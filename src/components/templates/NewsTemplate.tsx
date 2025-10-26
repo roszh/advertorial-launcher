@@ -20,6 +20,7 @@ interface NewsTemplateProps {
   imageUrl?: string;
   isEditing?: boolean;
   userId?: string;
+  ctaVariant?: "ctaAmazon" | "ctaUrgent" | "ctaPremium" | "ctaTrust";
   onUpdateSection?: (index: number, section: Section) => void;
   onUpdateCta?: (text: string) => void;
   onAddSection?: (index: number, type: "text" | "image") => void;
@@ -33,6 +34,7 @@ export const NewsTemplate = ({
   imageUrl, 
   isEditing,
   userId,
+  ctaVariant = "ctaAmazon",
   onUpdateSection,
   onUpdateCta,
   onAddSection,
@@ -193,7 +195,7 @@ export const NewsTemplate = ({
                   <div className="my-6 md:my-10 p-4 md:p-6 bg-muted/50 border-l-4 border-primary">
                     <p className="text-base md:text-lg font-semibold mb-3 md:mb-4">{section.heading}</p>
                     <Button
-                      variant="cta"
+                      variant={ctaVariant}
                       size="lg"
                       onClick={onCtaClick}
                       className="w-full"
@@ -220,7 +222,7 @@ export const NewsTemplate = ({
           <div className="bg-secondary/20 rounded-lg p-4 md:p-6 lg:p-8 text-center">
             <h3 className="text-lg md:text-xl lg:text-2xl font-bold mb-3 md:mb-4">Stay Updated</h3>
             <Button
-              variant="cta"
+              variant={ctaVariant}
               size="lg"
               onClick={onCtaClick}
               className="w-full px-6 md:px-12"

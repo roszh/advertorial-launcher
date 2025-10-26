@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           content: Json
           created_at: string | null
+          cta_style: string | null
           cta_text: string | null
           cta_url: string | null
           id: string
@@ -33,6 +34,7 @@ export type Database = {
         Insert: {
           content: Json
           created_at?: string | null
+          cta_style?: string | null
           cta_text?: string | null
           cta_url?: string | null
           id?: string
@@ -48,6 +50,7 @@ export type Database = {
         Update: {
           content?: Json
           created_at?: string | null
+          cta_style?: string | null
           cta_text?: string | null
           cta_url?: string | null
           id?: string
@@ -116,6 +119,7 @@ export type Database = {
         Row: {
           content: Json | null
           created_at: string | null
+          cta_style: string | null
           cta_text: string | null
           cta_url: string | null
           id: string | null
@@ -130,6 +134,7 @@ export type Database = {
         Insert: {
           content?: Json | null
           created_at?: string | null
+          cta_style?: string | null
           cta_text?: string | null
           cta_url?: string | null
           id?: string | null
@@ -144,6 +149,7 @@ export type Database = {
         Update: {
           content?: Json | null
           created_at?: string | null
+          cta_style?: string | null
           cta_text?: string | null
           cta_url?: string | null
           id?: string | null

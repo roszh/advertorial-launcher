@@ -42,8 +42,18 @@ All colors MUST be HSL.
     
     --gradient-primary: linear-gradient(135deg, hsl(221 83% 53%), hsl(262 83% 58%));
     --gradient-hero: linear-gradient(180deg, hsl(0 0% 100%), hsl(210 40% 98%));
+    --gradient-cta-premium: linear-gradient(135deg, hsl(262 83% 58%), hsl(281 83% 63%));
+    --gradient-cta-urgent: linear-gradient(135deg, hsl(0 84% 60%), hsl(15 84% 60%));
     --shadow-soft: 0 4px 20px -2px hsl(221 83% 53% / 0.15);
     --shadow-strong: 0 10px 40px -5px hsl(221 83% 53% / 0.3);
+    --shadow-cta: 0 4px 14px 0 hsl(221 83% 53% / 0.39);
+    
+    --cta-amazon: 45 100% 51%;
+    --cta-amazon-hover: 38 100% 45%;
+    --cta-urgent: 0 84% 60%;
+    --cta-urgent-hover: 0 84% 50%;
+    --cta-premium: 262 83% 58%;
+    --cta-trust: 142 76% 36%;
     
     --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
     --font-serif: 'Merriweather', Georgia, serif;
@@ -96,8 +106,18 @@ All colors MUST be HSL.
     
     --gradient-primary: linear-gradient(135deg, hsl(221 83% 53%), hsl(262 83% 58%));
     --gradient-hero: linear-gradient(180deg, hsl(220 18% 12%), hsl(220 15% 16%));
+    --gradient-cta-premium: linear-gradient(135deg, hsl(262 83% 58%), hsl(281 83% 63%));
+    --gradient-cta-urgent: linear-gradient(135deg, hsl(0 84% 60%), hsl(15 84% 60%));
     --shadow-soft: 0 4px 20px -2px hsl(221 83% 53% / 0.25);
     --shadow-strong: 0 10px 40px -5px hsl(221 83% 53% / 0.4);
+    --shadow-cta: 0 4px 14px 0 hsl(221 83% 53% / 0.39);
+    
+    --cta-amazon: 45 100% 51%;
+    --cta-amazon-hover: 38 100% 45%;
+    --cta-urgent: 0 84% 60%;
+    --cta-urgent-hover: 0 84% 50%;
+    --cta-premium: 262 83% 58%;
+    --cta-trust: 142 76% 36%;
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;

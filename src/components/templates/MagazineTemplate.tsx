@@ -21,6 +21,7 @@ interface MagazineTemplateProps {
   imageUrl?: string;
   isEditing?: boolean;
   userId?: string;
+  ctaVariant?: "ctaAmazon" | "ctaUrgent" | "ctaPremium" | "ctaTrust";
   onUpdateSection?: (index: number, section: Section) => void;
   onUpdateCta?: (text: string) => void;
   onAddSection?: (index: number, type: "text" | "image") => void;
@@ -34,6 +35,7 @@ export const MagazineTemplate = ({
   imageUrl, 
   isEditing,
   userId,
+  ctaVariant = "ctaAmazon",
   onUpdateSection,
   onUpdateCta,
   onAddSection,
@@ -175,7 +177,7 @@ export const MagazineTemplate = ({
                 {section.type === "cta" && (
                   <div className="my-6 md:my-8 p-4 md:p-6 lg:p-8 bg-secondary/30 rounded-lg text-center">
                     <Button
-                      variant="cta"
+                      variant={ctaVariant}
                       size="lg"
                       onClick={onCtaClick}
                       className="text-sm md:text-base lg:text-lg px-6 md:px-8 py-4 md:py-6 h-auto w-full md:w-auto"
@@ -202,7 +204,7 @@ export const MagazineTemplate = ({
         <div className="border-t border-border pt-6 md:pt-8 mt-8 md:mt-12 text-center">
           {isEditing && onUpdateCta ? (
             <Button
-              variant="cta"
+              variant={ctaVariant}
               size="lg"
               className="text-sm md:text-base lg:text-lg px-8 md:px-10 py-4 md:py-6 h-auto w-full md:w-auto"
             >
@@ -215,7 +217,7 @@ export const MagazineTemplate = ({
             </Button>
           ) : (
             <Button
-              variant="cta"
+              variant={ctaVariant}
               size="lg"
               onClick={onCtaClick}
               className="text-sm md:text-base lg:text-lg px-8 md:px-10 py-4 md:py-6 h-auto w-full md:w-auto"

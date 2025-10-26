@@ -22,6 +22,7 @@ interface PageData {
   };
   cta_text: string;
   cta_url: string;
+  cta_style?: string;
   image_url?: string;
   template: "magazine" | "news" | "blog";
 }
@@ -48,6 +49,7 @@ export default function PublicPage() {
           content: data.content as any,
           cta_text: data.cta_text || "",
           cta_url: data.cta_url || "",
+          cta_style: data.cta_style || "ctaAmazon",
           image_url: data.image_url || "",
           template,
         });
@@ -100,6 +102,7 @@ export default function PublicPage() {
     sections: pageData.content.sections,
     ctaText: pageData.cta_text,
     onCtaClick: handleCtaClick,
+    ctaVariant: (pageData.cta_style as any) || "ctaAmazon",
     imageUrl: pageData.image_url,
   };
 
@@ -118,7 +121,11 @@ export default function PublicPage() {
   return (
     <div className="min-h-screen bg-background">
       {renderTemplate()}
-      <StickyCtaButton text={pageData.cta_text} onClick={handleCtaClick} />
+      <StickyCtaButton 
+        text={pageData.cta_text} 
+        onClick={handleCtaClick} 
+        variant={(pageData.cta_style as any) || "ctaAmazon"} 
+      />
     </div>
   );
 }

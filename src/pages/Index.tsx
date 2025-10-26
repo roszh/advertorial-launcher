@@ -49,6 +49,7 @@ const Index = () => {
   const [editingSectionIndex, setEditingSectionIndex] = useState<number | null>(null);
   const [selectedTemplate, setSelectedTemplate] = useState<"magazine" | "news" | "blog">("magazine");
   const [imageUrl, setImageUrl] = useState<string>("");
+  const [ctaStyle, setCtaStyle] = useState<"ctaAmazon" | "ctaUrgent" | "ctaPremium" | "ctaTrust">("ctaAmazon");
 
   useEffect(() => {
     const checkUser = async () => {
@@ -93,6 +94,7 @@ const Index = () => {
       setImageUrl(data.image_url || "");
       const template = data.template as "magazine" | "news" | "blog";
       setSelectedTemplate(template || "magazine");
+      setCtaStyle((data.cta_style as any) || "ctaAmazon");
       setAnalysisResult({
         layout: "default",
         sections: content.sections,
@@ -177,6 +179,7 @@ const Index = () => {
         slug: slug,
         status: status,
         template: selectedTemplate,
+        cta_style: ctaStyle,
         content: { sections: analysisResult?.sections || [] } as any,
         cta_text: analysisResult?.cta.primary || "Get Started",
         cta_url: ctaUrl,
@@ -216,6 +219,7 @@ const Index = () => {
     setImageUrl("");
     setEditingSectionIndex(null);
     setSelectedTemplate("magazine");
+    setCtaStyle("ctaAmazon");
     navigate("/");
   };
 
@@ -318,6 +322,7 @@ const Index = () => {
       sections: analysisResult?.sections || [],
       ctaText: analysisResult?.cta.primary || "Get Started",
       onCtaClick: handleCtaClick,
+      ctaVariant: ctaStyle,
       imageUrl,
       isEditing: true,
       userId: user?.id,
@@ -468,6 +473,44 @@ const Index = () => {
                     onClick={() => setSelectedTemplate("blog")}
                   >
                     Blog
+                  </Button>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium mb-2 block">CTA Button Style</label>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  <Button
+                    variant={ctaStyle === "ctaAmazon" ? "ctaAmazon" : "outline"}
+                    size="sm"
+                    onClick={() => setCtaStyle("ctaAmazon")}
+                    className="justify-start"
+                  >
+                    🛒 Amazon
+                  </Button>
+                  <Button
+                    variant={ctaStyle === "ctaUrgent" ? "ctaUrgent" : "outline"}
+                    size="sm"
+                    onClick={() => setCtaStyle("ctaUrgent")}
+                    className="justify-start"
+                  >
+                    ⚡ Urgent
+                  </Button>
+                  <Button
+                    variant={ctaStyle === "ctaPremium" ? "ctaPremium" : "outline"}
+                    size="sm"
+                    onClick={() => setCtaStyle("ctaPremium")}
+                    className="justify-start"
+                  >
+                    ✨ Premium
+                  </Button>
+                  <Button
+                    variant={ctaStyle === "ctaTrust" ? "ctaTrust" : "outline"}
+                    size="sm"
+                    onClick={() => setCtaStyle("ctaTrust")}
+                    className="justify-start"
+                  >
+                    🛡️ Trust
                   </Button>
                 </div>
               </div>

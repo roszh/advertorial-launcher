@@ -5,9 +5,10 @@ import { cn } from "@/lib/utils";
 interface StickyCtaButtonProps {
   text: string;
   onClick: () => void;
+  variant?: "ctaAmazon" | "ctaUrgent" | "ctaPremium" | "ctaTrust";
 }
 
-export const StickyCtaButton = ({ text, onClick }: StickyCtaButtonProps) => {
+export const StickyCtaButton = ({ text, onClick, variant = "ctaAmazon" }: StickyCtaButtonProps) => {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
@@ -31,7 +32,7 @@ export const StickyCtaButton = ({ text, onClick }: StickyCtaButtonProps) => {
       <div className="bg-background/95 backdrop-blur-sm border-t border-border shadow-[var(--shadow-strong)] p-4">
         <div className="max-w-4xl mx-auto flex justify-center">
           <Button
-            variant="cta"
+            variant={variant}
             size="lg"
             onClick={onClick}
             className="w-full md:w-auto text-lg px-12 py-6 h-auto"

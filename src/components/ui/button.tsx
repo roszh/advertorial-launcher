@@ -17,6 +17,10 @@ const buttonVariants = cva(
         link: "text-primary underline-offset-4 hover:underline",
         cta: "bg-gradient-to-r from-primary to-accent text-primary-foreground hover:shadow-[var(--shadow-strong)] transition-all duration-300 font-semibold",
         ctaOutline: "border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300 font-semibold",
+        ctaAmazon: "bg-[hsl(var(--cta-amazon))] hover:bg-[hsl(var(--cta-amazon-hover))] text-black font-bold shadow-[0_2px_5px_0_rgba(213,217,217,.5)] hover:shadow-[0_4px_8px_0_rgba(213,217,217,.7)] border border-[#a88734] hover:border-[#8f7229] transition-all duration-200 rounded-lg",
+        ctaUrgent: "bg-gradient-to-r from-[hsl(var(--cta-urgent))] to-[hsl(var(--cta-urgent-hover))] text-white font-bold shadow-[var(--shadow-cta)] hover:shadow-[var(--shadow-strong)] hover:scale-105 transition-all duration-300 animate-pulse rounded-lg",
+        ctaPremium: "bg-gradient-to-r from-[hsl(var(--cta-premium))] via-[hsl(281_83%_63%)] to-[hsl(var(--cta-premium))] text-white font-bold shadow-[var(--shadow-cta)] hover:shadow-[var(--shadow-strong)] transition-all duration-300 bg-[length:200%_auto] hover:bg-right-bottom rounded-xl",
+        ctaTrust: "bg-[hsl(var(--cta-trust))] hover:bg-[hsl(var(--cta-trust))]/90 text-white font-semibold shadow-md hover:shadow-lg border-2 border-[hsl(var(--cta-trust))]/20 transition-all duration-200 rounded-md",
       },
       size: {
         default: "h-10 px-4 py-2",

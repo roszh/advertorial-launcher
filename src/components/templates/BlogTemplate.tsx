@@ -20,6 +20,7 @@ interface BlogTemplateProps {
   imageUrl?: string;
   isEditing?: boolean;
   userId?: string;
+  ctaVariant?: "ctaAmazon" | "ctaUrgent" | "ctaPremium" | "ctaTrust";
   onUpdateSection?: (index: number, section: Section) => void;
   onUpdateCta?: (text: string) => void;
   onAddSection?: (index: number, type: "text" | "image") => void;
@@ -33,6 +34,7 @@ export const BlogTemplate = ({
   imageUrl, 
   isEditing,
   userId,
+  ctaVariant = "ctaAmazon",
   onUpdateSection,
   onUpdateCta,
   onAddSection,
@@ -205,7 +207,7 @@ export const BlogTemplate = ({
                         />
                       )}
                       <Button
-                        variant="cta"
+                        variant={ctaVariant}
                         size="lg"
                         onClick={onCtaClick}
                         className="text-sm md:text-base lg:text-lg px-6 md:px-10 py-4 md:py-6 h-auto w-full md:w-auto"
@@ -233,7 +235,7 @@ export const BlogTemplate = ({
           <h3 className="text-lg md:text-2xl lg:text-3xl font-bold mb-3 md:mb-4">Ready to Get Started?</h3>
           <p className="text-sm md:text-base lg:text-lg text-muted-foreground mb-4 md:mb-6">Join thousands who have already transformed their lives</p>
           <Button
-            variant="cta"
+            variant={ctaVariant}
             size="lg"
             onClick={onCtaClick}
             className="text-sm md:text-base lg:text-lg px-8 md:px-12 py-4 md:py-6 h-auto w-full md:w-auto"
