@@ -21,6 +21,7 @@ interface Section {
   heading?: string;
   imagePosition?: "left" | "right" | "full" | "none";
   style?: "normal" | "emphasized" | "callout";
+  imageUrl?: string;
 }
 
 interface AnalysisResult {
@@ -279,6 +280,24 @@ const Index = () => {
     toast({ title: "Section added!" });
   };
 
+  const handleUpdateSection = (index: number, updatedSection: Section) => {
+    if (!analysisResult) return;
+    const newSections = [...analysisResult.sections];
+    newSections[index] = updatedSection;
+    setAnalysisResult({
+      ...analysisResult,
+      sections: newSections,
+    });
+  };
+
+  const handleUpdateCta = (newCtaText: string) => {
+    if (!analysisResult) return;
+    setAnalysisResult({
+      ...analysisResult,
+      cta: { ...analysisResult.cta, primary: newCtaText },
+    });
+  };
+
   const renderTemplate = () => {
     const templateProps = {
       sections: analysisResult?.sections || [],
@@ -286,6 +305,9 @@ const Index = () => {
       onCtaClick: () => ctaUrl && window.open(ctaUrl, "_blank"),
       imageUrl,
       isEditing: true,
+      userId: user?.id,
+      onUpdateSection: handleUpdateSection,
+      onUpdateCta: handleUpdateCta,
     };
 
     switch (selectedTemplate) {
@@ -353,13 +375,10 @@ const Index = () => {
                 </div>
               </div>
 
-              <div>
-                <label className="text-sm font-medium mb-2 block">Article Image</label>
-                <ImageUpload
-                  currentImageUrl={imageUrl}
-                  onImageUploaded={setImageUrl}
-                  userId={user.id}
-                />
+              <div className="bg-muted/30 rounded-lg p-4">
+                <p className="text-sm text-muted-foreground">
+                  💡 <strong>Tip:</strong> Click on any text or image in the preview below to edit it inline. Images are optimized automatically on upload.
+                </p>
               </div>
               
               <div className="flex gap-2 flex-wrap">

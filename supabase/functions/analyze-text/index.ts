@@ -31,11 +31,16 @@ serve(async (req) => {
 Your task:
 1. Identify the main sections (headline, subheadline, problem, solution, benefits, social proof, CTA)
 2. Choose the best layout type based on content (story, list, problem-solution, how-to)
-3. Suggest optimal image placements
+3. Suggest optimal image placements throughout the article (3-5 images recommended)
 4. Rewrite and format text for high conversion
 5. Create compelling headlines and CTAs
 
-CRITICAL: Return ONLY plain text content. DO NOT include any HTML tags, markdown formatting, or special characters. Use only plain text with line breaks (\n) for paragraphs.
+CRITICAL FORMATTING RULES:
+- Return ONLY plain text content. DO NOT include any HTML tags, markdown formatting, or special characters.
+- Use only plain text with line breaks (\n) for paragraphs.
+- For sections that should have images, set imageUrl to "" (empty string) as a placeholder
+
+IMPORTANT: Include 3-5 sections with empty imageUrl strings ("") throughout the article to indicate where images should be placed. These will be click-to-upload placeholders for the user.
 
 Return a JSON object with this structure:
 {
@@ -46,7 +51,8 @@ Return a JSON object with this structure:
       "content": "plain text content without any HTML tags",
       "heading": "plain text heading without any HTML tags",
       "imagePosition": "left" | "right" | "full" | "none",
-      "style": "normal" | "emphasized" | "callout"
+      "style": "normal" | "emphasized" | "callout",
+      "imageUrl": "" // empty string for placeholder images
     }
   ],
   "cta": {
