@@ -13,7 +13,7 @@ import { SectionEditor } from "@/components/SectionEditor";
 import { StickyCtaButton } from "@/components/StickyCtaButton";
 import { toast } from "@/hooks/use-toast";
 import { stripHtmlTags } from "@/lib/utils";
-import { Loader2, Save, Globe, Edit2, Plus } from "lucide-react";
+import { Loader2, Save, Globe, Edit2, Plus, Sparkles } from "lucide-react";
 
 interface Section {
   type: "hero" | "text" | "image" | "cta" | "benefits" | "testimonial";
@@ -308,6 +308,8 @@ const Index = () => {
       userId: user?.id,
       onUpdateSection: handleUpdateSection,
       onUpdateCta: handleUpdateCta,
+      onAddSection: handleAddSectionAt,
+      onDeleteSection: handleDeleteSection,
     };
 
     switch (selectedTemplate) {
@@ -318,6 +320,86 @@ const Index = () => {
       case "magazine":
       default:
         return <MagazineTemplate {...templateProps} />;
+    }
+  };
+
+  const handleAddSectionAt = (afterIndex: number, type: "text" | "image") => {
+    if (!analysisResult) return;
+    
+    const newSection: Section = type === "image" 
+      ? {
+          type: "image",
+          content: "",
+          imageUrl: "",
+          imagePosition: "full",
+          style: "normal",
+        }
+      : {
+          type: "text",
+          content: "Enter your content here...",
+          heading: "New Section",
+          imagePosition: "none",
+          style: "normal",
+        };
+    
+    const newSections = [...analysisResult.sections];
+    newSections.splice(afterIndex + 1, 0, newSection);
+    
+    setAnalysisResult({
+      ...analysisResult,
+      sections: newSections,
+    });
+    toast({ title: `${type === "image" ? "Image" : "Text"} section added!` });
+  };
+
+  const handleOptimizeWithAI = async () => {
+    if (!analysisResult) return;
+    
+    setIsAnalyzing(true);
+    try {
+      // Convert current content to text format for AI
+      const contentText = analysisResult.sections
+        .map(s => `${s.heading || ""}\n\n${s.content}`)
+        .join('\n\n---\n\n');
+      
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/analyze-text`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({ text: contentText }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to optimize content");
+      }
+
+      const data = await response.json();
+      
+      const cleanedData = {
+        ...data,
+        sections: data.sections.map((section: Section) => ({
+          ...section,
+          heading: section.heading ? stripHtmlTags(section.heading) : section.heading,
+          content: stripHtmlTags(section.content),
+        })),
+      };
+      
+      setAnalysisResult(cleanedData);
+      toast({ title: "Content optimized with AI!" });
+    } catch (error) {
+      console.error("Optimization error:", error);
+      toast({ 
+        title: "Error", 
+        description: error instanceof Error ? error.message : "Failed to optimize content", 
+        variant: "destructive" 
+      });
+    } finally {
+      setIsAnalyzing(false);
     }
   };
 
@@ -389,6 +471,23 @@ const Index = () => {
                 <Button onClick={() => handleSave("published")} disabled={saving}>
                   <Globe className="mr-2 h-4 w-4" />
                   Publish
+                </Button>
+                <Button 
+                  onClick={handleOptimizeWithAI} 
+                  disabled={isAnalyzing} 
+                  variant="secondary"
+                >
+                  {isAnalyzing ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Optimizing...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="mr-2 h-4 w-4" />
+                      AI Optimize
+                    </>
+                  )}
                 </Button>
                 <Button onClick={handleReset} variant="ghost">
                   Cancel
