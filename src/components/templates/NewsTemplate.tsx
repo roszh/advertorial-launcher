@@ -49,27 +49,27 @@ export const NewsTemplate = ({
   };
   
   return (
-    <article className="bg-background min-h-screen">
+    <article className="bg-background min-h-screen overflow-x-hidden">
       <div className="border-b border-border">
-        <div className="max-w-5xl mx-auto px-4 py-6">
-          <div className="flex items-center justify-between text-sm text-muted-foreground">
+        <div className="max-w-5xl mx-auto px-4 py-4 md:py-6">
+          <div className="flex items-center justify-between text-xs md:text-sm text-muted-foreground">
             <time dateTime={new Date().toISOString()}>{currentDate}</time>
             <span className="uppercase tracking-wide font-medium">Breaking News</span>
           </div>
         </div>
       </div>
 
-      <header className="max-w-5xl mx-auto px-4 py-8 md:py-12">
+      <header className="max-w-5xl mx-auto px-4 py-6 md:py-12">
         {isEditing ? (
           <RichTextEditor
             value={heroSection?.heading || "Breaking: Major Development Unfolds"}
             onSave={(value) => handleSectionUpdate(0, "heading", value)}
-            className="text-3xl md:text-5xl lg:text-6xl font-bold mb-4 leading-[1.1] font-serif"
+            className="text-2xl md:text-4xl lg:text-5xl font-bold mb-3 md:mb-4 leading-[1.1] font-serif"
             as="h1"
           />
         ) : (
           <h1 
-            className="text-3xl md:text-5xl lg:text-6xl font-bold mb-4 leading-[1.1] font-serif"
+            className="text-2xl md:text-4xl lg:text-5xl font-bold mb-3 md:mb-4 leading-[1.1] font-serif"
             dangerouslySetInnerHTML={{ 
               __html: (heroSection?.heading || "Breaking: Major Development Unfolds")
                 .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
@@ -83,12 +83,12 @@ export const NewsTemplate = ({
             value={heroSection?.content || ""}
             onSave={(value) => handleSectionUpdate(0, "content", value)}
             multiline
-            className="text-lg md:text-2xl text-muted-foreground mb-8 leading-relaxed font-medium"
+            className="text-base md:text-lg lg:text-xl text-muted-foreground mb-6 md:mb-8 leading-relaxed font-medium"
             as="p"
           />
         ) : (
           <p 
-            className="text-lg md:text-2xl text-muted-foreground mb-8 leading-relaxed font-medium"
+            className="text-base md:text-lg lg:text-xl text-muted-foreground mb-6 md:mb-8 leading-relaxed font-medium"
             dangerouslySetInnerHTML={{ 
               __html: (heroSection?.content || "")
                 .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
@@ -97,46 +97,46 @@ export const NewsTemplate = ({
           />
         )}
 
-        <figure className="w-full mb-6">
+        <figure className="w-full mb-4 md:mb-6">
           {isEditing && userId ? (
             <InlineImageUpload
               currentImageUrl={imageUrl || placeholderImage}
               onImageUploaded={(url) => handleSectionUpdate(0, "imageUrl", url)}
               userId={userId}
               aspectRatio="wide"
-              className="max-h-[500px]"
+              className="max-h-[300px] md:max-h-[500px]"
             />
           ) : (
             <img
               src={imageUrl || placeholderImage}
               alt="News article image"
-              className="w-full rounded object-cover"
-              style={{ maxHeight: '500px' }}
+              className="w-full max-w-full rounded object-cover"
+              style={{ maxHeight: '300px' }}
             />
           )}
-          <figcaption className="text-sm text-muted-foreground mt-3 px-2">
+          <figcaption className="text-xs md:text-sm text-muted-foreground mt-2 md:mt-3 px-2">
             {isEditing ? "Click image to replace" : "News Photo"}
           </figcaption>
         </figure>
       </header>
 
-      <div className="max-w-3xl mx-auto px-4 pb-12">
+      <div className="max-w-3xl mx-auto px-4 pb-8 md:pb-12">
         {bodySections.map((section, idx) => {
           const actualIndex = idx + 1;
           return (
             <div key={idx} className="group relative">
-              <section className="mb-6">
+              <section className="mb-5 md:mb-6">
                 {section.heading && (
                   isEditing ? (
                     <RichTextEditor
                       value={section.heading}
                       onSave={(value) => handleSectionUpdate(actualIndex, "heading", value)}
-                      className="text-xl md:text-2xl font-bold mb-3 font-serif"
+                      className="text-lg md:text-xl lg:text-2xl font-bold mb-2 md:mb-3 font-serif"
                       as="h2"
                     />
                   ) : (
                     <h2 
-                      className="text-xl md:text-2xl font-bold mb-3 font-serif"
+                      className="text-lg md:text-xl lg:text-2xl font-bold mb-2 md:mb-3 font-serif"
                       dangerouslySetInnerHTML={{ 
                         __html: section.heading
                           .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
@@ -147,7 +147,7 @@ export const NewsTemplate = ({
                 )}
                 
                 {section.imageUrl !== undefined && (
-                  <div className="mb-6">
+                  <div className="mb-4 md:mb-6">
                     {isEditing && userId ? (
                       <InlineImageUpload
                         currentImageUrl={section.imageUrl}
@@ -159,26 +159,26 @@ export const NewsTemplate = ({
                       <img
                         src={section.imageUrl}
                         alt={section.heading || "Section image"}
-                        className="w-full rounded"
+                        className="w-full max-w-full rounded"
                       />
                     ) : null}
                   </div>
                 )}
                 
-                <div className="space-y-4">
+                <div className="space-y-3 md:space-y-4">
                   {isEditing ? (
                     <RichTextEditor
                       value={section.content}
                       onSave={(value) => handleSectionUpdate(actualIndex, "content", value)}
                       multiline
-                      className="text-base md:text-lg leading-relaxed text-foreground/90"
+                      className="text-sm md:text-base lg:text-lg leading-relaxed text-foreground/90 break-words"
                       as="p"
                     />
                   ) : (
                     section.content.split('\n\n').map((paragraph, pIndex) => (
                       <p 
                         key={pIndex} 
-                        className="text-base md:text-lg leading-relaxed text-foreground/90"
+                        className="text-sm md:text-base lg:text-lg leading-relaxed text-foreground/90 break-words"
                         dangerouslySetInnerHTML={{ 
                           __html: paragraph
                             .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
@@ -190,13 +190,13 @@ export const NewsTemplate = ({
                 </div>
                 
                 {section.type === "cta" && (
-                  <div className="my-10 p-6 bg-muted/50 border-l-4 border-primary">
-                    <p className="text-lg font-semibold mb-4">{section.heading}</p>
+                  <div className="my-6 md:my-10 p-4 md:p-6 bg-muted/50 border-l-4 border-primary">
+                    <p className="text-base md:text-lg font-semibold mb-3 md:mb-4">{section.heading}</p>
                     <Button
                       variant="cta"
                       size="lg"
                       onClick={onCtaClick}
-                      className="w-full md:w-auto"
+                      className="w-full"
                     >
                       {ctaText}
                     </Button>
@@ -216,14 +216,14 @@ export const NewsTemplate = ({
           );
         })}
 
-        <div className="mt-12 pt-8 border-t border-border">
-          <div className="bg-secondary/20 rounded-lg p-6 md:p-8 text-center">
-            <h3 className="text-xl md:text-2xl font-bold mb-4">Stay Updated</h3>
+        <div className="mt-8 md:mt-12 pt-6 md:pt-8 border-t border-border">
+          <div className="bg-secondary/20 rounded-lg p-4 md:p-6 lg:p-8 text-center">
+            <h3 className="text-lg md:text-xl lg:text-2xl font-bold mb-3 md:mb-4">Stay Updated</h3>
             <Button
               variant="cta"
               size="lg"
               onClick={onCtaClick}
-              className="w-full md:w-auto px-12"
+              className="w-full px-6 md:px-12"
             >
               {ctaText}
             </Button>

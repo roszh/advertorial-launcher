@@ -49,22 +49,22 @@ export const MagazineTemplate = ({
   };
   
   return (
-    <article className="bg-background">
+    <article className="bg-background overflow-x-hidden">
       {/* Hero Section */}
-      <header className="max-w-4xl mx-auto px-4 py-8 md:py-12">
-        <div className="text-center mb-8">
-          <div className="text-sm text-muted-foreground mb-4 uppercase tracking-wider font-medium">
+      <header className="max-w-4xl mx-auto px-4 py-6 md:py-12">
+        <div className="text-center mb-6 md:mb-8">
+          <div className="text-xs md:text-sm text-muted-foreground mb-3 md:mb-4 uppercase tracking-wider font-medium">
             Featured Story
           </div>
           {isEditing ? (
             <RichTextEditor
               value={heroSection?.heading || "Your Compelling Headline Here"}
               onSave={(value) => handleSectionUpdate(0, "heading", value)}
-              className="text-3xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight font-serif text-center"
+              className="text-2xl md:text-4xl lg:text-5xl font-bold mb-4 md:mb-6 leading-tight font-serif text-center"
               as="h1"
             />
           ) : (
-            <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight font-serif">
+            <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold mb-4 md:mb-6 leading-tight font-serif">
               {heroSection?.heading || "Your Compelling Headline Here"}
             </h1>
           )}
@@ -74,12 +74,12 @@ export const MagazineTemplate = ({
                 value={heroSection?.content || ""}
                 onSave={(value) => handleSectionUpdate(0, "content", value)}
                 multiline
-                className="text-lg md:text-xl text-muted-foreground leading-relaxed"
+                className="text-base md:text-lg lg:text-xl text-muted-foreground leading-relaxed"
                 as="p"
               />
             </div>
           ) : (
-            <p className="text-lg md:text-xl text-muted-foreground leading-relaxed max-w-3xl mx-auto">
+            <p className="text-base md:text-lg lg:text-xl text-muted-foreground leading-relaxed max-w-3xl mx-auto">
               {heroSection?.content}
             </p>
           )}
@@ -93,7 +93,7 @@ export const MagazineTemplate = ({
             aspectRatio="video"
           />
         ) : (
-          <figure className="w-full aspect-video rounded-lg overflow-hidden shadow-lg mb-4">
+          <figure className="w-full aspect-video rounded-lg overflow-hidden shadow-lg mb-3 md:mb-4">
             <img
               src={imageUrl || placeholderImage}
               alt="Article hero image"
@@ -101,36 +101,36 @@ export const MagazineTemplate = ({
             />
           </figure>
         )}
-        <figcaption className="text-sm text-muted-foreground text-center mt-4">
+        <figcaption className="text-xs md:text-sm text-muted-foreground text-center mt-3 md:mt-4">
           {isEditing ? "Click image to replace" : "Photo illustration"}
         </figcaption>
       </header>
 
       {/* Body Content */}
-      <div className="max-w-2xl mx-auto px-4 py-6">
+      <div className="max-w-2xl mx-auto px-4 py-4 md:py-6">
         {bodySections.map((section, idx) => {
           const actualIndex = idx + 1; // +1 because hero is index 0
           return (
             <div key={idx} className="group relative">
-              <section className="mb-8">
+              <section className="mb-6 md:mb-8">
                 {section.heading && (
                   isEditing ? (
                     <RichTextEditor
                       value={section.heading}
                       onSave={(value) => handleSectionUpdate(actualIndex, "heading", value)}
-                      className="text-2xl md:text-3xl font-bold mb-4 font-serif leading-tight"
+                      className="text-xl md:text-2xl lg:text-3xl font-bold mb-3 md:mb-4 font-serif leading-tight"
                       as="h2"
                     />
                   ) : (
                     <h2 
-                      className="text-2xl md:text-3xl font-bold mb-4 font-serif leading-tight"
+                      className="text-xl md:text-2xl lg:text-3xl font-bold mb-3 md:mb-4 font-serif leading-tight"
                       dangerouslySetInnerHTML={{ __html: section.heading.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\*(.+?)\*/g, '<em>$1</em>') }}
                     />
                   )
                 )}
                 
                 {section.imageUrl !== undefined && (
-                  <div className="mb-6">
+                  <div className="mb-4 md:mb-6">
                     {isEditing && userId ? (
                       <InlineImageUpload
                         currentImageUrl={section.imageUrl}
@@ -142,26 +142,26 @@ export const MagazineTemplate = ({
                       <img
                         src={section.imageUrl}
                         alt={section.heading || "Section image"}
-                        className="w-full rounded-lg"
+                        className="w-full max-w-full rounded-lg"
                       />
                     ) : null}
                   </div>
                 )}
                 
-                <div className="prose prose-lg max-w-none">
+                <div className="prose prose-base md:prose-lg max-w-none break-words">
                   {isEditing ? (
                     <RichTextEditor
                       value={section.content}
                       onSave={(value) => handleSectionUpdate(actualIndex, "content", value)}
                       multiline
-                      className="text-base md:text-lg leading-relaxed text-foreground/90 font-serif"
+                      className="text-sm md:text-base lg:text-lg leading-relaxed text-foreground/90 font-serif"
                       as="p"
                     />
                   ) : (
                     section.content.split('\n\n').map((paragraph, pIndex) => (
                       <p 
                         key={pIndex} 
-                        className="text-base md:text-lg leading-relaxed mb-4 text-foreground/90 font-serif"
+                        className="text-sm md:text-base lg:text-lg leading-relaxed mb-3 md:mb-4 text-foreground/90 font-serif break-words"
                         dangerouslySetInnerHTML={{ 
                           __html: paragraph
                             .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
@@ -173,12 +173,12 @@ export const MagazineTemplate = ({
                 </div>
                 
                 {section.type === "cta" && (
-                  <div className="my-8 p-6 md:p-8 bg-secondary/30 rounded-lg text-center">
+                  <div className="my-6 md:my-8 p-4 md:p-6 lg:p-8 bg-secondary/30 rounded-lg text-center">
                     <Button
                       variant="cta"
                       size="lg"
                       onClick={onCtaClick}
-                      className="text-base md:text-lg px-8 py-6 h-auto"
+                      className="text-sm md:text-base lg:text-lg px-6 md:px-8 py-4 md:py-6 h-auto w-full md:w-auto"
                     >
                       {ctaText}
                     </Button>
@@ -199,12 +199,12 @@ export const MagazineTemplate = ({
         })}
 
         {/* Final CTA */}
-        <div className="border-t border-border pt-8 mt-12 text-center">
+        <div className="border-t border-border pt-6 md:pt-8 mt-8 md:mt-12 text-center">
           {isEditing && onUpdateCta ? (
             <Button
               variant="cta"
               size="lg"
-              className="text-base md:text-lg px-10 py-6 h-auto"
+              className="text-sm md:text-base lg:text-lg px-8 md:px-10 py-4 md:py-6 h-auto w-full md:w-auto"
             >
               <RichTextEditor
                 value={ctaText}
@@ -218,7 +218,7 @@ export const MagazineTemplate = ({
               variant="cta"
               size="lg"
               onClick={onCtaClick}
-              className="text-base md:text-lg px-10 py-6 h-auto"
+              className="text-sm md:text-base lg:text-lg px-8 md:px-10 py-4 md:py-6 h-auto w-full md:w-auto"
             >
               {ctaText}
             </Button>
