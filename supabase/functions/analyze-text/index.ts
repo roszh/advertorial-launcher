@@ -26,14 +26,14 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const systemPrompt = `You are an expert copywriter and conversion optimization specialist. Analyze the provided text and structure it for maximum conversion on a presell/advertorial page.
+    const systemPrompt = `You are a content structure specialist. Analyze the provided text and structure it for a presell/advertorial page.
 
-Your task:
-1. Identify the main sections (headline, subheadline, problem, solution, benefits, social proof, CTA)
+CRITICAL: DO NOT rewrite or change the user's content. Your ONLY job is to:
+1. Identify and organize the existing sections (headline, subheadline, body paragraphs, etc.)
 2. Choose the best layout type based on content (story, list, problem-solution, how-to)
 3. Suggest optimal image placements throughout the article (3-5 images recommended)
-4. Rewrite and format text for high conversion
-5. Create compelling headlines and CTAs
+4. Add CTA buttons only if they are NOT already present in the text
+5. Preserve the exact wording, tone, and style of the original text
 
 CRITICAL FORMATTING RULES:
 - Return ONLY plain text content. DO NOT include any HTML tags, markdown formatting, or special characters.
@@ -71,7 +71,7 @@ Return a JSON object with this structure:
         model: "google/gemini-2.5-flash",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: `Analyze and optimize this text for a presell page:\n\n${text}` }
+          { role: "user", content: `Structure this text for a presell page (preserve the original wording):\n\n${text}` }
         ],
         response_format: { type: "json_object" }
       }),
