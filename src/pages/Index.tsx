@@ -220,6 +220,9 @@ const Index = () => {
   };
 
   const handleReset = () => {
+    if (!confirm("Are you sure you want to cancel? All unsaved changes will be lost.")) {
+      return;
+    }
     setAnalysisResult(null);
     setInputText("");
     setIsEditorMode(false);
@@ -231,7 +234,6 @@ const Index = () => {
     setCtaStyle("ctaAmazon");
     setStickyCtaThreshold(20);
     setSubtitle("Featured Story");
-    navigate("/");
   };
 
   const handleSaveSection = (index: number, updatedSection: Section) => {
@@ -257,6 +259,9 @@ const Index = () => {
       timestamp: Date.now()
     });
     
+    const deletedSection = analysisResult.sections[index];
+    const sectionTitle = deletedSection.heading || "Section";
+    
     const newSections = analysisResult.sections.filter((_, i) => i !== index);
     setAnalysisResult({
       ...analysisResult,
@@ -265,9 +270,10 @@ const Index = () => {
     setEditingSectionIndex(null);
     
     toast({ 
-      title: "Section deleted!",
-      description: "You can undo this action within 10 seconds.",
+      title: `"${sectionTitle}" deleted`,
+      description: "You can undo this action for the next 10 seconds.",
       duration: 10000,
+      variant: "destructive"
     });
     
     // Clear undo stack after 10 seconds
@@ -601,11 +607,12 @@ const Index = () => {
                   <>
                     <Button 
                       onClick={handleUndo} 
-                      variant="secondary" 
+                      variant="destructive" 
                       size="sm" 
-                      className="h-8 px-3 text-xs animate-fade-in"
+                      className="h-8 px-3 text-xs animate-fade-in shadow-lg border-2 border-destructive-foreground/20"
                     >
-                      ↩️ Undo Delete
+                      <span className="animate-pulse mr-1">↩️</span>
+                      Undo Delete
                     </Button>
                     <div className="h-4 w-px bg-border" />
                   </>

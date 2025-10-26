@@ -4,6 +4,8 @@ import { RichTextEditor } from "../RichTextEditor";
 import { SectionControls } from "../SectionControls";
 import { DraggableSections } from "../DraggableSections";
 import placeholderImage from "@/assets/hero-image.jpg";
+import { useState } from "react";
+import { cn } from "@/lib/utils";
 
 interface Section {
   type: "hero" | "text" | "image" | "cta" | "benefits" | "testimonial";
@@ -49,6 +51,7 @@ export const BlogTemplate = ({
 }: BlogTemplateProps) => {
   const heroSection = sections[0];
   const bodySections = sections.slice(1);
+  const [deletingIndex, setDeletingIndex] = useState<number | null>(null);
   
   const handleSectionUpdate = (index: number, field: keyof Section, value: any) => {
     if (!isEditing || !onUpdateSection) return;
@@ -63,10 +66,15 @@ export const BlogTemplate = ({
   
   const draggableItems = bodySections.map((section, idx) => {
     const actualIndex = idx + 1;
+    const isDeleting = deletingIndex === actualIndex;
+    
     return {
       id: actualIndex.toString(),
       content: (
-        <div className="group relative">
+        <div className={cn(
+          "group relative transition-all duration-300",
+          isDeleting && "ring-4 ring-destructive ring-opacity-50 bg-destructive/5 rounded-lg animate-pulse"
+        )}>
           <section className="mb-6 md:mb-8 lg:mb-10">
             {section.heading && (
               isEditing ? (
@@ -170,6 +178,7 @@ export const BlogTemplate = ({
               onAddTextBelow={() => onAddSection(actualIndex, "text")}
               onAddImageBelow={() => onAddSection(actualIndex, "image")}
               onDeleteSection={() => onDeleteSection(actualIndex)}
+              onDeleteHover={(isHovering) => setDeletingIndex(isHovering ? actualIndex : null)}
             />
           )}
         </div>

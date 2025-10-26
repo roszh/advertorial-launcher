@@ -5,6 +5,7 @@ import { RichTextEditor } from "../RichTextEditor";
 import { SectionControls } from "../SectionControls";
 import { DraggableSections } from "../DraggableSections";
 import placeholderImage from "@/assets/hero-image.jpg";
+import { useState } from "react";
 
 interface Section {
   type: "hero" | "text" | "image" | "cta" | "benefits" | "testimonial";
@@ -50,6 +51,7 @@ export const MagazineTemplate = ({
 }: MagazineTemplateProps) => {
   const heroSection = sections[0];
   const bodySections = sections.slice(1);
+  const [deletingIndex, setDeletingIndex] = useState<number | null>(null);
   
   const handleSectionUpdate = (index: number, field: keyof Section, value: any) => {
     if (!isEditing || !onUpdateSection) return;
@@ -64,10 +66,15 @@ export const MagazineTemplate = ({
   
   const draggableItems = bodySections.map((section, idx) => {
     const actualIndex = idx + 1;
+    const isDeleting = deletingIndex === actualIndex;
+    
     return {
       id: actualIndex.toString(),
       content: (
-        <div className="group relative">
+        <div className={cn(
+          "group relative transition-all duration-300",
+          isDeleting && "ring-4 ring-destructive ring-opacity-50 bg-destructive/5 rounded-lg animate-pulse"
+        )}>
           <section className="mb-6 md:mb-8">
             {section.heading && (
               isEditing ? (
@@ -148,6 +155,7 @@ export const MagazineTemplate = ({
               onAddTextBelow={() => onAddSection(actualIndex, "text")}
               onAddImageBelow={() => onAddSection(actualIndex, "image")}
               onDeleteSection={() => onDeleteSection(actualIndex)}
+              onDeleteHover={(isHovering) => setDeletingIndex(isHovering ? actualIndex : null)}
             />
           )}
         </div>
