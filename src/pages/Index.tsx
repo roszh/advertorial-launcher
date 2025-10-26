@@ -50,6 +50,7 @@ const Index = () => {
   const [selectedTemplate, setSelectedTemplate] = useState<"magazine" | "news" | "blog">("magazine");
   const [imageUrl, setImageUrl] = useState<string>("");
   const [ctaStyle, setCtaStyle] = useState<"ctaAmazon" | "ctaUrgent" | "ctaPremium" | "ctaTrust">("ctaAmazon");
+  const [stickyCtaThreshold, setStickyCtaThreshold] = useState<number>(20);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -95,6 +96,7 @@ const Index = () => {
       const template = data.template as "magazine" | "news" | "blog";
       setSelectedTemplate(template || "magazine");
       setCtaStyle((data.cta_style as any) || "ctaAmazon");
+      setStickyCtaThreshold((data.sticky_cta_threshold as number) || 20);
       setAnalysisResult({
         layout: "default",
         sections: content.sections,
@@ -180,6 +182,7 @@ const Index = () => {
         status: status,
         template: selectedTemplate,
         cta_style: ctaStyle,
+        sticky_cta_threshold: stickyCtaThreshold,
         content: { sections: analysisResult?.sections || [] } as any,
         cta_text: analysisResult?.cta.primary || "Get Started",
         cta_url: ctaUrl,
@@ -220,6 +223,7 @@ const Index = () => {
     setEditingSectionIndex(null);
     setSelectedTemplate("magazine");
     setCtaStyle("ctaAmazon");
+    setStickyCtaThreshold(20);
     navigate("/");
   };
 
@@ -429,125 +433,136 @@ const Index = () => {
         <Navigation user={user} />
         
         <div className="border-b bg-background/95 backdrop-blur sticky top-0 z-50">
-          <div className="container py-4">
-            <div className="flex flex-col gap-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="container py-3">
+            <div className="flex flex-col gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Page Title</label>
+                  <label className="text-xs font-medium mb-1 block">Page Title</label>
                   <Input
                     placeholder="Enter page title..."
                     value={pageTitle}
                     onChange={(e) => setPageTitle(e.target.value)}
+                    className="h-9"
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium mb-2 block">CTA URL</label>
+                  <label className="text-xs font-medium mb-1 block">CTA URL</label>
                   <Input
                     placeholder="https://your-offer.com"
                     value={ctaUrl}
                     onChange={(e) => setCTAUrl(e.target.value)}
+                    className="h-9"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium mb-1 block">Sticky CTA Shows at {stickyCtaThreshold}%</label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="5"
+                    value={stickyCtaThreshold}
+                    onChange={(e) => setStickyCtaThreshold(Number(e.target.value))}
+                    className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
                   />
                 </div>
               </div>
               
-              <div>
-                <label className="text-sm font-medium mb-2 block">Template Style</label>
-                <div className="flex gap-2 flex-wrap">
+              <div className="flex gap-2 items-center flex-wrap">
+                <div className="flex gap-1">
                   <Button
-                    variant={selectedTemplate === "magazine" ? "default" : "outline"}
+                    variant={selectedTemplate === "magazine" ? "default" : "ghost"}
                     size="sm"
                     onClick={() => setSelectedTemplate("magazine")}
+                    className="h-8 px-3 text-xs"
                   >
                     Magazine
                   </Button>
                   <Button
-                    variant={selectedTemplate === "news" ? "default" : "outline"}
+                    variant={selectedTemplate === "news" ? "default" : "ghost"}
                     size="sm"
                     onClick={() => setSelectedTemplate("news")}
+                    className="h-8 px-3 text-xs"
                   >
                     News
                   </Button>
                   <Button
-                    variant={selectedTemplate === "blog" ? "default" : "outline"}
+                    variant={selectedTemplate === "blog" ? "default" : "ghost"}
                     size="sm"
                     onClick={() => setSelectedTemplate("blog")}
+                    className="h-8 px-3 text-xs"
                   >
                     Blog
                   </Button>
                 </div>
-              </div>
 
-              <div>
-                <label className="text-sm font-medium mb-2 block">CTA Button Style</label>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                <div className="h-4 w-px bg-border" />
+
+                <div className="flex gap-1">
                   <Button
-                    variant={ctaStyle === "ctaAmazon" ? "ctaAmazon" : "outline"}
+                    variant={ctaStyle === "ctaAmazon" ? "ctaAmazon" : "ghost"}
                     size="sm"
                     onClick={() => setCtaStyle("ctaAmazon")}
-                    className="justify-start"
+                    className="h-8 px-2 text-xs"
                   >
-                    🛒 Amazon
+                    🛒
                   </Button>
                   <Button
-                    variant={ctaStyle === "ctaUrgent" ? "ctaUrgent" : "outline"}
+                    variant={ctaStyle === "ctaUrgent" ? "ctaUrgent" : "ghost"}
                     size="sm"
                     onClick={() => setCtaStyle("ctaUrgent")}
-                    className="justify-start"
+                    className="h-8 px-2 text-xs"
                   >
-                    ⚡ Urgent
+                    ⚡
                   </Button>
                   <Button
-                    variant={ctaStyle === "ctaPremium" ? "ctaPremium" : "outline"}
+                    variant={ctaStyle === "ctaPremium" ? "ctaPremium" : "ghost"}
                     size="sm"
                     onClick={() => setCtaStyle("ctaPremium")}
-                    className="justify-start"
+                    className="h-8 px-2 text-xs"
                   >
-                    ✨ Premium
+                    ✨
                   </Button>
                   <Button
-                    variant={ctaStyle === "ctaTrust" ? "ctaTrust" : "outline"}
+                    variant={ctaStyle === "ctaTrust" ? "ctaTrust" : "ghost"}
                     size="sm"
                     onClick={() => setCtaStyle("ctaTrust")}
-                    className="justify-start"
+                    className="h-8 px-2 text-xs"
                   >
-                    🛡️ Trust
+                    🛡️
                   </Button>
                 </div>
-              </div>
 
-              <div className="bg-muted/30 rounded-lg p-4">
-                <p className="text-sm text-muted-foreground">
-                  💡 <strong>Tip:</strong> Click on any text or image in the preview below to edit it inline. Images are optimized automatically on upload.
-                </p>
-              </div>
-              
-              <div className="flex gap-2 flex-wrap">
-                <Button onClick={() => handleSave("draft")} disabled={saving} variant="outline">
-                  <Save className="mr-2 h-4 w-4" />
-                  Save Draft
+                <div className="h-4 w-px bg-border" />
+                
+                <Button onClick={() => handleSave("draft")} disabled={saving} variant="ghost" size="sm" className="h-8 px-3 text-xs">
+                  <Save className="mr-1 h-3 w-3" />
+                  Draft
                 </Button>
-                <Button onClick={() => handleSave("published")} disabled={saving}>
-                  <Globe className="mr-2 h-4 w-4" />
+                <Button onClick={() => handleSave("published")} disabled={saving} size="sm" className="h-8 px-3 text-xs">
+                  <Globe className="mr-1 h-3 w-3" />
                   Publish
                 </Button>
                 <Button 
                   onClick={handleOptimizeWithAI} 
                   disabled={isAnalyzing} 
                   variant="secondary"
+                  size="sm"
+                  className="h-8 px-3 text-xs"
                 >
                   {isAnalyzing ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Optimizing...
+                      <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                      AI...
                     </>
                   ) : (
                     <>
-                      <Sparkles className="mr-2 h-4 w-4" />
-                      AI Optimize
+                      <Sparkles className="mr-1 h-3 w-3" />
+                      AI
                     </>
                   )}
                 </Button>
-                <Button onClick={handleReset} variant="ghost">
+                <Button onClick={handleReset} variant="ghost" size="sm" className="h-8 px-3 text-xs">
                   Cancel
                 </Button>
               </div>

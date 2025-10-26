@@ -23,6 +23,7 @@ interface PageData {
   cta_text: string;
   cta_url: string;
   cta_style?: string;
+  sticky_cta_threshold?: number;
   image_url?: string;
   template: "magazine" | "news" | "blog";
 }
@@ -50,6 +51,7 @@ export default function PublicPage() {
           cta_text: data.cta_text || "",
           cta_url: data.cta_url || "",
           cta_style: data.cta_style || "ctaAmazon",
+          sticky_cta_threshold: data.sticky_cta_threshold || 20,
           image_url: data.image_url || "",
           template,
         });
@@ -124,7 +126,8 @@ export default function PublicPage() {
       <StickyCtaButton 
         text={pageData.cta_text} 
         onClick={handleCtaClick} 
-        variant={(pageData.cta_style as any) || "ctaAmazon"} 
+        variant={(pageData.cta_style as any) || "ctaAmazon"}
+        scrollThreshold={pageData.sticky_cta_threshold || 20}
       />
     </div>
   );

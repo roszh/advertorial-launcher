@@ -6,21 +6,27 @@ interface StickyCtaButtonProps {
   text: string;
   onClick: () => void;
   variant?: "ctaAmazon" | "ctaUrgent" | "ctaPremium" | "ctaTrust";
+  scrollThreshold?: number;
 }
 
-export const StickyCtaButton = ({ text, onClick, variant = "ctaAmazon" }: StickyCtaButtonProps) => {
+export const StickyCtaButton = ({ text, onClick, variant = "ctaAmazon", scrollThreshold = 20 }: StickyCtaButtonProps) => {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
-      // Show button after scrolling 300px
-      const shouldShow = window.scrollY > 300;
-      setIsVisible(shouldShow);
+      const windowHeight = window.innerHeight;
+      const documentHeight = document.documentElement.scrollHeight;
+      const scrollTop = window.scrollY;
+      const scrollableHeight = documentHeight - windowHeight;
+      const scrollPercentage = (scrollTop / scrollableHeight) * 100;
+      
+      setIsVisible(scrollPercentage >= scrollThreshold);
     };
 
     window.addEventListener("scroll", handleScroll);
+    handleScroll(); // Check on mount
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [scrollThreshold]);
 
   return (
     <div

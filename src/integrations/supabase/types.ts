@@ -26,6 +26,7 @@ export type Database = {
           published_at: string | null
           slug: string
           status: string
+          sticky_cta_threshold: number | null
           template: string | null
           title: string
           updated_at: string | null
@@ -42,6 +43,7 @@ export type Database = {
           published_at?: string | null
           slug: string
           status?: string
+          sticky_cta_threshold?: number | null
           template?: string | null
           title: string
           updated_at?: string | null
@@ -58,6 +60,7 @@ export type Database = {
           published_at?: string | null
           slug?: string
           status?: string
+          sticky_cta_threshold?: number | null
           template?: string | null
           title?: string
           updated_at?: string | null
@@ -127,6 +130,7 @@ export type Database = {
           published_at: string | null
           slug: string | null
           status: string | null
+          sticky_cta_threshold: number | null
           template: string | null
           title: string | null
           updated_at: string | null
@@ -142,6 +146,7 @@ export type Database = {
           published_at?: string | null
           slug?: string | null
           status?: string | null
+          sticky_cta_threshold?: number | null
           template?: string | null
           title?: string | null
           updated_at?: string | null
@@ -157,6 +162,7 @@ export type Database = {
           published_at?: string | null
           slug?: string | null
           status?: string | null
+          sticky_cta_threshold?: number | null
           template?: string | null
           title?: string | null
           updated_at?: string | null
