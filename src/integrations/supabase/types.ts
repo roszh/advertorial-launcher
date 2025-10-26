@@ -112,7 +112,51 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      published_pages: {
+        Row: {
+          content: Json | null
+          created_at: string | null
+          cta_text: string | null
+          cta_url: string | null
+          id: string | null
+          image_url: string | null
+          published_at: string | null
+          slug: string | null
+          status: string | null
+          template: string | null
+          title: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          content?: Json | null
+          created_at?: string | null
+          cta_text?: string | null
+          cta_url?: string | null
+          id?: string | null
+          image_url?: string | null
+          published_at?: string | null
+          slug?: string | null
+          status?: string | null
+          template?: string | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          content?: Json | null
+          created_at?: string | null
+          cta_text?: string | null
+          cta_url?: string | null
+          id?: string | null
+          image_url?: string | null
+          published_at?: string | null
+          slug?: string | null
+          status?: string | null
+          template?: string | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       has_role: {

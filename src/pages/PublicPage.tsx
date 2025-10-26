@@ -34,10 +34,9 @@ export default function PublicPage() {
   useEffect(() => {
     const fetchPage = async () => {
       const { data, error } = await supabase
-        .from("pages")
+        .from("published_pages")
         .select("*")
         .eq("slug", slug)
-        .eq("status", "published")
         .single();
 
       if (error || !data) {
