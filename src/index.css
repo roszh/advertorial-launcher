@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&family=Inter:wght@400;500;600;700&display=swap');
+
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
 All colors MUST be HSL.
 */
@@ -42,6 +44,9 @@ All colors MUST be HSL.
     --gradient-hero: linear-gradient(180deg, hsl(0 0% 100%), hsl(210 40% 98%));
     --shadow-soft: 0 4px 20px -2px hsl(221 83% 53% / 0.15);
     --shadow-strong: 0 10px 40px -5px hsl(221 83% 53% / 0.3);
+    
+    --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-serif: 'Merriweather', Georgia, serif;
 
     --sidebar-background: 0 0% 98%;
 
@@ -111,5 +116,10 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-sans);
+  }
+  
+  .font-serif {
+    font-family: var(--font-serif);
   }
 }

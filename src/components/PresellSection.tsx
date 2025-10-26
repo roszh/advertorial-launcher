@@ -104,10 +104,14 @@ export const PresellSection = ({ section, ctaText, onCtaClick }: PresellSectionP
         >
           <div className={cn(section.imagePosition === "right" && "md:col-start-2")}>
             {section.heading && (
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">{section.heading}</h2>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4 font-serif leading-tight">
+                {section.heading}
+              </h2>
             )}
-            <div className="prose prose-lg max-w-none text-foreground">
-              <p className="text-lg leading-relaxed whitespace-pre-wrap">{section.content}</p>
+            <div className="prose prose-lg max-w-none">
+              <p className="text-lg leading-relaxed whitespace-pre-wrap font-serif text-foreground/90">
+                {section.content}
+              </p>
             </div>
           </div>
           <div className={cn(section.imagePosition === "right" && "md:col-start-1 md:row-start-1")}>
@@ -126,10 +130,14 @@ export const PresellSection = ({ section, ctaText, onCtaClick }: PresellSectionP
     <div className={containerClasses}>
       <div className="max-w-4xl mx-auto">
         {section.heading && (
-          <h2 className="text-3xl md:text-4xl font-bold mb-6">{section.heading}</h2>
+          <h2 className="text-3xl md:text-4xl font-bold mb-6 font-serif leading-tight">
+            {section.heading}
+          </h2>
         )}
-        <div className="prose prose-lg max-w-none text-foreground">
-          <p className="text-lg leading-relaxed whitespace-pre-wrap">{section.content}</p>
+        <div className="prose prose-lg max-w-none">
+          <p className="text-lg leading-relaxed whitespace-pre-wrap font-serif text-foreground/90">
+            {section.content}
+          </p>
         </div>
       </div>
     </div>
