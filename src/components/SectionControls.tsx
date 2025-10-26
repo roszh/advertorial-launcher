@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "./ui/button";
-import { Plus, Trash2, ImagePlus, AlertCircle } from "lucide-react";
+import { Plus, Trash2, ImagePlus, AlertCircle, Copy } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface SectionControlsProps {
@@ -8,6 +8,7 @@ interface SectionControlsProps {
   onAddTextBelow: () => void;
   onAddImageBelow: () => void;
   onDeleteSection: () => void;
+  onCloneSection?: () => void;
   className?: string;
   onDeleteHover?: (isHovering: boolean) => void;
 }
@@ -17,6 +18,7 @@ export const SectionControls = ({
   onAddTextBelow,
   onAddImageBelow,
   onDeleteSection,
+  onCloneSection,
   className,
   onDeleteHover
 }: SectionControlsProps) => {
@@ -58,6 +60,18 @@ export const SectionControls = ({
           <ImagePlus className="h-4 w-4 mr-1" />
           Image
         </Button>
+        {onCloneSection && (
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={onCloneSection}
+            title="Clone this section"
+            className="hover-scale"
+          >
+            <Copy className="h-4 w-4 mr-1" />
+            Clone
+          </Button>
+        )}
         {index > 0 && ( // Don't allow deleting the hero section
           <Button
             size="sm"

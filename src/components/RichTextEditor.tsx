@@ -110,6 +110,9 @@ export const RichTextEditor = ({
     formatted = formatted.replace(/\*(.+?)\*/g, '<em>$1</em>');
     formatted = formatted.replace(/_(.+?)_/g, '<em>$1</em>');
     
+    // Line breaks: \n to <br>
+    formatted = formatted.replace(/\n/g, '<br>');
+    
     return formatted;
   };
 

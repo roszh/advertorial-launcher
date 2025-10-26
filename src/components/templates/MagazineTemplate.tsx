@@ -157,6 +157,14 @@ export const MagazineTemplate = ({
               onAddTextBelow={() => onAddSection(actualIndex, "text")}
               onAddImageBelow={() => onAddSection(actualIndex, "image")}
               onDeleteSection={() => onDeleteSection(actualIndex)}
+              onCloneSection={() => {
+                const clonedSection = { ...section };
+                onAddSection(actualIndex, section.type as "text" | "image");
+                setTimeout(() => {
+                  const newIndex = actualIndex + 1;
+                  onUpdateSection?.(newIndex, clonedSection);
+                }, 100);
+              }}
               onDeleteHover={(isHovering) => setDeletingIndex(isHovering ? actualIndex : null)}
             />
           )}
