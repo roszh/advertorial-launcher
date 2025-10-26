@@ -35,14 +35,16 @@ Your task:
 4. Rewrite and format text for high conversion
 5. Create compelling headlines and CTAs
 
+CRITICAL: Return ONLY plain text content. DO NOT include any HTML tags, markdown formatting, or special characters. Use only plain text with line breaks (\n) for paragraphs.
+
 Return a JSON object with this structure:
 {
   "layout": "story" | "list" | "problem-solution" | "how-to",
   "sections": [
     {
       "type": "hero" | "text" | "image" | "cta" | "benefits" | "testimonial",
-      "content": "formatted content",
-      "heading": "optional heading",
+      "content": "plain text content without any HTML tags",
+      "heading": "plain text heading without any HTML tags",
       "imagePosition": "left" | "right" | "full" | "none",
       "style": "normal" | "emphasized" | "callout"
     }

@@ -6,9 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { PresellSection } from "@/components/PresellSection";
+import { SectionEditor } from "@/components/SectionEditor";
 import { StickyCtaButton } from "@/components/StickyCtaButton";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Save, Globe, Edit2 } from "lucide-react";
+import { stripHtmlTags } from "@/lib/utils";
+import { Loader2, Save, Globe, Edit2, Plus } from "lucide-react";
 
 interface Section {
   type: "hero" | "text" | "image" | "cta" | "benefits" | "testimonial";
@@ -40,6 +42,7 @@ const Index = () => {
   const [pageTitle, setPageTitle] = useState("");
   const [ctaUrl, setCTAUrl] = useState("");
   const [saving, setSaving] = useState(false);
+  const [editingSectionIndex, setEditingSectionIndex] = useState<number | null>(null);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -116,7 +119,18 @@ const Index = () => {
       }
 
       const data = await response.json();
-      setAnalysisResult(data);
+      
+      // Strip HTML tags from all content
+      const cleanedData = {
+        ...data,
+        sections: data.sections.map((section: Section) => ({
+          ...section,
+          heading: section.heading ? stripHtmlTags(section.heading) : section.heading,
+          content: stripHtmlTags(section.content),
+        })),
+      };
+      
+      setAnalysisResult(cleanedData);
       setIsEditorMode(true);
       toast({ title: "Text analyzed successfully!" });
     } catch (error) {
@@ -188,7 +202,69 @@ const Index = () => {
     setIsEditorMode(false);
     setPageTitle("");
     setCTAUrl("");
+    setEditingSectionIndex(null);
     navigate("/");
+  };
+
+  const handleSaveSection = (index: number, updatedSection: Section) => {
+    if (!analysisResult) return;
+    
+    const newSections = [...analysisResult.sections];
+    newSections[index] = updatedSection;
+    
+    setAnalysisResult({
+      ...analysisResult,
+      sections: newSections,
+    });
+    setEditingSectionIndex(null);
+    toast({ title: "Section updated!" });
+  };
+
+  const handleDeleteSection = (index: number) => {
+    if (!analysisResult) return;
+    
+    const newSections = analysisResult.sections.filter((_, i) => i !== index);
+    setAnalysisResult({
+      ...analysisResult,
+      sections: newSections,
+    });
+    setEditingSectionIndex(null);
+    toast({ title: "Section deleted!" });
+  };
+
+  const handleMoveSection = (index: number, direction: "up" | "down") => {
+    if (!analysisResult) return;
+    
+    const newSections = [...analysisResult.sections];
+    const targetIndex = direction === "up" ? index - 1 : index + 1;
+    
+    if (targetIndex < 0 || targetIndex >= newSections.length) return;
+    
+    [newSections[index], newSections[targetIndex]] = [newSections[targetIndex], newSections[index]];
+    
+    setAnalysisResult({
+      ...analysisResult,
+      sections: newSections,
+    });
+    toast({ title: "Section moved!" });
+  };
+
+  const handleAddSection = () => {
+    if (!analysisResult) return;
+    
+    const newSection: Section = {
+      type: "text",
+      content: "Enter your content here...",
+      heading: "New Section",
+      imagePosition: "none",
+      style: "normal",
+    };
+    
+    setAnalysisResult({
+      ...analysisResult,
+      sections: [...analysisResult.sections, newSection],
+    });
+    toast({ title: "Section added!" });
   };
 
   if (isEditorMode && analysisResult) {
@@ -234,14 +310,54 @@ const Index = () => {
           </div>
         </div>
 
-        {analysisResult.sections.map((section, index) => (
-          <PresellSection
-            key={index}
-            section={section}
-            ctaText={analysisResult.cta.primary}
-            onCtaClick={() => ctaUrl && window.open(ctaUrl, "_blank")}
-          />
-        ))}
+        <div className="space-y-8">
+          {analysisResult.sections.map((section, index) => (
+            <div key={index} className="relative">
+              {editingSectionIndex === index ? (
+                <SectionEditor
+                  section={section}
+                  index={index}
+                  totalSections={analysisResult.sections.length}
+                  onSave={(updatedSection) => handleSaveSection(index, updatedSection)}
+                  onDelete={() => handleDeleteSection(index)}
+                  onMoveUp={() => handleMoveSection(index, "up")}
+                  onMoveDown={() => handleMoveSection(index, "down")}
+                  onCancel={() => setEditingSectionIndex(null)}
+                />
+              ) : (
+                <>
+                  <div className="absolute top-4 right-4 z-10 flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => setEditingSectionIndex(index)}
+                    >
+                      <Edit2 className="h-4 w-4 mr-1" />
+                      Edit
+                    </Button>
+                  </div>
+                  <PresellSection
+                    section={section}
+                    ctaText={analysisResult.cta.primary}
+                    onCtaClick={() => ctaUrl && window.open(ctaUrl, "_blank")}
+                  />
+                </>
+              )}
+            </div>
+          ))}
+          
+          <div className="container py-8">
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={handleAddSection}
+              className="w-full"
+            >
+              <Plus className="mr-2 h-5 w-5" />
+              Add New Section
+            </Button>
+          </div>
+        </div>
 
         <StickyCtaButton 
           text={analysisResult.cta.primary} 
