@@ -27,12 +27,25 @@ export const RichTextEditor = ({
   const [isItalic, setIsItalic] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // Auto-resize textarea based on content
+  const adjustTextareaHeight = () => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = 'auto';
+      // Set minimum height based on content length
+      const contentLines = editValue.split('\n').length;
+      const minHeight = Math.max(150, Math.min(contentLines * 24, 600));
+      textarea.style.height = `${Math.max(textarea.scrollHeight, minHeight)}px`;
+    }
+  };
+
   useEffect(() => {
     if (isEditing && textareaRef.current) {
       textareaRef.current.focus();
       textareaRef.current.setSelectionRange(editValue.length, editValue.length);
+      adjustTextareaHeight();
     }
-  }, [isEditing]);
+  }, [isEditing, editValue]);
 
   const handleSave = () => {
     if (editValue.trim()) {
@@ -122,9 +135,12 @@ export const RichTextEditor = ({
         <Textarea
           ref={textareaRef}
           value={editValue}
-          onChange={(e) => setEditValue(e.target.value)}
+          onChange={(e) => {
+            setEditValue(e.target.value);
+            adjustTextareaHeight();
+          }}
           onKeyDown={handleKeyDown}
-          className={cn("min-h-[100px]", className)}
+          className={cn("min-h-[150px] max-h-[600px] resize-none overflow-y-auto", className)}
         />
         <div className="flex gap-2 flex-wrap">
           <div className="flex gap-1 border-r pr-2">
