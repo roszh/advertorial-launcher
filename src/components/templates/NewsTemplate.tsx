@@ -82,6 +82,7 @@ export const NewsTemplate = ({
                 <RichTextEditor
                   value={section.heading}
                   onSave={(value) => handleSectionUpdate(actualIndex, "heading", value)}
+                  onDelete={() => onDeleteSection?.(actualIndex)}
                   className="text-lg md:text-xl lg:text-2xl font-bold mb-2 md:mb-3 font-serif"
                   as="h2"
                 />
@@ -121,6 +122,7 @@ export const NewsTemplate = ({
                 <RichTextEditor
                   value={section.content}
                   onSave={(value) => handleSectionUpdate(actualIndex, "content", value)}
+                  onDelete={() => onDeleteSection?.(actualIndex)}
                   multiline
                   className="text-sm md:text-base lg:text-lg leading-relaxed text-foreground/90 break-words"
                   as="p"

@@ -81,6 +81,7 @@ export const BlogTemplate = ({
                 <RichTextEditor
                   value={section.heading}
                   onSave={(value) => handleSectionUpdate(actualIndex, "heading", value)}
+                  onDelete={() => onDeleteSection?.(actualIndex)}
                   className="text-lg md:text-2xl lg:text-3xl font-bold mb-3 md:mb-4 lg:mb-5 leading-tight"
                   as="h2"
                 />
@@ -120,6 +121,7 @@ export const BlogTemplate = ({
                 <RichTextEditor
                   value={section.content}
                   onSave={(value) => handleSectionUpdate(actualIndex, "content", value)}
+                  onDelete={() => onDeleteSection?.(actualIndex)}
                   multiline
                   className="text-sm md:text-base lg:text-lg leading-[1.7] md:leading-[1.8] text-foreground/90 break-words"
                   as="p"

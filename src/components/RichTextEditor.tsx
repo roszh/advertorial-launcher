@@ -1,12 +1,13 @@
 import { useState, useRef, useEffect } from "react";
 import { Textarea } from "./ui/textarea";
 import { Button } from "./ui/button";
-import { Check, X, Edit2, Bold, Italic, Type } from "lucide-react";
+import { Check, X, Edit2, Bold, Italic, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface RichTextEditorProps {
   value: string;
   onSave: (value: string) => void;
+  onDelete?: () => void;
   multiline?: boolean;
   className?: string;
   as?: "h1" | "h2" | "h3" | "p";
@@ -14,7 +15,8 @@ interface RichTextEditorProps {
 
 export const RichTextEditor = ({ 
   value, 
-  onSave, 
+  onSave,
+  onDelete,
   multiline = false,
   className,
   as = "p"
@@ -100,7 +102,23 @@ export const RichTextEditor = ({
 
   if (isEditing) {
     return (
-      <div className="space-y-2">
+      <div className="space-y-2 relative">
+        {onDelete && (
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              if (confirm("Are you sure you want to delete this section?")) {
+                onDelete();
+                setIsEditing(false);
+              }
+            }}
+            className="absolute -top-2 -right-2 z-10 h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+            title="Delete section"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        )}
         <Textarea
           ref={textareaRef}
           value={editValue}
