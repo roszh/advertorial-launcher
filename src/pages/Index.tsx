@@ -51,6 +51,7 @@ const Index = () => {
   const [imageUrl, setImageUrl] = useState<string>("");
   const [ctaStyle, setCtaStyle] = useState<"ctaAmazon" | "ctaUrgent" | "ctaPremium" | "ctaTrust">("ctaAmazon");
   const [stickyCtaThreshold, setStickyCtaThreshold] = useState<number>(20);
+  const [undoStack, setUndoStack] = useState<{ sections: Section[], timestamp: number } | null>(null);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -244,13 +245,45 @@ const Index = () => {
   const handleDeleteSection = (index: number) => {
     if (!analysisResult) return;
     
+    // Save current state for undo
+    setUndoStack({
+      sections: [...analysisResult.sections],
+      timestamp: Date.now()
+    });
+    
     const newSections = analysisResult.sections.filter((_, i) => i !== index);
     setAnalysisResult({
       ...analysisResult,
       sections: newSections,
     });
     setEditingSectionIndex(null);
-    toast({ title: "Section deleted!" });
+    
+    toast({ 
+      title: "Section deleted!",
+      description: "You can undo this action within 10 seconds.",
+      duration: 10000,
+    });
+    
+    // Clear undo stack after 10 seconds
+    setTimeout(() => {
+      setUndoStack((current) => {
+        if (current && Date.now() - current.timestamp >= 10000) {
+          return null;
+        }
+        return current;
+      });
+    }, 10000);
+  };
+
+  const handleUndo = () => {
+    if (!undoStack || !analysisResult) return;
+    
+    setAnalysisResult({
+      ...analysisResult,
+      sections: undoStack.sections,
+    });
+    setUndoStack(null);
+    toast({ title: "Section restored!" });
   };
 
   const handleMoveSection = (index: number, direction: "up" | "down") => {
@@ -534,6 +567,20 @@ const Index = () => {
                 </div>
 
                 <div className="h-4 w-px bg-border" />
+                
+                {undoStack && (
+                  <>
+                    <Button 
+                      onClick={handleUndo} 
+                      variant="secondary" 
+                      size="sm" 
+                      className="h-8 px-3 text-xs animate-fade-in"
+                    >
+                      ↩️ Undo Delete
+                    </Button>
+                    <div className="h-4 w-px bg-border" />
+                  </>
+                )}
                 
                 <Button onClick={() => handleSave("draft")} disabled={saving} variant="ghost" size="sm" className="h-8 px-3 text-xs">
                   <Save className="mr-1 h-3 w-3" />
