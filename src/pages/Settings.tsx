@@ -12,6 +12,9 @@ export default function Settings() {
   const navigate = useNavigate();
   const [user, setUser] = useState<any>(null);
   const [fullName, setFullName] = useState("");
+  const [googleAnalyticsId, setGoogleAnalyticsId] = useState("");
+  const [facebookPixelId, setFacebookPixelId] = useState("");
+  const [triplewhaleToken, setTriplewhaleToken] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -38,11 +41,16 @@ export default function Settings() {
   const loadProfile = async (userId: string) => {
     const { data } = await supabase
       .from("profiles")
-      .select("full_name")
+      .select("full_name, google_analytics_id, facebook_pixel_id, triplewhale_token")
       .eq("id", userId)
       .single();
     
-    if (data) setFullName(data.full_name || "");
+    if (data) {
+      setFullName(data.full_name || "");
+      setGoogleAnalyticsId(data.google_analytics_id || "");
+      setFacebookPixelId(data.facebook_pixel_id || "");
+      setTriplewhaleToken(data.triplewhale_token || "");
+    }
   };
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
@@ -51,13 +59,18 @@ export default function Settings() {
 
     const { error } = await supabase
       .from("profiles")
-      .update({ full_name: fullName })
+      .update({ 
+        full_name: fullName,
+        google_analytics_id: googleAnalyticsId || null,
+        facebook_pixel_id: facebookPixelId || null,
+        triplewhale_token: triplewhaleToken || null
+      })
       .eq("id", user?.id);
 
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Profile updated successfully" });
+      toast({ title: "Settings updated successfully" });
     }
     setLoading(false);
   };
@@ -68,7 +81,7 @@ export default function Settings() {
       <div className="container mx-auto py-8 px-4 max-w-2xl">
         <h1 className="text-3xl font-bold mb-6">Settings</h1>
         
-        <Card>
+        <Card className="mb-6">
           <CardHeader>
             <CardTitle>Profile Information</CardTitle>
             <CardDescription>Update your account details</CardDescription>
@@ -89,6 +102,59 @@ export default function Settings() {
               </div>
               <Button type="submit" disabled={loading}>
                 {loading ? "Saving..." : "Save Changes"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Tracking Scripts</CardTitle>
+            <CardDescription>Add tracking scripts to all your published pages</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleUpdateProfile} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="googleAnalytics">Google Analytics ID</Label>
+                <Input
+                  id="googleAnalytics"
+                  placeholder="G-XXXXXXXXXX"
+                  value={googleAnalyticsId}
+                  onChange={(e) => setGoogleAnalyticsId(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Enter your Google Analytics 4 measurement ID (starts with G-)
+                </p>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="facebookPixel">Facebook Pixel ID</Label>
+                <Input
+                  id="facebookPixel"
+                  placeholder="123456789012345"
+                  value={facebookPixelId}
+                  onChange={(e) => setFacebookPixelId(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Enter your Facebook Pixel ID (15-16 digit number)
+                </p>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="triplewhale">Triple Whale Token</Label>
+                <Input
+                  id="triplewhale"
+                  placeholder="Your Triple Whale tracking token"
+                  value={triplewhaleToken}
+                  onChange={(e) => setTriplewhaleToken(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Enter your Triple Whale tracking token
+                </p>
+              </div>
+              
+              <Button type="submit" disabled={loading}>
+                {loading ? "Saving..." : "Save Tracking Settings"}
               </Button>
             </form>
           </CardContent>

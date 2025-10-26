@@ -33,6 +33,11 @@ export default function PublicPage() {
   const { slug } = useParams();
   const [pageData, setPageData] = useState<PageData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [trackingScripts, setTrackingScripts] = useState<{
+    googleAnalyticsId?: string;
+    facebookPixelId?: string;
+    triplewhaleToken?: string;
+  }>({});
 
   useEffect(() => {
     const fetchPage = async () => {
@@ -60,6 +65,29 @@ export default function PublicPage() {
         
         // Set page title
         document.title = data.title;
+
+        // Fetch page owner's tracking scripts
+        const { data: pageOwner } = await supabase
+          .from("pages")
+          .select("user_id")
+          .eq("id", data.id)
+          .single();
+
+        if (pageOwner) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("google_analytics_id, facebook_pixel_id, triplewhale_token")
+            .eq("id", pageOwner.user_id)
+            .single();
+
+          if (profile) {
+            setTrackingScripts({
+              googleAnalyticsId: profile.google_analytics_id || undefined,
+              facebookPixelId: profile.facebook_pixel_id || undefined,
+              triplewhaleToken: profile.triplewhale_token || undefined,
+            });
+          }
+        }
       }
       setLoading(false);
     };
@@ -86,6 +114,63 @@ export default function PublicPage() {
 
     trackView();
   }, [pageData?.id]);
+
+  // Inject tracking scripts
+  useEffect(() => {
+    // Google Analytics
+    if (trackingScripts.googleAnalyticsId) {
+      const gaScript = document.createElement('script');
+      gaScript.async = true;
+      gaScript.src = `https://www.googletagmanager.com/gtag/js?id=${trackingScripts.googleAnalyticsId}`;
+      document.head.appendChild(gaScript);
+
+      const gaConfigScript = document.createElement('script');
+      gaConfigScript.innerHTML = `
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', '${trackingScripts.googleAnalyticsId}');
+      `;
+      document.head.appendChild(gaConfigScript);
+    }
+
+    // Facebook Pixel
+    if (trackingScripts.facebookPixelId) {
+      const fbScript = document.createElement('script');
+      fbScript.innerHTML = `
+        !function(f,b,e,v,n,t,s)
+        {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+        n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+        if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+        n.queue=[];t=b.createElement(e);t.async=!0;
+        t.src=v;s=b.getElementsByTagName(e)[0];
+        s.parentNode.insertBefore(t,s)}(window, document,'script',
+        'https://connect.facebook.net/en_US/fbevents.js');
+        fbq('init', '${trackingScripts.facebookPixelId}');
+        fbq('track', 'PageView');
+      `;
+      document.head.appendChild(fbScript);
+
+      const fbNoScript = document.createElement('noscript');
+      fbNoScript.innerHTML = `<img height="1" width="1" style="display:none"
+        src="https://www.facebook.com/tr?id=${trackingScripts.facebookPixelId}&ev=PageView&noscript=1"/>`;
+      document.body.appendChild(fbNoScript);
+    }
+
+    // Triple Whale
+    if (trackingScripts.triplewhaleToken) {
+      const twScript = document.createElement('script');
+      twScript.innerHTML = `
+        (function(){var w=window;var d=document;var s=d.createElement('script');
+        s.src='https://cdn.triplewhale.com/pixel/v2.js';s.async=true;
+        d.getElementsByTagName('head')[0].appendChild(s);
+        w.TriplePixel=w.TriplePixel||function(){(w.TriplePixel.q=w.TriplePixel.q||[]).push(arguments);};
+        w.TriplePixel('init', '${trackingScripts.triplewhaleToken}');
+        w.TriplePixel('page', 'PageView');})();
+      `;
+      document.head.appendChild(twScript);
+    }
+  }, [trackingScripts]);
 
   if (loading) {
     return (
