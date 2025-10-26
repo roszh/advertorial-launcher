@@ -22,6 +22,8 @@ interface MagazineTemplateProps {
   imageUrl?: string;
   isEditing?: boolean;
   userId?: string;
+  subtitle?: string;
+  onUpdateSubtitle?: (subtitle: string) => void;
   ctaVariant?: "ctaAmazon" | "ctaUrgent" | "ctaPremium" | "ctaTrust";
   onUpdateSection?: (index: number, section: Section) => void;
   onUpdateCta?: (text: string) => void;
@@ -37,6 +39,8 @@ export const MagazineTemplate = ({
   imageUrl, 
   isEditing,
   userId,
+  subtitle = "Featured Story",
+  onUpdateSubtitle,
   ctaVariant = "ctaAmazon",
   onUpdateSection,
   onUpdateCta,
@@ -157,7 +161,16 @@ export const MagazineTemplate = ({
       <header className="max-w-4xl mx-auto px-4 py-6 md:py-12">
         <div className="text-center mb-6 md:mb-8">
           <div className="text-xs md:text-sm text-muted-foreground mb-3 md:mb-4 uppercase tracking-wider font-medium">
-            Featured Story
+            {isEditing && onUpdateSubtitle ? (
+              <RichTextEditor
+                value={subtitle}
+                onSave={onUpdateSubtitle}
+                className="text-xs md:text-sm text-muted-foreground uppercase tracking-wider font-medium text-center"
+                as="p"
+              />
+            ) : (
+              subtitle
+            )}
           </div>
           {isEditing ? (
             <RichTextEditor

@@ -21,6 +21,8 @@ interface NewsTemplateProps {
   imageUrl?: string;
   isEditing?: boolean;
   userId?: string;
+  subtitle?: string;
+  onUpdateSubtitle?: (subtitle: string) => void;
   ctaVariant?: "ctaAmazon" | "ctaUrgent" | "ctaPremium" | "ctaTrust";
   onUpdateSection?: (index: number, section: Section) => void;
   onUpdateCta?: (text: string) => void;
@@ -36,6 +38,8 @@ export const NewsTemplate = ({
   imageUrl, 
   isEditing,
   userId,
+  subtitle = "Breaking News",
+  onUpdateSubtitle,
   ctaVariant = "ctaAmazon",
   onUpdateSection,
   onUpdateCta,
@@ -162,7 +166,18 @@ export const NewsTemplate = ({
         <div className="max-w-5xl mx-auto px-4 py-4 md:py-6">
           <div className="flex items-center justify-between text-xs md:text-sm text-muted-foreground">
             <time dateTime={new Date().toISOString()}>{currentDate}</time>
-            <span className="uppercase tracking-wide font-medium">Breaking News</span>
+            <span className="uppercase tracking-wide font-medium">
+              {isEditing && onUpdateSubtitle ? (
+                <RichTextEditor
+                  value={subtitle}
+                  onSave={onUpdateSubtitle}
+                  className="text-xs md:text-sm text-muted-foreground uppercase tracking-wide font-medium"
+                  as="p"
+                />
+              ) : (
+                subtitle
+              )}
+            </span>
           </div>
         </div>
       </div>

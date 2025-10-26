@@ -21,6 +21,8 @@ interface BlogTemplateProps {
   imageUrl?: string;
   isEditing?: boolean;
   userId?: string;
+  subtitle?: string;
+  onUpdateSubtitle?: (subtitle: string) => void;
   ctaVariant?: "ctaAmazon" | "ctaUrgent" | "ctaPremium" | "ctaTrust";
   onUpdateSection?: (index: number, section: Section) => void;
   onUpdateCta?: (text: string) => void;
@@ -36,6 +38,8 @@ export const BlogTemplate = ({
   imageUrl, 
   isEditing,
   userId,
+  subtitle = "Expert Insights",
+  onUpdateSubtitle,
   ctaVariant = "ctaAmazon",
   onUpdateSection,
   onUpdateCta,
@@ -200,7 +204,16 @@ export const BlogTemplate = ({
         <div className="relative max-w-4xl mx-auto px-4 -mt-20 md:-mt-32 lg:-mt-48">
           <div className="bg-background/95 backdrop-blur rounded-lg p-4 md:p-6 lg:p-10 shadow-xl">
             <div className="text-xs md:text-sm text-primary font-semibold mb-2 md:mb-3 uppercase tracking-wider">
-              Expert Insights
+              {isEditing && onUpdateSubtitle ? (
+                <RichTextEditor
+                  value={subtitle}
+                  onSave={onUpdateSubtitle}
+                  className="text-xs md:text-sm text-primary font-semibold uppercase tracking-wider"
+                  as="p"
+                />
+              ) : (
+                subtitle
+              )}
             </div>
             {isEditing ? (
               <RichTextEditor

@@ -11,9 +11,10 @@ import { NewsTemplate } from "@/components/templates/NewsTemplate";
 import { BlogTemplate } from "@/components/templates/BlogTemplate";
 import { SectionEditor } from "@/components/SectionEditor";
 import { StickyCtaButton } from "@/components/StickyCtaButton";
+import { HtmlEditor } from "@/components/HtmlEditor";
 import { toast } from "@/hooks/use-toast";
 import { stripHtmlTags } from "@/lib/utils";
-import { Loader2, Save, Globe, Edit2, Plus, Sparkles } from "lucide-react";
+import { Loader2, Save, Globe, Edit2, Plus, Sparkles, Code } from "lucide-react";
 
 interface Section {
   type: "hero" | "text" | "image" | "cta" | "benefits" | "testimonial";
@@ -52,6 +53,8 @@ const Index = () => {
   const [ctaStyle, setCtaStyle] = useState<"ctaAmazon" | "ctaUrgent" | "ctaPremium" | "ctaTrust">("ctaAmazon");
   const [stickyCtaThreshold, setStickyCtaThreshold] = useState<number>(20);
   const [undoStack, setUndoStack] = useState<{ sections: Section[], timestamp: number } | null>(null);
+  const [subtitle, setSubtitle] = useState<string>("Featured Story");
+  const [showHtmlEditor, setShowHtmlEditor] = useState(false);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -98,6 +101,7 @@ const Index = () => {
       setSelectedTemplate(template || "magazine");
       setCtaStyle((data.cta_style as any) || "ctaAmazon");
       setStickyCtaThreshold((data.sticky_cta_threshold as number) || 20);
+      setSubtitle(data.subtitle || "Featured Story");
       setAnalysisResult({
         layout: "default",
         sections: content.sections,
@@ -184,6 +188,7 @@ const Index = () => {
         template: selectedTemplate,
         cta_style: ctaStyle,
         sticky_cta_threshold: stickyCtaThreshold,
+        subtitle: subtitle,
         content: { sections: analysisResult?.sections || [] } as any,
         cta_text: analysisResult?.cta.primary || "Get Started",
         cta_url: ctaUrl,
@@ -225,6 +230,7 @@ const Index = () => {
     setSelectedTemplate("magazine");
     setCtaStyle("ctaAmazon");
     setStickyCtaThreshold(20);
+    setSubtitle("Featured Story");
     navigate("/");
   };
 
@@ -383,6 +389,8 @@ const Index = () => {
       imageUrl,
       isEditing: true,
       userId: user?.id,
+      subtitle: subtitle,
+      onUpdateSubtitle: setSubtitle,
       onUpdateSection: handleUpdateSection,
       onUpdateCta: handleUpdateCta,
       onAddSection: handleAddSectionAt,
@@ -633,10 +641,32 @@ const Index = () => {
                 <Button onClick={handleReset} variant="ghost" size="sm" className="h-8 px-3 text-xs">
                   Cancel
                 </Button>
+                <Button 
+                  onClick={() => setShowHtmlEditor(true)} 
+                  variant="outline" 
+                  size="sm" 
+                  className="h-8 px-3 text-xs"
+                >
+                  <Code className="mr-1 h-3 w-3" />
+                  HTML
+                </Button>
               </div>
             </div>
           </div>
         </div>
+
+        {showHtmlEditor && (
+          <HtmlEditor
+            sections={analysisResult.sections}
+            onSave={(newSections) => {
+              setAnalysisResult({
+                ...analysisResult,
+                sections: newSections,
+              });
+            }}
+            onClose={() => setShowHtmlEditor(false)}
+          />
+        )}
 
         {editingSectionIndex !== null ? (
           <div className="container py-8">
