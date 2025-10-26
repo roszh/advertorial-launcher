@@ -80,9 +80,19 @@ export default function PublicPage() {
     );
   }
 
+  const normalizeUrl = (url: string): string => {
+    if (!url) return url;
+    const trimmedUrl = url.trim();
+    if (trimmedUrl.startsWith('http://') || trimmedUrl.startsWith('https://')) {
+      return trimmedUrl;
+    }
+    return `https://${trimmedUrl}`;
+  };
+
   const handleCtaClick = () => {
     if (pageData.cta_url) {
-      window.open(pageData.cta_url, "_blank");
+      const normalizedUrl = normalizeUrl(pageData.cta_url);
+      window.open(normalizedUrl, "_blank");
     }
   };
 

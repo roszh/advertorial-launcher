@@ -298,11 +298,26 @@ const Index = () => {
     });
   };
 
+  const normalizeUrl = (url: string): string => {
+    if (!url) return url;
+    const trimmedUrl = url.trim();
+    if (trimmedUrl.startsWith('http://') || trimmedUrl.startsWith('https://')) {
+      return trimmedUrl;
+    }
+    return `https://${trimmedUrl}`;
+  };
+
+  const handleCtaClick = () => {
+    if (!ctaUrl) return;
+    const normalizedUrl = normalizeUrl(ctaUrl);
+    window.open(normalizedUrl, "_blank");
+  };
+
   const renderTemplate = () => {
     const templateProps = {
       sections: analysisResult?.sections || [],
       ctaText: analysisResult?.cta.primary || "Get Started",
-      onCtaClick: () => ctaUrl && window.open(ctaUrl, "_blank"),
+      onCtaClick: handleCtaClick,
       imageUrl,
       isEditing: true,
       userId: user?.id,
