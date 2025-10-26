@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { PresellSection } from "@/components/PresellSection";
+import { MagazineTemplate } from "@/components/templates/MagazineTemplate";
+import { NewsTemplate } from "@/components/templates/NewsTemplate";
+import { BlogTemplate } from "@/components/templates/BlogTemplate";
 import { StickyCtaButton } from "@/components/StickyCtaButton";
+import { Loader2 } from "lucide-react";
 
 interface Section {
   type: "hero" | "text" | "image" | "cta" | "testimonial" | "benefits";
@@ -19,6 +22,8 @@ interface PageData {
   };
   cta_text: string;
   cta_url: string;
+  image_url?: string;
+  template: "magazine" | "news" | "blog";
 }
 
 export default function PublicPage() {
@@ -38,12 +43,18 @@ export default function PublicPage() {
       if (error || !data) {
         console.error("Page not found");
       } else {
+        const template = (data.template as "magazine" | "news" | "blog") || "magazine";
         setPageData({
           title: data.title,
           content: data.content as any,
           cta_text: data.cta_text || "",
-          cta_url: data.cta_url || ""
+          cta_url: data.cta_url || "",
+          image_url: data.image_url || "",
+          template,
         });
+        
+        // Set page title
+        document.title = data.title;
       }
       setLoading(false);
     };
@@ -54,7 +65,7 @@ export default function PublicPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Loading...</p>
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -70,20 +81,35 @@ export default function PublicPage() {
     );
   }
 
+  const handleCtaClick = () => {
+    if (pageData.cta_url) {
+      window.open(pageData.cta_url, "_blank");
+    }
+  };
+
+  const templateProps = {
+    sections: pageData.content.sections,
+    ctaText: pageData.cta_text,
+    onCtaClick: handleCtaClick,
+    imageUrl: pageData.image_url,
+  };
+
+  const renderTemplate = () => {
+    switch (pageData.template) {
+      case "news":
+        return <NewsTemplate {...templateProps} />;
+      case "blog":
+        return <BlogTemplate {...templateProps} />;
+      case "magazine":
+      default:
+        return <MagazineTemplate {...templateProps} />;
+    }
+  };
+
   return (
-    <div className="min-h-screen">
-      {pageData.content.sections.map((section, index) => (
-        <PresellSection
-          key={index}
-          section={section}
-          ctaText={pageData.cta_text}
-          onCtaClick={() => window.location.href = pageData.cta_url}
-        />
-      ))}
-      <StickyCtaButton
-        text={pageData.cta_text}
-        onClick={() => window.location.href = pageData.cta_url}
-      />
+    <div className="min-h-screen bg-background">
+      {renderTemplate()}
+      <StickyCtaButton text={pageData.cta_text} onClick={handleCtaClick} />
     </div>
   );
 }

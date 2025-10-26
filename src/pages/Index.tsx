@@ -5,7 +5,10 @@ import { Navigation } from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { PresellSection } from "@/components/PresellSection";
+import { ImageUpload } from "@/components/ImageUpload";
+import { MagazineTemplate } from "@/components/templates/MagazineTemplate";
+import { NewsTemplate } from "@/components/templates/NewsTemplate";
+import { BlogTemplate } from "@/components/templates/BlogTemplate";
 import { SectionEditor } from "@/components/SectionEditor";
 import { StickyCtaButton } from "@/components/StickyCtaButton";
 import { toast } from "@/hooks/use-toast";
@@ -43,6 +46,8 @@ const Index = () => {
   const [ctaUrl, setCTAUrl] = useState("");
   const [saving, setSaving] = useState(false);
   const [editingSectionIndex, setEditingSectionIndex] = useState<number | null>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<"magazine" | "news" | "blog">("magazine");
+  const [imageUrl, setImageUrl] = useState<string>("");
 
   useEffect(() => {
     const checkUser = async () => {
@@ -84,6 +89,9 @@ const Index = () => {
       const content = data.content as any;
       setPageTitle(data.title);
       setCTAUrl(data.cta_url || "");
+      setImageUrl(data.image_url || "");
+      const template = data.template as "magazine" | "news" | "blog";
+      setSelectedTemplate(template || "magazine");
       setAnalysisResult({
         layout: "default",
         sections: content.sections,
@@ -167,9 +175,11 @@ const Index = () => {
         title: pageTitle,
         slug: slug,
         status: status,
+        template: selectedTemplate,
         content: { sections: analysisResult?.sections || [] } as any,
         cta_text: analysisResult?.cta.primary || "Get Started",
         cta_url: ctaUrl,
+        image_url: imageUrl,
         published_at: status === "published" ? new Date().toISOString() : null
       };
 
@@ -202,7 +212,9 @@ const Index = () => {
     setIsEditorMode(false);
     setPageTitle("");
     setCTAUrl("");
+    setImageUrl("");
     setEditingSectionIndex(null);
+    setSelectedTemplate("magazine");
     navigate("/");
   };
 
@@ -267,12 +279,32 @@ const Index = () => {
     toast({ title: "Section added!" });
   };
 
+  const renderTemplate = () => {
+    const templateProps = {
+      sections: analysisResult?.sections || [],
+      ctaText: analysisResult?.cta.primary || "Get Started",
+      onCtaClick: () => ctaUrl && window.open(ctaUrl, "_blank"),
+      imageUrl,
+      isEditing: true,
+    };
+
+    switch (selectedTemplate) {
+      case "news":
+        return <NewsTemplate {...templateProps} />;
+      case "blog":
+        return <BlogTemplate {...templateProps} />;
+      case "magazine":
+      default:
+        return <MagazineTemplate {...templateProps} />;
+    }
+  };
+
   if (isEditorMode && analysisResult) {
     return (
       <div className="min-h-screen bg-background">
         <Navigation user={user} />
         
-        <div className="border-b bg-background/95 backdrop-blur">
+        <div className="border-b bg-background/95 backdrop-blur sticky top-0 z-50">
           <div className="container py-4">
             <div className="flex flex-col gap-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -293,6 +325,43 @@ const Index = () => {
                   />
                 </div>
               </div>
+              
+              <div>
+                <label className="text-sm font-medium mb-2 block">Template Style</label>
+                <div className="flex gap-2 flex-wrap">
+                  <Button
+                    variant={selectedTemplate === "magazine" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSelectedTemplate("magazine")}
+                  >
+                    Magazine
+                  </Button>
+                  <Button
+                    variant={selectedTemplate === "news" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSelectedTemplate("news")}
+                  >
+                    News
+                  </Button>
+                  <Button
+                    variant={selectedTemplate === "blog" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSelectedTemplate("blog")}
+                  >
+                    Blog
+                  </Button>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium mb-2 block">Article Image</label>
+                <ImageUpload
+                  currentImageUrl={imageUrl}
+                  onImageUploaded={setImageUrl}
+                  userId={user.id}
+                />
+              </div>
+              
               <div className="flex gap-2 flex-wrap">
                 <Button onClick={() => handleSave("draft")} disabled={saving} variant="outline">
                   <Save className="mr-2 h-4 w-4" />
@@ -310,54 +379,42 @@ const Index = () => {
           </div>
         </div>
 
-        <div className="space-y-8">
-          {analysisResult.sections.map((section, index) => (
-            <div key={index} className="relative">
-              {editingSectionIndex === index ? (
-                <SectionEditor
-                  section={section}
-                  index={index}
-                  totalSections={analysisResult.sections.length}
-                  onSave={(updatedSection) => handleSaveSection(index, updatedSection)}
-                  onDelete={() => handleDeleteSection(index)}
-                  onMoveUp={() => handleMoveSection(index, "up")}
-                  onMoveDown={() => handleMoveSection(index, "down")}
-                  onCancel={() => setEditingSectionIndex(null)}
-                />
-              ) : (
-                <>
-                  <div className="absolute top-4 right-4 z-10 flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      onClick={() => setEditingSectionIndex(index)}
-                    >
-                      <Edit2 className="h-4 w-4 mr-1" />
-                      Edit
-                    </Button>
-                  </div>
-                  <PresellSection
-                    section={section}
-                    ctaText={analysisResult.cta.primary}
-                    onCtaClick={() => ctaUrl && window.open(ctaUrl, "_blank")}
-                  />
-                </>
-              )}
-            </div>
-          ))}
-          
+        {editingSectionIndex !== null ? (
           <div className="container py-8">
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={handleAddSection}
-              className="w-full"
-            >
-              <Plus className="mr-2 h-5 w-5" />
-              Add New Section
-            </Button>
+            <SectionEditor
+              section={analysisResult.sections[editingSectionIndex]}
+              index={editingSectionIndex}
+              totalSections={analysisResult.sections.length}
+              onSave={(updatedSection) => handleSaveSection(editingSectionIndex, updatedSection)}
+              onDelete={() => handleDeleteSection(editingSectionIndex)}
+              onMoveUp={() => handleMoveSection(editingSectionIndex, "up")}
+              onMoveDown={() => handleMoveSection(editingSectionIndex, "down")}
+              onCancel={() => setEditingSectionIndex(null)}
+            />
           </div>
-        </div>
+        ) : (
+          <>
+            {renderTemplate()}
+            <div className="container py-8">
+              <div className="flex gap-2 justify-center">
+                <Button
+                  variant="outline"
+                  onClick={() => setEditingSectionIndex(0)}
+                >
+                  <Edit2 className="h-4 w-4 mr-2" />
+                  Edit Content
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleAddSection}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Section
+                </Button>
+              </div>
+            </div>
+          </>
+        )}
 
         <StickyCtaButton 
           text={analysisResult.cta.primary} 

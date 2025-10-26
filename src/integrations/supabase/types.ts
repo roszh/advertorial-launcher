@@ -21,9 +21,11 @@ export type Database = {
           cta_text: string | null
           cta_url: string | null
           id: string
+          image_url: string | null
           published_at: string | null
           slug: string
           status: string
+          template: string | null
           title: string
           updated_at: string | null
           user_id: string
@@ -34,9 +36,11 @@ export type Database = {
           cta_text?: string | null
           cta_url?: string | null
           id?: string
+          image_url?: string | null
           published_at?: string | null
           slug: string
           status?: string
+          template?: string | null
           title: string
           updated_at?: string | null
           user_id: string
@@ -47,9 +51,11 @@ export type Database = {
           cta_text?: string | null
           cta_url?: string | null
           id?: string
+          image_url?: string | null
           published_at?: string | null
           slug?: string
           status?: string
+          template?: string | null
           title?: string
           updated_at?: string | null
           user_id?: string
