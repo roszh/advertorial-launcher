@@ -2,6 +2,7 @@ import { Button } from "../ui/button";
 import { InlineImageUpload } from "../InlineImageUpload";
 import { RichTextEditor } from "../RichTextEditor";
 import { SectionControls } from "../SectionControls";
+import { DraggableSections } from "../DraggableSections";
 import placeholderImage from "@/assets/hero-image.jpg";
 
 interface Section {
@@ -25,6 +26,7 @@ interface BlogTemplateProps {
   onUpdateCta?: (text: string) => void;
   onAddSection?: (index: number, type: "text" | "image") => void;
   onDeleteSection?: (index: number) => void;
+  onReorderSections?: (newOrder: string[]) => void;
 }
 
 export const BlogTemplate = ({ 
@@ -38,7 +40,8 @@ export const BlogTemplate = ({
   onUpdateSection,
   onUpdateCta,
   onAddSection,
-  onDeleteSection
+  onDeleteSection,
+  onReorderSections
 }: BlogTemplateProps) => {
   const heroSection = sections[0];
   const bodySections = sections.slice(1);
@@ -48,6 +51,127 @@ export const BlogTemplate = ({
     const section = sections[index];
     onUpdateSection(index, { ...section, [field]: value });
   };
+  
+  const handleReorder = (newOrder: string[]) => {
+    if (!onReorderSections) return;
+    onReorderSections(newOrder);
+  };
+  
+  const draggableItems = bodySections.map((section, idx) => {
+    const actualIndex = idx + 1;
+    return {
+      id: actualIndex.toString(),
+      content: (
+        <div className="group relative">
+          <section className="mb-6 md:mb-8 lg:mb-10">
+            {section.heading && (
+              isEditing ? (
+                <RichTextEditor
+                  value={section.heading}
+                  onSave={(value) => handleSectionUpdate(actualIndex, "heading", value)}
+                  className="text-lg md:text-2xl lg:text-3xl font-bold mb-3 md:mb-4 lg:mb-5 leading-tight"
+                  as="h2"
+                />
+              ) : (
+                <h2 
+                  className="text-lg md:text-2xl lg:text-3xl font-bold mb-3 md:mb-4 lg:mb-5 leading-tight"
+                  dangerouslySetInnerHTML={{ 
+                    __html: section.heading
+                      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                      .replace(/\*(.+?)\*/g, '<em>$1</em>') 
+                  }}
+                />
+              )
+            )}
+            
+            {section.imageUrl !== undefined && (
+              <div className="mb-4 md:mb-6">
+                {isEditing && userId ? (
+                  <InlineImageUpload
+                    currentImageUrl={section.imageUrl}
+                    onImageUploaded={(url) => handleSectionUpdate(actualIndex, "imageUrl", url)}
+                    userId={userId}
+                    aspectRatio="video"
+                  />
+                ) : section.imageUrl ? (
+                  <img
+                    src={section.imageUrl}
+                    alt={section.heading || "Section image"}
+                    className="w-full max-w-full rounded-lg"
+                  />
+                ) : null}
+              </div>
+            )}
+            
+            <div className="space-y-3 md:space-y-4 lg:space-y-5">
+              {isEditing ? (
+                <RichTextEditor
+                  value={section.content}
+                  onSave={(value) => handleSectionUpdate(actualIndex, "content", value)}
+                  multiline
+                  className="text-sm md:text-base lg:text-lg leading-[1.7] md:leading-[1.8] text-foreground/90 break-words"
+                  as="p"
+                />
+              ) : (
+                section.content.split('\n\n').map((paragraph, pIndex) => (
+                  <p 
+                    key={pIndex} 
+                    className="text-sm md:text-base lg:text-lg leading-[1.7] md:leading-[1.8] text-foreground/90 break-words"
+                    dangerouslySetInnerHTML={{ 
+                      __html: paragraph
+                        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                        .replace(/\*(.+?)\*/g, '<em>$1</em>') 
+                    }}
+                  />
+                ))
+              )}
+            </div>
+            
+            {section.type === "cta" && (
+              <div className="my-8 md:my-12 text-center">
+                <div className="bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10 rounded-lg p-4 md:p-6 lg:p-8">
+                  {isEditing && section.heading ? (
+                    <RichTextEditor
+                      value={section.heading}
+                      onSave={(value) => handleSectionUpdate(actualIndex, "heading", value)}
+                      className="text-lg md:text-xl lg:text-2xl font-bold mb-3 md:mb-4"
+                      as="h3"
+                    />
+                  ) : (
+                    <h3 
+                      className="text-lg md:text-xl lg:text-2xl font-bold mb-3 md:mb-4"
+                      dangerouslySetInnerHTML={{ 
+                        __html: (section.heading || "")
+                          .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                          .replace(/\*(.+?)\*/g, '<em>$1</em>') 
+                      }}
+                    />
+                  )}
+                  <Button
+                    variant={ctaVariant}
+                    size="lg"
+                    onClick={onCtaClick}
+                    className="text-sm md:text-base lg:text-lg px-6 md:px-10 py-4 md:py-6 h-auto w-full md:w-auto"
+                  >
+                    {ctaText}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </section>
+          
+          {isEditing && onAddSection && onDeleteSection && (
+            <SectionControls
+              index={actualIndex}
+              onAddTextBelow={() => onAddSection(actualIndex, "text")}
+              onAddImageBelow={() => onAddSection(actualIndex, "image")}
+              onDeleteSection={() => onDeleteSection(actualIndex)}
+            />
+          )}
+        </div>
+      )
+    };
+  });
   
   return (
     <article className="bg-background overflow-x-hidden">
@@ -118,118 +242,11 @@ export const BlogTemplate = ({
       </header>
 
       <div className="max-w-3xl mx-auto px-4 py-8 md:py-12 lg:py-16">
-        {bodySections.map((section, idx) => {
-          const actualIndex = idx + 1;
-          return (
-            <div key={idx} className="group relative">
-              <section className="mb-6 md:mb-8 lg:mb-10">
-                {section.heading && (
-                  isEditing ? (
-                    <RichTextEditor
-                      value={section.heading}
-                      onSave={(value) => handleSectionUpdate(actualIndex, "heading", value)}
-                      className="text-lg md:text-2xl lg:text-3xl font-bold mb-3 md:mb-4 lg:mb-5 leading-tight"
-                      as="h2"
-                    />
-                  ) : (
-                    <h2 
-                      className="text-lg md:text-2xl lg:text-3xl font-bold mb-3 md:mb-4 lg:mb-5 leading-tight"
-                      dangerouslySetInnerHTML={{ 
-                        __html: section.heading
-                          .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-                          .replace(/\*(.+?)\*/g, '<em>$1</em>') 
-                      }}
-                    />
-                  )
-                )}
-                
-                {section.imageUrl !== undefined && (
-                  <div className="mb-4 md:mb-6">
-                    {isEditing && userId ? (
-                      <InlineImageUpload
-                        currentImageUrl={section.imageUrl}
-                        onImageUploaded={(url) => handleSectionUpdate(actualIndex, "imageUrl", url)}
-                        userId={userId}
-                        aspectRatio="video"
-                      />
-                    ) : section.imageUrl ? (
-                      <img
-                        src={section.imageUrl}
-                        alt={section.heading || "Section image"}
-                        className="w-full max-w-full rounded-lg"
-                      />
-                    ) : null}
-                  </div>
-                )}
-                
-                <div className="space-y-3 md:space-y-4 lg:space-y-5">
-                  {isEditing ? (
-                    <RichTextEditor
-                      value={section.content}
-                      onSave={(value) => handleSectionUpdate(actualIndex, "content", value)}
-                      multiline
-                      className="text-sm md:text-base lg:text-lg leading-[1.7] md:leading-[1.8] text-foreground/90 break-words"
-                      as="p"
-                    />
-                  ) : (
-                    section.content.split('\n\n').map((paragraph, pIndex) => (
-                      <p 
-                        key={pIndex} 
-                        className="text-sm md:text-base lg:text-lg leading-[1.7] md:leading-[1.8] text-foreground/90 break-words"
-                        dangerouslySetInnerHTML={{ 
-                          __html: paragraph
-                            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-                            .replace(/\*(.+?)\*/g, '<em>$1</em>') 
-                        }}
-                      />
-                    ))
-                  )}
-                </div>
-                
-                {section.type === "cta" && (
-                  <div className="my-8 md:my-12 text-center">
-                    <div className="bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10 rounded-lg p-4 md:p-6 lg:p-8">
-                      {isEditing && section.heading ? (
-                        <RichTextEditor
-                          value={section.heading}
-                          onSave={(value) => handleSectionUpdate(actualIndex, "heading", value)}
-                          className="text-lg md:text-xl lg:text-2xl font-bold mb-3 md:mb-4"
-                          as="h3"
-                        />
-                      ) : (
-                        <h3 
-                          className="text-lg md:text-xl lg:text-2xl font-bold mb-3 md:mb-4"
-                          dangerouslySetInnerHTML={{ 
-                            __html: (section.heading || "")
-                              .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-                              .replace(/\*(.+?)\*/g, '<em>$1</em>') 
-                          }}
-                        />
-                      )}
-                      <Button
-                        variant={ctaVariant}
-                        size="lg"
-                        onClick={onCtaClick}
-                        className="text-sm md:text-base lg:text-lg px-6 md:px-10 py-4 md:py-6 h-auto w-full md:w-auto"
-                      >
-                        {ctaText}
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </section>
-              
-              {isEditing && onAddSection && onDeleteSection && (
-                <SectionControls
-                  index={actualIndex}
-                  onAddTextBelow={() => onAddSection(actualIndex, "text")}
-                  onAddImageBelow={() => onAddSection(actualIndex, "image")}
-                  onDeleteSection={() => onDeleteSection(actualIndex)}
-                />
-              )}
-            </div>
-          );
-        })}
+        <DraggableSections
+          items={draggableItems}
+          onReorder={handleReorder}
+          isEditing={isEditing}
+        />
 
         <footer className="mt-10 md:mt-16 pt-6 md:pt-10 border-t border-border text-center">
           <h3 className="text-lg md:text-2xl lg:text-3xl font-bold mb-3 md:mb-4">Ready to Get Started?</h3>
