@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { Eye, Edit, Trash2, Globe, Copy } from "lucide-react";
+import { Eye, Edit, Trash2, Globe, Copy, BarChart3 } from "lucide-react";
 
 interface Page {
   id: string;
@@ -210,6 +210,16 @@ export default function Dashboard() {
                       <Copy className="mr-2 h-4 w-4" />
                       Clone
                     </Button>
+                    {page.status === "published" && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate(`/analytics/${page.id}`)}
+                      >
+                        <BarChart3 className="mr-2 h-4 w-4" />
+                        Analytics
+                      </Button>
+                    )}
                     <Button
                       variant="outline"
                       size="sm"

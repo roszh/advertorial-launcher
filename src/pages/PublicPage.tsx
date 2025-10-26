@@ -16,6 +16,7 @@ interface Section {
 }
 
 interface PageData {
+  id?: string;
   title: string;
   content: {
     sections: Section[];
@@ -46,6 +47,7 @@ export default function PublicPage() {
       } else {
         const template = (data.template as "magazine" | "news" | "blog") || "magazine";
         setPageData({
+          id: data.id || undefined,
           title: data.title,
           content: data.content as any,
           cta_text: data.cta_text || "",
@@ -64,6 +66,26 @@ export default function PublicPage() {
 
     fetchPage();
   }, [slug]);
+
+  // Track page view
+  useEffect(() => {
+    const trackView = async () => {
+      if (!pageData?.id) return;
+      
+      try {
+        await supabase.from("page_analytics").insert({
+          page_id: pageData.id,
+          event_type: "view",
+          user_agent: navigator.userAgent,
+          referrer: document.referrer || null
+        });
+      } catch (error) {
+        console.error("Error tracking view:", error);
+      }
+    };
+
+    trackView();
+  }, [pageData?.id]);
 
   if (loading) {
     return (
@@ -93,11 +115,23 @@ export default function PublicPage() {
     return `https://${trimmedUrl}`;
   };
 
-  const handleCtaClick = () => {
-    if (pageData.cta_url) {
-      const normalizedUrl = normalizeUrl(pageData.cta_url);
-      window.open(normalizedUrl, "_blank");
+  const handleCtaClick = async () => {
+    if (!pageData?.cta_url || !pageData?.id) return;
+    
+    // Track the click
+    try {
+      await supabase.from("page_analytics").insert({
+        page_id: pageData.id,
+        event_type: "click",
+        user_agent: navigator.userAgent,
+        referrer: document.referrer || null
+      });
+    } catch (error) {
+      console.error("Error tracking click:", error);
     }
+    
+    const normalizedUrl = normalizeUrl(pageData.cta_url);
+    window.open(normalizedUrl, "_blank");
   };
 
   const templateProps = {

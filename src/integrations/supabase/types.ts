@@ -14,6 +14,55 @@ export type Database = {
   }
   public: {
     Tables: {
+      page_analytics: {
+        Row: {
+          created_at: string | null
+          event_type: string
+          id: string
+          page_id: string
+          referrer: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_type: string
+          id?: string
+          page_id: string
+          referrer?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          event_type?: string
+          id?: string
+          page_id?: string
+          referrer?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "page_analytics_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "page_analytics_summary"
+            referencedColumns: ["page_id"]
+          },
+          {
+            foreignKeyName: "page_analytics_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "pages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "page_analytics_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "published_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pages: {
         Row: {
           content: Json
@@ -118,6 +167,18 @@ export type Database = {
       }
     }
     Views: {
+      page_analytics_summary: {
+        Row: {
+          ctr_percentage: number | null
+          page_id: string | null
+          slug: string | null
+          title: string | null
+          total_clicks: number | null
+          total_views: number | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
       published_pages: {
         Row: {
           content: Json | null
