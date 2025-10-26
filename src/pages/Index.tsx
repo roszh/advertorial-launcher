@@ -303,6 +303,26 @@ const Index = () => {
     toast({ title: "Section moved!" });
   };
 
+  const handleReorderSections = (newOrder: string[]) => {
+    if (!analysisResult) return;
+    
+    // Create a map of section index to section
+    const sectionMap = new Map(analysisResult.sections.map((section, idx) => [idx.toString(), section]));
+    
+    // Reorder sections based on the new order
+    const reorderedSections = newOrder.map(id => {
+      const section = sectionMap.get(id);
+      if (!section) throw new Error(`Section with id ${id} not found`);
+      return section;
+    });
+    
+    setAnalysisResult({
+      ...analysisResult,
+      sections: reorderedSections,
+    });
+    toast({ title: "Sections reordered!" });
+  };
+
   const handleAddSection = () => {
     if (!analysisResult) return;
     
@@ -367,6 +387,7 @@ const Index = () => {
       onUpdateCta: handleUpdateCta,
       onAddSection: handleAddSectionAt,
       onDeleteSection: handleDeleteSection,
+      onReorderSections: handleReorderSections,
     };
 
     switch (selectedTemplate) {

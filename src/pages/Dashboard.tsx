@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { Eye, Edit, Trash2, Globe } from "lucide-react";
+import { Eye, Edit, Trash2, Globe, Copy } from "lucide-react";
 
 interface Page {
   id: string;
@@ -90,6 +90,52 @@ export default function Dashboard() {
     }
   };
 
+  const handleClone = async (pageId: string) => {
+    if (!user) return;
+
+    // Fetch the full page data
+    const { data: pageData, error: fetchError } = await supabase
+      .from("pages")
+      .select("*")
+      .eq("id", pageId)
+      .single();
+
+    if (fetchError || !pageData) {
+      toast({ title: "Error", description: "Failed to load page data", variant: "destructive" });
+      return;
+    }
+
+    // Create a new slug by appending -copy-{timestamp}
+    const timestamp = Date.now();
+    const newSlug = `${pageData.slug}-copy-${timestamp}`;
+    const newTitle = `${pageData.title} (Copy)`;
+
+    // Insert the cloned page
+    const { error: insertError } = await supabase
+      .from("pages")
+      .insert({
+        user_id: user.id,
+        title: newTitle,
+        slug: newSlug,
+        status: "draft",
+        template: pageData.template,
+        cta_style: pageData.cta_style,
+        sticky_cta_threshold: pageData.sticky_cta_threshold,
+        content: pageData.content,
+        cta_text: pageData.cta_text,
+        cta_url: pageData.cta_url,
+        image_url: pageData.image_url,
+        published_at: null
+      });
+
+    if (insertError) {
+      toast({ title: "Error", description: insertError.message, variant: "destructive" });
+    } else {
+      toast({ title: "Page cloned successfully!", description: "The copy has been saved as a draft." });
+      fetchPages();
+    }
+  };
+
   const filteredPages = pages.filter(p => filter === "all" || p.status === filter);
 
   return (
@@ -139,7 +185,7 @@ export default function Dashboard() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 flex-wrap">
                     <Button
                       variant="outline"
                       size="sm"
@@ -155,6 +201,14 @@ export default function Dashboard() {
                     >
                       <Edit className="mr-2 h-4 w-4" />
                       Edit
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleClone(page.id)}
+                    >
+                      <Copy className="mr-2 h-4 w-4" />
+                      Clone
                     </Button>
                     <Button
                       variant="outline"

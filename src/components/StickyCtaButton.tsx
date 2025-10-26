@@ -41,7 +41,7 @@ export const StickyCtaButton = ({ text, onClick, variant = "ctaAmazon", scrollTh
             variant={variant}
             size="lg"
             onClick={onClick}
-            className="w-full md:w-auto text-lg px-12 py-6 h-auto"
+            className="w-full md:w-auto text-base md:text-lg px-8 md:px-12 py-4 md:py-6 h-auto relative z-10"
           >
             {text}
           </Button>
