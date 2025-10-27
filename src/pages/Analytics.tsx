@@ -19,6 +19,11 @@ interface DailyStats {
   clicks: number;
 }
 
+interface ElementStats {
+  element_id: string;
+  click_count: number;
+}
+
 export default function Analytics() {
   const navigate = useNavigate();
   const { pageId } = useParams();
@@ -31,6 +36,7 @@ export default function Analytics() {
     ctr_percentage: 0 
   });
   const [dailyStats, setDailyStats] = useState<DailyStats[]>([]);
+  const [elementStats, setElementStats] = useState<ElementStats[]>([]);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -124,7 +130,43 @@ export default function Analytics() {
       setDailyStats(dailyStatsArray);
     }
 
+    // Fetch clicks by element
+    const { data: elementData, error: elementError } = await supabase
+      .from("page_analytics")
+      .select("element_id")
+      .eq("page_id", pageId)
+      .eq("event_type", "click");
+
+    if (!elementError && elementData) {
+      const elementCounts: { [key: string]: number } = {};
+      
+      elementData.forEach(event => {
+        const elementId = event.element_id || "untracked";
+        elementCounts[elementId] = (elementCounts[elementId] || 0) + 1;
+      });
+
+      const elementStatsArray = Object.entries(elementCounts)
+        .map(([element_id, click_count]) => ({
+          element_id,
+          click_count
+        }))
+        .sort((a, b) => b.click_count - a.click_count);
+
+      setElementStats(elementStatsArray);
+    }
+
     setLoading(false);
+  };
+
+  const getElementLabel = (elementId: string): string => {
+    if (elementId === "sticky_button") return "Sticky Button";
+    if (elementId === "final_cta") return "Final CTA (Footer)";
+    if (elementId.startsWith("button")) {
+      const num = elementId.replace("button", "");
+      return `Button ${num} (Section CTA)`;
+    }
+    if (elementId === "untracked") return "Untracked Clicks";
+    return elementId;
   };
 
   return (
@@ -180,6 +222,38 @@ export default function Analytics() {
                 </CardContent>
               </Card>
             </div>
+
+            {/* Clicks by Element */}
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle>Clicks by Button</CardTitle>
+                <CardDescription>Which buttons get the most engagement</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {elementStats.length === 0 ? (
+                  <p className="text-muted-foreground">No click data available yet</p>
+                ) : (
+                  <div className="space-y-3">
+                    {elementStats.map((stat, idx) => (
+                      <div key={idx} className="flex items-center justify-between border-b pb-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-primary" />
+                          <span className="text-sm font-medium">{getElementLabel(stat.element_id)}</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm text-muted-foreground">{stat.click_count} clicks</span>
+                          <span className="text-sm font-semibold">
+                            {summary.total_clicks > 0 
+                              ? ((stat.click_count / summary.total_clicks) * 100).toFixed(1) 
+                              : 0}%
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
             {/* Daily Stats */}
             <Card>

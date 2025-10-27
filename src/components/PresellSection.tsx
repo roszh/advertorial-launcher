@@ -13,7 +13,8 @@ interface PresellSectionProps {
     style?: "normal" | "emphasized" | "callout";
   };
   ctaText: string;
-  onCtaClick: () => void;
+  onCtaClick: (elementId: string) => void;
+  elementId?: string;
 }
 
 const getImageForSection = (type: string) => {
@@ -29,7 +30,7 @@ const getImageForSection = (type: string) => {
   }
 };
 
-export const PresellSection = ({ section, ctaText, onCtaClick }: PresellSectionProps) => {
+export const PresellSection = ({ section, ctaText, onCtaClick, elementId = "untracked" }: PresellSectionProps) => {
   const isHero = section.type === "hero";
   const isCta = section.type === "cta";
   const hasImage = section.imagePosition && section.imagePosition !== "none";
@@ -44,7 +45,7 @@ export const PresellSection = ({ section, ctaText, onCtaClick }: PresellSectionP
           <Button
             variant="cta"
             size="lg"
-            onClick={onCtaClick}
+            onClick={() => onCtaClick(elementId)}
             className="text-lg px-12 py-6 h-auto"
           >
             {ctaText}
@@ -77,7 +78,7 @@ export const PresellSection = ({ section, ctaText, onCtaClick }: PresellSectionP
           <Button
             variant="cta"
             size="lg"
-            onClick={onCtaClick}
+            onClick={() => onCtaClick(elementId)}
             className="text-lg px-10 py-6 h-auto"
           >
             {ctaText}

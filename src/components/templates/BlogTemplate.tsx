@@ -19,7 +19,7 @@ interface Section {
 interface BlogTemplateProps {
   sections: Section[];
   ctaText: string;
-  onCtaClick: () => void;
+  onCtaClick: (elementId: string) => void;
   imageUrl?: string;
   isEditing?: boolean;
   userId?: string;
@@ -165,7 +165,7 @@ export const BlogTemplate = ({
                   <Button
                     variant={ctaVariant}
                     size="lg"
-                    onClick={onCtaClick}
+                    onClick={() => onCtaClick(`button${actualIndex}`)}
                     className="text-sm md:text-base lg:text-lg px-6 md:px-10 py-4 md:py-6 h-auto w-full md:w-auto"
                   >
                     {ctaText}
@@ -287,7 +287,7 @@ export const BlogTemplate = ({
           <Button
             variant={ctaVariant}
             size="lg"
-            onClick={onCtaClick}
+            onClick={() => onCtaClick("final_cta")}
             className="text-sm md:text-base lg:text-lg px-8 md:px-12 py-4 md:py-6 h-auto w-full md:w-auto"
           >
             {ctaText}

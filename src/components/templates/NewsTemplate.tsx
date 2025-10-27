@@ -19,7 +19,7 @@ interface Section {
 interface NewsTemplateProps {
   sections: Section[];
   ctaText: string;
-  onCtaClick: () => void;
+  onCtaClick: (elementId: string) => void;
   imageUrl?: string;
   isEditing?: boolean;
   userId?: string;
@@ -149,7 +149,7 @@ export const NewsTemplate = ({
                 <Button
                   variant={ctaVariant}
                   size="lg"
-                  onClick={onCtaClick}
+                  onClick={() => onCtaClick(`button${actualIndex}`)}
                   className="w-full"
                 >
                   {ctaText}
@@ -276,7 +276,7 @@ export const NewsTemplate = ({
             <Button
               variant={ctaVariant}
               size="lg"
-              onClick={onCtaClick}
+              onClick={() => onCtaClick("final_cta")}
               className="w-full px-6 md:px-12"
             >
               {ctaText}

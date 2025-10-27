@@ -215,14 +215,15 @@ export default function PublicPage() {
     return `https://${trimmedUrl}`;
   };
 
-  const handleCtaClick = async () => {
+  const handleCtaClick = async (elementId: string = "untracked") => {
     if (!pageData?.cta_url || !pageData?.id) return;
     
-    // Track the click
+    // Track the click with element_id
     try {
       await supabase.from("page_analytics").insert({
         page_id: pageData.id,
         event_type: "click",
+        element_id: elementId,
         user_agent: navigator.userAgent,
         referrer: document.referrer || null
       });
@@ -260,7 +261,7 @@ export default function PublicPage() {
       {renderTemplate()}
       <StickyCtaButton 
         text={pageData.cta_text} 
-        onClick={handleCtaClick} 
+        onClick={() => handleCtaClick("sticky_button")} 
         variant={(pageData.cta_style as any) || "ctaAmazon"}
         scrollThreshold={pageData.sticky_cta_threshold || 20}
       />
