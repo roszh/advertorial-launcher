@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ImageUpload } from "@/components/ImageUpload";
 import { MagazineTemplate } from "@/components/templates/MagazineTemplate";
 import { NewsTemplate } from "@/components/templates/NewsTemplate";
@@ -588,30 +589,91 @@ const Index = () => {
         <Navigation user={user} />
         
         <div className="border-b bg-background/95 backdrop-blur sticky top-0 z-50">
-          <div className="container py-3">
-            <div className="flex flex-col gap-3">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-medium mb-1 block">Page Title</label>
-                  <Input
-                    placeholder="Enter page title..."
-                    value={pageTitle}
-                    onChange={(e) => setPageTitle(e.target.value)}
-                    className="h-9"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-medium mb-1 block">CTA URL</label>
-                  <Input
-                    placeholder="https://your-offer.com"
-                    value={ctaUrl}
-                    onChange={(e) => setCTAUrl(e.target.value)}
-                    className="h-9"
-                  />
+          <div className="container py-2">
+            <Tabs defaultValue="content" className="w-full">
+              <div className="flex items-center justify-between mb-2">
+                <TabsList className="h-9">
+                  <TabsTrigger value="content" className="text-xs">Content</TabsTrigger>
+                  <TabsTrigger value="design" className="text-xs">Design</TabsTrigger>
+                  <TabsTrigger value="settings" className="text-xs">Settings</TabsTrigger>
+                </TabsList>
+                
+                <div className="flex gap-2 items-center">
+                  {undoStack && (
+                    <Button 
+                      onClick={handleUndo} 
+                      variant="destructive" 
+                      size="sm" 
+                      className="h-8 px-3 text-xs"
+                    >
+                      <span className="mr-1">↩️</span>
+                      Undo
+                    </Button>
+                  )}
+                  <Button onClick={() => handleSave("draft")} disabled={saving} variant="ghost" size="sm" className="h-8 px-3 text-xs">
+                    <Save className="mr-1 h-3 w-3" />
+                    Draft
+                  </Button>
+                  <Button onClick={() => handleSave("published")} disabled={saving} size="sm" className="h-8 px-3 text-xs">
+                    <Globe className="mr-1 h-3 w-3" />
+                    Publish
+                  </Button>
+                  <Button 
+                    onClick={handleOptimizeWithAI} 
+                    disabled={isAnalyzing} 
+                    variant="secondary"
+                    size="sm"
+                    className="h-8 px-3 text-xs"
+                    title="Re-optimize entire page content with AI"
+                  >
+                    {isAnalyzing ? (
+                      <>
+                        <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                        Optimizing...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="mr-1 h-3 w-3" />
+                        AI Enhance
+                      </>
+                    )}
+                  </Button>
+                  <Button onClick={handleReset} variant="ghost" size="sm" className="h-8 px-3 text-xs">
+                    Cancel
+                  </Button>
+                  <Button 
+                    onClick={() => setShowHtmlEditor(true)} 
+                    variant="outline" 
+                    size="sm" 
+                    className="h-8 px-3 text-xs"
+                  >
+                    <Code className="mr-1 h-3 w-3" />
+                    HTML
+                  </Button>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <TabsContent value="content" className="m-0 space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-medium mb-1 block">Page Title</label>
+                    <Input
+                      placeholder="Enter page title..."
+                      value={pageTitle}
+                      onChange={(e) => setPageTitle(e.target.value)}
+                      className="h-9"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium mb-1 block">CTA URL</label>
+                    <Input
+                      placeholder="https://your-offer.com"
+                      value={ctaUrl}
+                      onChange={(e) => setCTAUrl(e.target.value)}
+                      className="h-9"
+                    />
+                  </div>
+                </div>
                 <div>
                   <label className="text-xs font-medium mb-1 block">Tags</label>
                   <div className="flex items-center gap-2 flex-wrap">
@@ -642,7 +704,7 @@ const Index = () => {
                       <SelectTrigger className="h-7 w-[120px] text-xs">
                         <SelectValue placeholder="Add tag..." />
                       </SelectTrigger>
-                      <SelectContent className="bg-background">
+                      <SelectContent className="bg-background z-50">
                         <SelectItem value="create-new" className="text-xs font-semibold text-primary">
                           <Plus className="inline h-3 w-3 mr-1" />
                           Create new tag
@@ -662,143 +724,106 @@ const Index = () => {
                     </Select>
                   </div>
                 </div>
+              </TabsContent>
+
+              <TabsContent value="design" className="m-0 space-y-3">
                 <div>
-                  <label className="text-xs font-medium mb-1 block">Sticky CTA Shows at {stickyCtaThreshold}%</label>
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    step="5"
-                    value={stickyCtaThreshold}
-                    onChange={(e) => setStickyCtaThreshold(Number(e.target.value))}
-                    className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
-                  />
-                </div>
-              </div>
-              
-              <div className="flex gap-2 items-center flex-wrap">
-                <div className="flex gap-1">
-                  <Button
-                    variant={selectedTemplate === "magazine" ? "default" : "ghost"}
-                    size="sm"
-                    onClick={() => setSelectedTemplate("magazine")}
-                    className="h-8 px-3 text-xs"
-                  >
-                    Magazine
-                  </Button>
-                  <Button
-                    variant={selectedTemplate === "news" ? "default" : "ghost"}
-                    size="sm"
-                    onClick={() => setSelectedTemplate("news")}
-                    className="h-8 px-3 text-xs"
-                  >
-                    News
-                  </Button>
-                  <Button
-                    variant={selectedTemplate === "blog" ? "default" : "ghost"}
-                    size="sm"
-                    onClick={() => setSelectedTemplate("blog")}
-                    className="h-8 px-3 text-xs"
-                  >
-                    Blog
-                  </Button>
-                </div>
-
-                <div className="h-4 w-px bg-border" />
-
-                <div className="flex gap-1">
-                  <Button
-                    variant={ctaStyle === "ctaAmazon" ? "ctaAmazon" : "ghost"}
-                    size="sm"
-                    onClick={() => setCtaStyle("ctaAmazon")}
-                    className="h-8 px-2 text-xs"
-                  >
-                    🛒
-                  </Button>
-                  <Button
-                    variant={ctaStyle === "ctaUrgent" ? "ctaUrgent" : "ghost"}
-                    size="sm"
-                    onClick={() => setCtaStyle("ctaUrgent")}
-                    className="h-8 px-2 text-xs"
-                  >
-                    ⚡
-                  </Button>
-                  <Button
-                    variant={ctaStyle === "ctaPremium" ? "ctaPremium" : "ghost"}
-                    size="sm"
-                    onClick={() => setCtaStyle("ctaPremium")}
-                    className="h-8 px-2 text-xs"
-                  >
-                    ✨
-                  </Button>
-                  <Button
-                    variant={ctaStyle === "ctaTrust" ? "ctaTrust" : "ghost"}
-                    size="sm"
-                    onClick={() => setCtaStyle("ctaTrust")}
-                    className="h-8 px-2 text-xs"
-                  >
-                    🛡️
-                  </Button>
-                </div>
-
-                <div className="h-4 w-px bg-border" />
-                
-                {undoStack && (
-                  <>
-                    <Button 
-                      onClick={handleUndo} 
-                      variant="destructive" 
-                      size="sm" 
-                      className="h-8 px-3 text-xs animate-fade-in shadow-lg border-2 border-destructive-foreground/20"
+                  <label className="text-xs font-medium mb-2 block">Page Template</label>
+                  <div className="flex gap-2">
+                    <Button
+                      variant={selectedTemplate === "magazine" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setSelectedTemplate("magazine")}
+                      className="h-9 flex-1"
                     >
-                      <span className="animate-pulse mr-1">↩️</span>
-                      Undo Delete
+                      Magazine
                     </Button>
-                    <div className="h-4 w-px bg-border" />
-                  </>
-                )}
-                
-                <Button onClick={() => handleSave("draft")} disabled={saving} variant="ghost" size="sm" className="h-8 px-3 text-xs">
-                  <Save className="mr-1 h-3 w-3" />
-                  Draft
-                </Button>
-                <Button onClick={() => handleSave("published")} disabled={saving} size="sm" className="h-8 px-3 text-xs">
-                  <Globe className="mr-1 h-3 w-3" />
-                  Publish
-                </Button>
-                <Button 
-                  onClick={handleOptimizeWithAI} 
-                  disabled={isAnalyzing} 
-                  variant="secondary"
-                  size="sm"
-                  className="h-8 px-3 text-xs"
-                >
-                  {isAnalyzing ? (
-                    <>
-                      <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-                      AI...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="mr-1 h-3 w-3" />
-                      AI
-                    </>
-                  )}
-                </Button>
-                <Button onClick={handleReset} variant="ghost" size="sm" className="h-8 px-3 text-xs">
-                  Cancel
-                </Button>
-                <Button 
-                  onClick={() => setShowHtmlEditor(true)} 
-                  variant="outline" 
-                  size="sm" 
-                  className="h-8 px-3 text-xs"
-                >
-                  <Code className="mr-1 h-3 w-3" />
-                  HTML
-                </Button>
-              </div>
-            </div>
+                    <Button
+                      variant={selectedTemplate === "news" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setSelectedTemplate("news")}
+                      className="h-9 flex-1"
+                    >
+                      News
+                    </Button>
+                    <Button
+                      variant={selectedTemplate === "blog" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setSelectedTemplate("blog")}
+                      className="h-9 flex-1"
+                    >
+                      Blog
+                    </Button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-medium mb-2 block">CTA Button Style (updates live preview)</label>
+                  <div className="grid grid-cols-4 gap-2">
+                    <Button
+                      variant={ctaStyle === "ctaAmazon" ? "ctaAmazon" : "outline"}
+                      size="sm"
+                      onClick={() => setCtaStyle("ctaAmazon")}
+                      className="h-16 flex flex-col gap-1"
+                    >
+                      <span className="text-2xl">🛒</span>
+                      <span className="text-xs">Amazon</span>
+                    </Button>
+                    <Button
+                      variant={ctaStyle === "ctaUrgent" ? "ctaUrgent" : "outline"}
+                      size="sm"
+                      onClick={() => setCtaStyle("ctaUrgent")}
+                      className="h-16 flex flex-col gap-1"
+                    >
+                      <span className="text-2xl">⚡</span>
+                      <span className="text-xs">Urgent</span>
+                    </Button>
+                    <Button
+                      variant={ctaStyle === "ctaPremium" ? "ctaPremium" : "outline"}
+                      size="sm"
+                      onClick={() => setCtaStyle("ctaPremium")}
+                      className="h-16 flex flex-col gap-1"
+                    >
+                      <span className="text-2xl">✨</span>
+                      <span className="text-xs">Premium</span>
+                    </Button>
+                    <Button
+                      variant={ctaStyle === "ctaTrust" ? "ctaTrust" : "outline"}
+                      size="sm"
+                      onClick={() => setCtaStyle("ctaTrust")}
+                      className="h-16 flex flex-col gap-1"
+                    >
+                      <span className="text-2xl">🛡️</span>
+                      <span className="text-xs">Trust</span>
+                    </Button>
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="settings" className="m-0 space-y-3">
+                <div>
+                  <label className="text-xs font-medium mb-2 block">
+                    Sticky CTA Appears at {stickyCtaThreshold}% scroll
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs text-muted-foreground">0%</span>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      step="5"
+                      value={stickyCtaThreshold}
+                      onChange={(e) => setStickyCtaThreshold(Number(e.target.value))}
+                      className="flex-1 h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
+                    />
+                    <span className="text-xs text-muted-foreground">100%</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    The sticky button will appear when users scroll down this percentage of the page
+                  </p>
+                </div>
+              </TabsContent>
+            </Tabs>
           </div>
         </div>
 
