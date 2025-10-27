@@ -41,13 +41,13 @@ CRITICAL RULES - YOU MUST FOLLOW THESE EXACTLY:
 1. PRESERVE EVERY SINGLE WORD from the original text - do NOT summarize, condense, or shorten anything
 2. INCLUDE ALL CONTENT - if the user provides 2000 words, your output must contain all 2000 words
 3. DO NOT rewrite, rephrase, or change any of the user's original wording
-4. Your ONLY job is to organize the existing content into sections and suggest image placements
+4. Your ONLY job is to organize the existing content into sections
 5. If any content seems long, that's fine - include ALL of it in the appropriate section
 
 Your tasks:
 1. Identify and organize the existing sections (headline, subheadline, body paragraphs, etc.)
 2. Choose the best layout type based on content (story, list, problem-solution, how-to)
-3. Suggest image placements sparingly: use 0-2 image placeholders total, and only if they clearly enhance readability; prefer exactly 1 placeholder for long articles
+3. DO NOT add any image placeholder sections - the user will add images manually
 4. Add CTA buttons only if they are NOT already present in the text
 5. Preserve the exact wording, tone, and style - EVERY SINGLE WORD
 
@@ -56,27 +56,24 @@ CRITICAL FORMATTING RULES:
 - Use line breaks (\n) to separate paragraphs and list items.
 - IMPORTANT: When the original text contains lists, bullet points, or ingredients, you MUST add TWO line breaks (\n\n) between each item to ensure readability.
 - IMPORTANT: When the original text has clear paragraph breaks or formatting, preserve them with double line breaks (\n\n).
-- For sections that should have images, set imageUrl to "" (empty string) as a placeholder.
 - Avoid creating large blocks of text - break them up into digestible paragraphs with proper spacing.
 - NEVER truncate or summarize - include the COMPLETE original text
+- DO NOT include any image sections with type "image" - only text, hero, cta, benefits, or testimonial sections
 
 FORMATTING EXAMPLE:
 If original text has ingredients like "Ingredient A: description. Ingredient B: description." 
 You should format as: "Ingredient A: description.\n\nIngredient B: description."
-
-IMPORTANT: Include at most 2 sections with empty imageUrl strings ("") and only when clearly beneficial. Prefer exactly 1 placeholder roughly after the first third of the article for long texts.
 
 Return a JSON object with this structure:
 {
   "layout": "story" | "list" | "problem-solution" | "how-to",
   "sections": [
     {
-      "type": "hero" | "text" | "image" | "cta" | "benefits" | "testimonial",
+      "type": "hero" | "text" | "cta" | "benefits" | "testimonial",
       "content": "plain text content without any HTML tags, with proper line breaks (\n\n) between list items and paragraphs - INCLUDE ALL ORIGINAL TEXT",
       "heading": "plain text heading without any HTML tags",
-      "imagePosition": "left" | "right" | "full" | "none",
+      "imagePosition": "none",
       "style": "normal" | "emphasized" | "callout",
-      "imageUrl": "", // empty string for placeholder images
       "ctaText": "button text" // only for CTA sections
     }
   ],
@@ -136,7 +133,7 @@ Return a JSON object with this structure:
     
     if (!data.choices || !data.choices[0] || !data.choices[0].message || !data.choices[0].message.content) {
       console.error("Invalid AI response structure:", JSON.stringify(data));
-      // Fallback to full input text structured into paragraphs
+      // Fallback to full input text structured into paragraphs (no image placeholders)
       const paragraphs = text.split(/\n{2,}/).map(p => p.trim()).filter(Boolean);
       const rebuilt = paragraphs.map(p => ({
         type: "text",
@@ -146,11 +143,7 @@ Return a JSON object with this structure:
         style: "normal",
         imageUrl: ""
       }));
-      // Add up to 1 placeholder image section for long texts
-      if (rebuilt.length >= 6) {
-        const insertAt = Math.floor(rebuilt.length / 3);
-        rebuilt.splice(insertAt, 0, { type: "image", content: "", heading: undefined, imagePosition: "full", style: "normal", imageUrl: "" });
-      }
+      // No image placeholders - user will add manually
       const fallback = { layout: "story", sections: rebuilt, cta: { primary: "Learn More" } } as const;
       return new Response(JSON.stringify(fallback), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
@@ -170,15 +163,17 @@ Return a JSON object with this structure:
       
       result = JSON.parse(jsonText);
       
-      // Clean up null values and ensure proper types
+      // Clean up null values and ensure proper types, and filter out any image sections
       if (result.sections) {
-        result.sections = result.sections.map((section: any) => ({
-          ...section,
-          content: section.content || "",
-          heading: section.heading || undefined,
-          imageUrl: section.imageUrl === null ? "" : section.imageUrl,
-          ctaText: section.ctaText || undefined
-        }));
+        result.sections = result.sections
+          .filter((section: any) => section.type !== "image") // Remove all image sections
+          .map((section: any) => ({
+            ...section,
+            content: section.content || "",
+            heading: section.heading || undefined,
+            imageUrl: section.imageUrl === null ? "" : section.imageUrl,
+            ctaText: section.ctaText || undefined
+          }));
       }
       
       // If AI output seems truncated, rebuild from full input to ensure complete delivery
@@ -194,11 +189,7 @@ Return a JSON object with this structure:
           style: "normal",
           imageUrl: ""
         }));
-        // Add a single placeholder image for long texts
-        if (rebuilt.length >= 6) {
-          const insertAt = Math.floor(rebuilt.length / 3);
-          rebuilt.splice(insertAt, 0, { type: "image", content: "", heading: undefined, imagePosition: "full", style: "normal", imageUrl: "" });
-        }
+        // No image placeholders added - user will add them manually
         result = { layout: "story", sections: rebuilt, cta: result.cta || { primary: "Learn More" } };
         console.log("AI output detected as truncated; rebuilt from input text.");
       }
