@@ -1,8 +1,10 @@
 import { useState, useRef, useEffect } from "react";
 import { Textarea } from "./ui/textarea";
 import { Button } from "./ui/button";
-import { Check, X, Edit2, Bold, Italic, Trash2 } from "lucide-react";
+import { Check, X, Edit2, Bold, Italic, Trash2, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface RichTextEditorProps {
   value: string;
@@ -11,6 +13,7 @@ interface RichTextEditorProps {
   multiline?: boolean;
   className?: string;
   as?: "h1" | "h2" | "h3" | "p";
+  enableAiOptimize?: boolean;
 }
 
 export const RichTextEditor = ({ 
@@ -19,13 +22,16 @@ export const RichTextEditor = ({
   onDelete,
   multiline = false,
   className,
-  as = "p"
+  as = "p",
+  enableAiOptimize = false
 }: RichTextEditorProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(value);
   const [isBold, setIsBold] = useState(false);
   const [isItalic, setIsItalic] = useState(false);
+  const [isOptimizing, setIsOptimizing] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const { toast } = useToast();
 
   // Auto-resize textarea based on content
   const adjustTextareaHeight = () => {
@@ -98,6 +104,36 @@ export const RichTextEditor = ({
     }
   };
 
+  const handleAiOptimize = async () => {
+    if (!editValue.trim()) return;
+    
+    setIsOptimizing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('optimize-paragraph', {
+        body: { text: editValue }
+      });
+
+      if (error) throw error;
+
+      if (data?.optimizedText) {
+        setEditValue(data.optimizedText);
+        toast({
+          title: "Paragraph optimized",
+          description: "AI has improved the formatting and readability",
+        });
+      }
+    } catch (error) {
+      console.error('Error optimizing paragraph:', error);
+      toast({
+        title: "Optimization failed",
+        description: "Could not optimize paragraph. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsOptimizing(false);
+    }
+  };
+
   const formatText = (markdownValue: string) => {
     // Convert markdown to styled text for display
     let formatted = markdownValue;
@@ -164,6 +200,18 @@ export const RichTextEditor = ({
               <Italic className="h-4 w-4" />
             </Button>
           </div>
+          {enableAiOptimize && (
+            <Button 
+              size="sm" 
+              variant="outline"
+              onClick={handleAiOptimize}
+              disabled={isOptimizing}
+              title="AI optimize formatting"
+            >
+              <Sparkles className="h-4 w-4 mr-1" />
+              {isOptimizing ? "Optimizing..." : "AI Fix"}
+            </Button>
+          )}
           <Button size="sm" onClick={handleSave}>
             <Check className="h-4 w-4 mr-1" />
             Save

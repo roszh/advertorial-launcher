@@ -125,6 +125,7 @@ export const BlogTemplate = ({
                   multiline
                   className="text-sm md:text-base lg:text-lg leading-[1.7] md:leading-[1.8] text-foreground/90 break-words"
                   as="p"
+                  enableAiOptimize={true}
                 />
               ) : (
                 section.content.split('\n\n').map((paragraph, pIndex) => (

@@ -37,8 +37,15 @@ CRITICAL: DO NOT rewrite or change the user's content. Your ONLY job is to:
 
 CRITICAL FORMATTING RULES:
 - Return ONLY plain text content. DO NOT include any HTML tags, markdown formatting, or special characters.
-- Use only plain text with line breaks (\n) for paragraphs.
-- For sections that should have images, set imageUrl to "" (empty string) as a placeholder
+- Use line breaks (\n) to separate paragraphs and list items.
+- IMPORTANT: When the original text contains lists, bullet points, or ingredients, you MUST add TWO line breaks (\n\n) between each item to ensure readability.
+- IMPORTANT: When the original text has clear paragraph breaks or formatting, preserve them with double line breaks (\n\n).
+- For sections that should have images, set imageUrl to "" (empty string) as a placeholder.
+- Avoid creating large blocks of text - break them up into digestible paragraphs with proper spacing.
+
+FORMATTING EXAMPLE:
+If original text has ingredients like "Ingredient A: description. Ingredient B: description." 
+You should format as: "Ingredient A: description.\n\nIngredient B: description."
 
 IMPORTANT: Include 3-5 sections with empty imageUrl strings ("") throughout the article to indicate where images should be placed. These will be click-to-upload placeholders for the user.
 
@@ -48,7 +55,7 @@ Return a JSON object with this structure:
   "sections": [
     {
       "type": "hero" | "text" | "image" | "cta" | "benefits" | "testimonial",
-      "content": "plain text content without any HTML tags",
+      "content": "plain text content without any HTML tags, with proper line breaks (\n\n) between list items and paragraphs",
       "heading": "plain text heading without any HTML tags",
       "imagePosition": "left" | "right" | "full" | "none",
       "style": "normal" | "emphasized" | "callout",

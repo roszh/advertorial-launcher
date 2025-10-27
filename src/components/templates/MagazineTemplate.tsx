@@ -121,6 +121,7 @@ export const MagazineTemplate = ({
                   multiline
                   className="text-sm md:text-base lg:text-lg leading-relaxed text-foreground/90 font-serif"
                   as="p"
+                  enableAiOptimize={true}
                 />
               ) : (
                 section.content.split('\n\n').map((paragraph, pIndex) => (
