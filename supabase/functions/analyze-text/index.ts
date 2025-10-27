@@ -136,10 +136,23 @@ Return a JSON object with this structure:
     
     if (!data.choices || !data.choices[0] || !data.choices[0].message || !data.choices[0].message.content) {
       console.error("Invalid AI response structure:", JSON.stringify(data));
-      return new Response(
-        JSON.stringify({ error: "Invalid response from AI service" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      // Fallback to full input text structured into paragraphs
+      const paragraphs = text.split(/\n{2,}/).map(p => p.trim()).filter(Boolean);
+      const rebuilt = paragraphs.map(p => ({
+        type: "text",
+        content: p,
+        heading: undefined,
+        imagePosition: "none",
+        style: "normal",
+        imageUrl: ""
+      }));
+      // Add 3 placeholder image sections roughly evenly spaced
+      const interval = Math.max(2, Math.ceil(rebuilt.length / 4));
+      for (let i = interval; i < rebuilt.length; i += interval) {
+        rebuilt.splice(i, 0, { type: "image", content: "", heading: undefined, imagePosition: "full", style: "normal", imageUrl: "" });
+      }
+      const fallback = { layout: "story", sections: rebuilt, cta: { primary: "Learn More" } } as const;
+      return new Response(JSON.stringify(fallback), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     let result;
@@ -166,6 +179,27 @@ Return a JSON object with this structure:
           imageUrl: section.imageUrl === null ? "" : section.imageUrl,
           ctaText: section.ctaText || undefined
         }));
+      }
+      
+      // If AI output seems truncated, rebuild from full input to ensure complete delivery
+      const inputLen = text.length;
+      const outputLen = (result.sections || []).reduce((acc: number, s: any) => acc + String(s.content || "").length, 0);
+      if (outputLen < Math.max(inputLen * 0.9, inputLen - 200)) {
+        const paragraphs = text.split(/\n{2,}/).map(p => p.trim()).filter(Boolean);
+        const rebuilt = paragraphs.map(p => ({
+          type: "text",
+          content: p,
+          heading: undefined,
+          imagePosition: "none",
+          style: "normal",
+          imageUrl: ""
+        }));
+        const interval = Math.max(2, Math.ceil(rebuilt.length / 4));
+        for (let i = interval; i < rebuilt.length; i += interval) {
+          rebuilt.splice(i, 0, { type: "image", content: "", heading: undefined, imagePosition: "full", style: "normal", imageUrl: "" });
+        }
+        result = { layout: "story", sections: rebuilt, cta: result.cta || { primary: "Learn More" } };
+        console.log("AI output detected as truncated; rebuilt from input text.");
       }
       
       console.log("Successfully parsed AI response");
