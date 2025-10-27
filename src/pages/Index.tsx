@@ -962,6 +962,35 @@ const Index = () => {
               </TabsContent>
 
               <TabsContent value="settings" className="m-0 space-y-3">
+                <div>
+                  <label className="text-xs font-medium mb-2 block">Headline Text Size</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-9 text-xs"
+                    >
+                      Small
+                    </Button>
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="h-9 text-xs"
+                    >
+                      Medium
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-9 text-xs"
+                    >
+                      Large
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Adjust the size of headlines throughout your page
+                  </p>
+                </div>
               </TabsContent>
             </Tabs>
           </div>

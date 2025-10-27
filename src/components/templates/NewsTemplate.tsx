@@ -88,12 +88,12 @@ export const NewsTemplate = ({
                   value={section.heading}
                   onSave={(value) => handleSectionUpdate(actualIndex, "heading", value)}
                   onDelete={() => onDeleteSection?.(actualIndex)}
-                  className="text-lg md:text-xl lg:text-2xl font-bold mb-2 md:mb-3 font-serif"
+                  className="text-[22px] md:text-xl lg:text-2xl font-bold mb-2 md:mb-3 font-serif"
                   as="h2"
                 />
               ) : (
                 <h2 
-                  className="text-lg md:text-xl lg:text-2xl font-bold mb-2 md:mb-3 font-serif"
+                  className="text-[22px] md:text-xl lg:text-2xl font-bold mb-2 md:mb-3 font-serif"
                   dangerouslySetInnerHTML={{ 
                     __html: section.heading
                       .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
@@ -130,7 +130,7 @@ export const NewsTemplate = ({
                     onSave={(value) => handleSectionUpdate(actualIndex, "content", value)}
                     onDelete={() => onDeleteSection?.(actualIndex)}
                     multiline
-                    className="text-sm md:text-base lg:text-lg leading-relaxed text-foreground/90 break-words"
+                    className="text-lg md:text-base lg:text-lg leading-relaxed text-foreground/90 break-words"
                     as="p"
                     enableAiOptimize={true}
                   />
@@ -141,7 +141,7 @@ export const NewsTemplate = ({
                     // Detect bullet points (•, -, *)
                     if (trimmed.match(/^[•\-\*]\s/)) {
                       return (
-                        <div key={pIndex} className="flex gap-2 md:gap-3 mb-2 md:mb-3 text-sm md:text-base lg:text-lg leading-relaxed text-foreground/90">
+                        <div key={pIndex} className="flex gap-2 md:gap-3 mb-2 md:mb-3 text-lg md:text-base lg:text-lg leading-relaxed text-foreground/90">
                           <span className="flex-shrink-0 font-bold">•</span>
                           <span 
                             className="flex-1 break-words"
@@ -159,7 +159,7 @@ export const NewsTemplate = ({
                     const numberMatch = trimmed.match(/^(\d+)\.\s/);
                     if (numberMatch) {
                       return (
-                        <div key={pIndex} className="flex gap-2 md:gap-3 mb-2 md:mb-3 text-sm md:text-base lg:text-lg leading-relaxed text-foreground/90">
+                        <div key={pIndex} className="flex gap-2 md:gap-3 mb-2 md:mb-3 text-lg md:text-base lg:text-lg leading-relaxed text-foreground/90">
                           <span className="flex-shrink-0 font-bold">{numberMatch[1]}.</span>
                           <span 
                             className="flex-1 break-words"
@@ -177,7 +177,7 @@ export const NewsTemplate = ({
                     return (
                       <p 
                         key={pIndex} 
-                        className="text-sm md:text-base lg:text-lg leading-relaxed text-foreground/90 break-words"
+                        className="text-lg md:text-base lg:text-lg leading-relaxed text-foreground/90 break-words"
                         dangerouslySetInnerHTML={{ 
                           __html: paragraph
                             .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
@@ -296,12 +296,12 @@ export const NewsTemplate = ({
           <RichTextEditor
             value={headline || "Breaking: Major Development Unfolds"}
             onSave={onUpdateHeadline}
-            className="text-2xl md:text-4xl lg:text-5xl font-bold mb-3 md:mb-4 leading-[1.1] font-serif"
+            className="text-[25px] md:text-4xl lg:text-5xl font-bold mb-3 md:mb-4 leading-[1.1] font-serif"
             as="h1"
           />
         ) : (
           <h1 
-            className="text-2xl md:text-4xl lg:text-5xl font-bold mb-3 md:mb-4 leading-[1.1] font-serif"
+            className="text-[25px] md:text-4xl lg:text-5xl font-bold mb-3 md:mb-4 leading-[1.1] font-serif"
             dangerouslySetInnerHTML={{ 
               __html: (headline || "Breaking: Major Development Unfolds")
                 .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
@@ -315,12 +315,12 @@ export const NewsTemplate = ({
             value={heroSection?.content || ""}
             onSave={(value) => handleSectionUpdate(0, "content", value)}
             multiline
-            className="text-base md:text-lg lg:text-xl text-muted-foreground mb-6 md:mb-8 leading-relaxed font-medium"
+            className="text-lg md:text-lg lg:text-xl text-muted-foreground mb-6 md:mb-8 leading-relaxed font-medium"
             as="p"
           />
         ) : (
           <p 
-            className="text-base md:text-lg lg:text-xl text-muted-foreground mb-6 md:mb-8 leading-relaxed font-medium"
+            className="text-lg md:text-lg lg:text-xl text-muted-foreground mb-6 md:mb-8 leading-relaxed font-medium"
             dangerouslySetInnerHTML={{ 
               __html: (heroSection?.content || "")
                 .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')

@@ -87,12 +87,12 @@ export const MagazineTemplate = ({
                   value={section.heading}
                   onSave={(value) => handleSectionUpdate(actualIndex, "heading", value)}
                   onDelete={() => onDeleteSection?.(actualIndex)}
-                  className="text-xl md:text-2xl lg:text-3xl font-bold mb-3 md:mb-4 font-serif leading-tight"
+                  className="text-[22px] md:text-2xl lg:text-3xl font-bold mb-3 md:mb-4 font-serif leading-tight"
                   as="h2"
                 />
               ) : (
                 <h2 
-                  className="text-xl md:text-2xl lg:text-3xl font-bold mb-3 md:mb-4 font-serif leading-tight"
+                  className="text-[22px] md:text-2xl lg:text-3xl font-bold mb-3 md:mb-4 font-serif leading-tight"
                   dangerouslySetInnerHTML={{ __html: section.heading.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\*(.+?)\*/g, '<em>$1</em>') }}
                 />
               )
@@ -125,7 +125,7 @@ export const MagazineTemplate = ({
                     onSave={(value) => handleSectionUpdate(actualIndex, "content", value)}
                     onDelete={() => onDeleteSection?.(actualIndex)}
                     multiline
-                    className="text-sm md:text-base lg:text-lg leading-relaxed text-foreground/90 font-serif"
+                    className="text-lg md:text-base lg:text-lg leading-relaxed text-foreground/90 font-serif"
                     as="p"
                     enableAiOptimize={true}
                   />
@@ -136,7 +136,7 @@ export const MagazineTemplate = ({
                     // Detect bullet points (•, -, *)
                     if (trimmed.match(/^[•\-\*]\s/)) {
                       return (
-                        <div key={pIndex} className="flex gap-2 md:gap-3 mb-2 md:mb-3 text-sm md:text-base lg:text-lg leading-relaxed text-foreground/90 font-serif">
+                        <div key={pIndex} className="flex gap-2 md:gap-3 mb-2 md:mb-3 text-lg md:text-base lg:text-lg leading-relaxed text-foreground/90 font-serif">
                           <span className="flex-shrink-0 font-bold">•</span>
                           <span 
                             className="flex-1 break-words"
@@ -154,7 +154,7 @@ export const MagazineTemplate = ({
                     const numberMatch = trimmed.match(/^(\d+)\.\s/);
                     if (numberMatch) {
                       return (
-                        <div key={pIndex} className="flex gap-2 md:gap-3 mb-2 md:mb-3 text-sm md:text-base lg:text-lg leading-relaxed text-foreground/90 font-serif">
+                        <div key={pIndex} className="flex gap-2 md:gap-3 mb-2 md:mb-3 text-lg md:text-base lg:text-lg leading-relaxed text-foreground/90 font-serif">
                           <span className="flex-shrink-0 font-bold">{numberMatch[1]}.</span>
                           <span 
                             className="flex-1 break-words"
@@ -172,7 +172,7 @@ export const MagazineTemplate = ({
                     return (
                       <p 
                         key={pIndex} 
-                        className="text-sm md:text-base lg:text-lg leading-relaxed mb-3 md:mb-4 text-foreground/90 font-serif break-words"
+                        className="text-lg md:text-base lg:text-lg leading-relaxed mb-3 md:mb-4 text-foreground/90 font-serif break-words"
                         dangerouslySetInnerHTML={{ 
                           __html: paragraph
                             .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
@@ -273,11 +273,11 @@ export const MagazineTemplate = ({
             <RichTextEditor
               value={headline || "Your Compelling Headline Here"}
               onSave={onUpdateHeadline}
-              className="text-2xl md:text-4xl lg:text-5xl font-bold mb-4 md:mb-6 leading-tight font-serif text-center"
+              className="text-[25px] md:text-4xl lg:text-5xl font-bold mb-4 md:mb-6 leading-tight font-serif text-center"
               as="h1"
             />
           ) : (
-            <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold mb-4 md:mb-6 leading-tight font-serif">
+            <h1 className="text-[25px] md:text-4xl lg:text-5xl font-bold mb-4 md:mb-6 leading-tight font-serif">
               {headline || "Your Compelling Headline Here"}
             </h1>
           )}
@@ -287,12 +287,12 @@ export const MagazineTemplate = ({
                 value={heroSection?.content || ""}
                 onSave={(value) => handleSectionUpdate(0, "content", value)}
                 multiline
-                className="text-base md:text-lg lg:text-xl text-muted-foreground leading-relaxed"
+                className="text-lg md:text-lg lg:text-xl text-muted-foreground leading-relaxed"
                 as="p"
               />
             </div>
           ) : (
-            <p className="text-base md:text-lg lg:text-xl text-muted-foreground leading-relaxed max-w-3xl mx-auto">
+            <p className="text-lg md:text-lg lg:text-xl text-muted-foreground leading-relaxed max-w-3xl mx-auto">
               {heroSection?.content}
             </p>
           )}

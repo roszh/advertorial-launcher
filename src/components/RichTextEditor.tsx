@@ -323,18 +323,6 @@ export const RichTextEditor = ({
               <Heading2 className="h-4 w-4" />
             </Button>
           </div>
-          {enableAiOptimize && (
-            <Button 
-              size="sm" 
-              variant="outline"
-              onClick={handleAiOptimize}
-              disabled={isOptimizing}
-              title="AI optimize formatting"
-            >
-              <Sparkles className="h-4 w-4 mr-1" />
-              {isOptimizing ? "Optimizing..." : "AI Fix"}
-            </Button>
-          )}
           <Button size="sm" onClick={handleSave}>
             <Check className="h-4 w-4 mr-1" />
             Save
