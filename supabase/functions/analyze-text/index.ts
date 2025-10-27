@@ -11,8 +11,17 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Keep a copy of input text available for any fallback paths
+  let inputText = "";
+
   try {
-    const { text } = await req.json();
+    try {
+      const body = await req.json();
+      inputText = body?.text || "";
+    } catch (_) {
+      inputText = "";
+    }
+    const text = inputText;
     
     if (!text || text.trim().length === 0) {
       return new Response(
@@ -109,10 +118,17 @@ Return a JSON object with this structure:
       
       const errorText = await response.text();
       console.error("AI gateway error:", response.status, errorText);
-      return new Response(
-        JSON.stringify({ error: "AI processing failed" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      // Fallback when AI gateway fails: still return full text as a single section
+      const fallback = {
+        layout: "story",
+        sections: [
+          { type: "text", content: inputText, heading: undefined, imagePosition: "none", style: "normal", imageUrl: "" }
+        ],
+        cta: { primary: "Learn More" }
+      } as const;
+      return new Response(JSON.stringify(fallback), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const data = await response.json();
@@ -155,10 +171,24 @@ Return a JSON object with this structure:
       console.log("Successfully parsed AI response");
     } catch (parseError) {
       console.error("Failed to parse AI response as JSON:", data.choices[0].message.content);
-      return new Response(
-        JSON.stringify({ error: "AI returned invalid JSON format. Please try again." }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      // Fallback: return full text in a single section so user always gets content
+      const fallback = {
+        layout: "story",
+        sections: [
+          {
+            type: "text",
+            content: inputText,
+            heading: undefined,
+            imagePosition: "none",
+            style: "normal",
+            imageUrl: ""
+          }
+        ],
+        cta: { primary: "Learn More" }
+      } as const;
+      return new Response(JSON.stringify(fallback), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     return new Response(JSON.stringify(result), {
@@ -167,11 +197,24 @@ Return a JSON object with this structure:
   } catch (error) {
     console.error("Error in analyze-text function:", error);
     console.error("Error stack:", error instanceof Error ? error.stack : "No stack trace");
-    return new Response(
-      JSON.stringify({ 
-        error: error instanceof Error ? error.message : "Unknown error occurred. Please try again." 
-      }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    
+    // Robust fallback: always deliver full text as a single section
+    const fallback = {
+      layout: "story",
+      sections: [
+        {
+          type: "text",
+          content: inputText,
+          heading: undefined,
+          imagePosition: "none",
+          style: "normal",
+          imageUrl: ""
+        }
+      ],
+      cta: { primary: "Learn More" }
+    } as const;
+    return new Response(JSON.stringify(fallback), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 });
