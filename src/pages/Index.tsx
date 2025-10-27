@@ -172,6 +172,52 @@ const Index = () => {
     "#a855f7", "#ec4899", "#f97316", "#14b8a6"
   ];
 
+  const detectLanguage = (text: string): string => {
+    // Simple language detection based on common patterns
+    const cyrillicPattern = /[\u0400-\u04FF]/;
+    const arabicPattern = /[\u0600-\u06FF]/;
+    const chinesePattern = /[\u4E00-\u9FFF]/;
+    const japanesePattern = /[\u3040-\u309F\u30A0-\u30FF]/;
+    
+    if (cyrillicPattern.test(text)) return "Russian";
+    if (arabicPattern.test(text)) return "Arabic";
+    if (chinesePattern.test(text)) return "Chinese";
+    if (japanesePattern.test(text)) return "Japanese";
+    
+    // Add more language detection as needed
+    return "English";
+  };
+
+  const generateAutoTitle = (sections: Section[], text: string): string => {
+    // Extract headline from first section with heading or content
+    let headline = "";
+    
+    if (sections.length > 0) {
+      if (sections[0].heading) {
+        headline = sections[0].heading;
+      } else if (sections[0].content) {
+        // Take first 50 characters of content as headline
+        headline = sections[0].content.substring(0, 50);
+      }
+    }
+    
+    // Fallback to input text if no headline found
+    if (!headline && text) {
+      headline = text.substring(0, 50);
+    }
+    
+    // Clean up the headline
+    headline = stripHtmlTags(headline).trim();
+    if (headline.length > 50) {
+      headline = headline.substring(0, 47) + "...";
+    }
+    
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    const language = detectLanguage(text);
+    
+    return `${headline} - ${today} - ${language}`;
+  };
+
   const handleAnalyze = async () => {
     if (!inputText.trim()) {
       toast({ title: "Please enter some text to analyze", variant: "destructive" });
@@ -211,7 +257,51 @@ const Index = () => {
       
       setAnalysisResult(cleanedData);
       setIsEditorMode(true);
-      toast({ title: "Text analyzed successfully!" });
+      
+      // Auto-generate title and slug
+      const autoTitle = generateAutoTitle(cleanedData.sections, inputText);
+      setPageTitle(autoTitle);
+      
+      // Auto-save as draft
+      const slug = generateSlug(autoTitle);
+      const pageData = {
+        user_id: user.id,
+        title: autoTitle,
+        slug: slug,
+        status: "draft" as const,
+        template: selectedTemplate,
+        cta_style: ctaStyle,
+        sticky_cta_threshold: stickyCtaThreshold,
+        subtitle: subtitle,
+        content: { sections: cleanedData.sections } as any,
+        cta_text: cleanedData.cta.primary || "Get Started",
+        cta_url: ctaUrl || "",
+        image_url: imageUrl,
+        published_at: null
+      };
+
+      if (editId) {
+        const { error } = await supabase
+          .from("pages")
+          .update(pageData)
+          .eq("id", editId);
+
+        if (error) throw error;
+      } else {
+        const { data: insertData, error } = await supabase
+          .from("pages")
+          .insert([pageData])
+          .select();
+        
+        if (error) throw error;
+        
+        // Update the URL to include the new page ID for editing
+        if (insertData?.[0]?.id) {
+          navigate(`/dashboard?edit=${insertData[0].id}`, { replace: true });
+        }
+      }
+      
+      toast({ title: "Page analyzed and saved as draft!" });
     } catch (error) {
       console.error("Analysis error:", error);
       toast({ title: "Error", description: error instanceof Error ? error.message : "Failed to analyze text", variant: "destructive" });
