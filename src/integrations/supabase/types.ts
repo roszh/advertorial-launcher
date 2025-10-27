@@ -123,6 +123,7 @@ export type Database = {
           cta_style: string | null
           cta_text: string | null
           cta_url: string | null
+          headline: string | null
           id: string
           image_url: string | null
           published_at: string | null
@@ -141,6 +142,7 @@ export type Database = {
           cta_style?: string | null
           cta_text?: string | null
           cta_url?: string | null
+          headline?: string | null
           id?: string
           image_url?: string | null
           published_at?: string | null
@@ -159,6 +161,7 @@ export type Database = {
           cta_style?: string | null
           cta_text?: string | null
           cta_url?: string | null
+          headline?: string | null
           id?: string
           image_url?: string | null
           published_at?: string | null

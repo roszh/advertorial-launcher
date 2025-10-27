@@ -7,6 +7,7 @@ interface SectionControlsProps {
   index: number;
   onAddTextBelow: () => void;
   onAddImageBelow: () => void;
+  onAddHeadlineBelow: () => void;
   onAddCtaBelow?: () => void;
   onDeleteSection: () => void;
   onCloneSection?: () => void;
@@ -18,6 +19,7 @@ export const SectionControls = ({
   index,
   onAddTextBelow,
   onAddImageBelow,
+  onAddHeadlineBelow,
   onAddCtaBelow,
   onDeleteSection,
   onCloneSection,
@@ -46,11 +48,21 @@ export const SectionControls = ({
           size="sm"
           variant="ghost"
           onClick={onAddTextBelow}
-          title="Add text section below"
+          title="Add paragraph below"
           className="hover-scale"
         >
           <Plus className="h-4 w-4 mr-1" />
           Text
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={onAddHeadlineBelow}
+          title="Add section headline below"
+          className="hover-scale"
+        >
+          <Plus className="h-4 w-4 mr-1" />
+          Headline
         </Button>
         <Button
           size="sm"

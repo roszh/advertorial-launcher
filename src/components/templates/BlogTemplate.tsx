@@ -201,6 +201,14 @@ export const BlogTemplate = ({
             <SectionControls
               index={actualIndex}
               onAddTextBelow={() => onAddSection(actualIndex, "text")}
+              onAddHeadlineBelow={() => {
+                const headlineSection = {
+                  type: "text" as const,
+                  content: "",
+                  heading: "New Section Heading"
+                };
+                onUpdateSection?.(actualIndex + 1, headlineSection);
+              }}
               onAddImageBelow={() => onAddSection(actualIndex, "image")}
               onAddCtaBelow={() => {
                 const ctaSection = {

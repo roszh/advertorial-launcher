@@ -41,45 +41,55 @@ CRITICAL RULES - YOU MUST FOLLOW THESE EXACTLY:
 1. PRESERVE EVERY SINGLE WORD from the original text - do NOT summarize, condense, or shorten anything
 2. INCLUDE ALL CONTENT - if the user provides 2000 words, your output must contain all 2000 words
 3. DO NOT rewrite, rephrase, or change any of the user's original wording
-4. Your ONLY job is to organize the existing content into sections
+4. Your ONLY job is to organize the existing content into meaningful sections with clear headings
 5. If any content seems long, that's fine - include ALL of it in the appropriate section
 
-Your tasks:
-1. Identify and organize the existing sections (headline, subheadline, body paragraphs, etc.)
-2. Choose the best layout type based on content (story, list, problem-solution, how-to)
-3. DO NOT add any image placeholder sections - the user will add images manually
-4. Add CTA buttons only if they are NOT already present in the text
-5. Preserve the exact wording, tone, and style - EVERY SINGLE WORD
+SECTION STRUCTURE RULES:
+1. Create a hero section with the main headline as "heading" and subheadline as "content"
+2. Group related paragraphs together under meaningful section headings
+3. Each body section MUST have a descriptive "heading" that summarizes what that section is about
+4. Aim for 3-7 main body sections (not dozens of tiny sections)
+5. Each section can contain multiple paragraphs in the "content" field
+6. DO NOT create a separate section for every single paragraph - group related content together
+7. DO NOT add any image placeholder sections - the user will add images manually
+8. Add CTA buttons only if they are NOT already present in the text
 
 CRITICAL FORMATTING RULES:
 - Return ONLY plain text content. DO NOT include any HTML tags, markdown formatting, or special characters.
-- Use line breaks (\n) to separate paragraphs and list items.
-- IMPORTANT: When the original text contains lists, bullet points, or ingredients, you MUST add TWO line breaks (\n\n) between each item to ensure readability.
-- IMPORTANT: When the original text has clear paragraph breaks or formatting, preserve them with double line breaks (\n\n).
-- Avoid creating large blocks of text - break them up into digestible paragraphs with proper spacing.
+- Use line breaks (\n\n) to separate paragraphs within a section's content.
+- IMPORTANT: When the original text contains lists, bullet points, or ingredients, you MUST add TWO line breaks (\n\n) between each item.
+- Preserve the exact wording, tone, and style - EVERY SINGLE WORD
 - NEVER truncate or summarize - include the COMPLETE original text
 - DO NOT include any image sections with type "image" - only text, hero, cta, benefits, or testimonial sections
 
-FORMATTING EXAMPLE:
-If original text has ingredients like "Ingredient A: description. Ingredient B: description." 
-You should format as: "Ingredient A: description.\n\nIngredient B: description."
-
-Return a JSON object with this structure:
+EXAMPLE OUTPUT STRUCTURE:
 {
-  "layout": "story" | "list" | "problem-solution" | "how-to",
+  "layout": "story",
   "sections": [
     {
-      "type": "hero" | "text" | "cta" | "benefits" | "testimonial",
-      "content": "plain text content without any HTML tags, with proper line breaks (\n\n) between list items and paragraphs - INCLUDE ALL ORIGINAL TEXT",
-      "heading": "plain text heading without any HTML tags",
+      "type": "hero",
+      "heading": "Main Article Headline",
+      "content": "Subheadline or intro paragraph",
+      "imagePosition": "full",
+      "style": "emphasized"
+    },
+    {
+      "type": "text",
+      "heading": "First Major Topic",
+      "content": "Multiple paragraphs of content grouped together...\n\nSecond paragraph continues the topic...\n\nThird paragraph wraps it up...",
       "imagePosition": "none",
-      "style": "normal" | "emphasized" | "callout",
-      "ctaText": "button text" // only for CTA sections
+      "style": "normal"
+    },
+    {
+      "type": "text",
+      "heading": "Second Major Topic",
+      "content": "Content for this section...",
+      "imagePosition": "none",
+      "style": "normal"
     }
   ],
   "cta": {
-    "primary": "main CTA text",
-    "secondary": "optional secondary CTA"
+    "primary": "main CTA text"
   }
 }`;
 

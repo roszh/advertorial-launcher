@@ -118,12 +118,7 @@ const Index = () => {
       setCtaStyle((data.cta_style as any) || "ctaAmazon");
       setStickyCtaThreshold((data.sticky_cta_threshold as number) || 20);
       setSubtitle(data.subtitle || "Featured Story");
-      
-      // Extract headline from first hero section if exists
-      const heroSection = content.sections?.find((s: Section) => s.type === "hero");
-      if (heroSection) {
-        setHeadline(heroSection.heading || heroSection.content || "");
-      }
+      setHeadline((data as any).headline || "");
       
       setAnalysisResult({
         layout: "default",
@@ -360,6 +355,7 @@ const Index = () => {
         cta_style: ctaStyle,
         sticky_cta_threshold: stickyCtaThreshold,
         subtitle: subtitle,
+        headline: headline,
         content: { sections: analysisResult?.sections || [] } as any,
         cta_text: analysisResult?.cta.primary || "Get Started",
         cta_url: ctaUrl,
@@ -628,8 +624,7 @@ const Index = () => {
         }
       : {
           type: "text",
-          content: "Enter your content here...",
-          heading: "New Section",
+          content: "Enter your paragraph here...",
           imagePosition: "none",
           style: "normal",
         };
@@ -641,7 +636,7 @@ const Index = () => {
       ...analysisResult,
       sections: newSections,
     });
-    toast({ title: `${type === "image" ? "Image" : "Text"} section added!` });
+    toast({ title: `${type === "image" ? "Image" : "Paragraph"} section added!` });
   };
 
   const handleOptimizeWithAI = async () => {
