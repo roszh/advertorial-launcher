@@ -43,25 +43,9 @@ CRITICAL RULES - YOU MUST FOLLOW THESE EXACTLY:
 3. DO NOT rewrite, rephrase, or change any of the user's original wording
 4. Your job is to organize AND FORMAT the content properly for web display
 
-HEADLINE DETECTION - CRITICAL SKILL:
-Detect headlines using these patterns:
-- Lines in ALL CAPS (e.g., "AMAZING DISCOVERY")
-- Lines ending with colons (e.g., "Benefits Include:")
-- Short lines (under 60 chars) followed by longer paragraphs
-- Lines starting with "##" or markdown heading markers
-- Lines that appear to be section titles or topic headers
-- Sentences that introduce a topic (e.g., "Here's what you get:", "The solution is simple:")
-- Any line that clearly separates content into logical sections
-
-When you detect a headline:
-1. Place it in the "heading" field of that section
-2. The content that follows goes in the "content" field
-3. Preserve the exact wording and capitalization
-4. DO NOT include the headline text again in the content field
-
 FORMATTING DETECTION & PRESERVATION:
-1. **Main Headlines**: Identify the main headline (usually the first line or largest text) and place it in the hero section's "heading" field
-2. **Section Headlines**: Every new topic, benefit list title, or section divider should become a section's "heading" field
+1. **Headlines**: Identify the main headline (usually the first line or largest text) and place it in the hero section's "heading" field
+2. **Subheadlines**: Identify supporting headlines or subtitles and place them in the hero section's "content" field OR as section headings
 3. **Bullet Points & Lists**: When you detect bullet points, numbered lists, or ingredient lists:
    - Preserve each item on its own line
    - Use "• " prefix for bullet points
