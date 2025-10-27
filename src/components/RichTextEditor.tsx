@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Textarea } from "./ui/textarea";
 import { Button } from "./ui/button";
-import { Check, X, Edit2, Bold, Italic, Trash2, Sparkles, Link as LinkIcon } from "lucide-react";
+import { Check, X, Edit2, Bold, Italic, Trash2, Sparkles, Link as LinkIcon, Heading2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -107,6 +107,58 @@ export const RichTextEditor = ({
     }
   };
 
+  const convertToSubheadline = () => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = editValue.substring(start, end);
+    
+    const textToConvert = selectedText || editValue;
+    
+    if (!textToConvert.trim()) {
+      toast({
+        title: "No text to convert",
+        description: "Please select text or ensure the editor has content",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Remove any existing formatting markers
+    const cleanText = textToConvert
+      .replace(/^##\s*/, '')  // Remove ## prefix if exists
+      .replace(/^\*\*/, '')   // Remove bold markers
+      .replace(/\*\*$/, '')
+      .replace(/^\*/, '')     // Remove italic markers
+      .replace(/\*$/, '')
+      .trim();
+    
+    // Wrap with ## for subheadline markdown
+    const subheadlineText = `## ${cleanText}`;
+    
+    if (selectedText) {
+      const newValue = 
+        editValue.substring(0, start) + 
+        subheadlineText + 
+        editValue.substring(end);
+      setEditValue(newValue);
+      
+      setTimeout(() => {
+        textarea.focus();
+        textarea.setSelectionRange(start, start + subheadlineText.length);
+      }, 0);
+    } else {
+      setEditValue(subheadlineText);
+    }
+
+    toast({
+      title: "Converted to subheadline",
+      description: "Text formatted as subheadline",
+    });
+  };
+
   const insertLink = () => {
     const textarea = textareaRef.current;
     if (!textarea) return;
@@ -187,6 +239,9 @@ export const RichTextEditor = ({
     // Convert markdown to styled text for display
     let formatted = markdownValue;
     
+    // Subheadline: ## text
+    formatted = formatted.replace(/^##\s+(.+)$/gm, '<span class="text-lg md:text-xl font-semibold text-muted-foreground">$1</span>');
+    
     // Links: [text](url)
     formatted = formatted.replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" class="text-primary underline hover:no-underline">$1</a>');
     
@@ -259,6 +314,14 @@ export const RichTextEditor = ({
             >
               <LinkIcon className="h-4 w-4" />
             </Button>
+            <Button 
+              size="sm" 
+              variant="outline"
+              onClick={convertToSubheadline}
+              title="Convert to subheadline"
+            >
+              <Heading2 className="h-4 w-4" />
+            </Button>
           </div>
           {enableAiOptimize && (
             <Button 
@@ -314,7 +377,7 @@ export const RichTextEditor = ({
           </div>
         )}
         <p className="text-xs text-muted-foreground">
-          Tip: Select text and click Bold/Italic/Link to format, or use **bold**, *italic*, and [text](url) syntax
+          Tip: Select text and click Bold/Italic/Link to format, or use **bold**, *italic*, and [text](url) syntax. Use the subheadline button to convert text to a styled subheadline.
         </p>
       </div>
     );
