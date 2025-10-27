@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn, formatMarkdownText } from "@/lib/utils";
 import { Button } from "./ui/button";
 import { Edit2 } from "lucide-react";
 import heroImage from "@/assets/hero-image.jpg";
@@ -63,9 +63,10 @@ export const PresellSection = ({ section, ctaText, onCtaClick, elementId = "untr
           >
             <div className="absolute -top-4 -left-4 text-6xl md:text-8xl text-primary/20 font-serif">"</div>
             <blockquote className="relative z-10">
-              <p className="text-lg md:text-2xl font-serif italic leading-relaxed mb-6">
-                {section.content}
-              </p>
+              <div 
+                className="text-lg md:text-2xl font-serif italic leading-relaxed mb-6"
+                dangerouslySetInnerHTML={{ __html: formatMarkdownText(section.content) }}
+              />
             </blockquote>
             <div className="flex items-center gap-4">
               {section.authorAvatar && (
@@ -123,9 +124,10 @@ export const PresellSection = ({ section, ctaText, onCtaClick, elementId = "untr
                 <p className="text-xs text-muted-foreground">{section.timestamp || "2 days ago"}</p>
               </div>
             </div>
-            <p className="text-sm md:text-base leading-relaxed mb-4 whitespace-pre-wrap">
-              {section.content}
-            </p>
+            <div 
+              className="text-sm md:text-base leading-relaxed mb-4"
+              dangerouslySetInnerHTML={{ __html: formatMarkdownText(section.content) }}
+            />
             <div className="flex items-center gap-4 pt-3 border-t border-border">
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
                 <span className="text-blue-500">👍</span>
@@ -204,7 +206,10 @@ export const PresellSection = ({ section, ctaText, onCtaClick, elementId = "untr
       <div className="py-16 text-center bg-gradient-to-br from-background via-secondary/20 to-background">
         <div className="max-w-2xl mx-auto px-4">
           <h2 className="text-3xl md:text-4xl font-bold mb-6">{section.heading}</h2>
-          <p className="text-lg text-muted-foreground mb-8">{section.content}</p>
+          <div 
+            className="text-lg text-muted-foreground mb-8"
+            dangerouslySetInnerHTML={{ __html: formatMarkdownText(section.content) }}
+          />
           <Button
             variant="cta"
             size="lg"
@@ -235,9 +240,10 @@ export const PresellSection = ({ section, ctaText, onCtaClick, elementId = "untr
           <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
             {section.heading}
           </h1>
-          <p className="text-xl md:text-2xl text-muted-foreground mb-8 leading-relaxed">
-            {section.content}
-          </p>
+          <div 
+            className="text-xl md:text-2xl text-muted-foreground mb-8 leading-relaxed"
+            dangerouslySetInnerHTML={{ __html: formatMarkdownText(section.content) }}
+          />
           <Button
             variant="cta"
             size="lg"
@@ -272,11 +278,10 @@ export const PresellSection = ({ section, ctaText, onCtaClick, elementId = "untr
                 {section.heading}
               </h2>
             )}
-            <div className="prose prose-lg max-w-none">
-              <p className="text-lg leading-relaxed whitespace-pre-wrap font-serif text-foreground/90">
-                {section.content}
-              </p>
-            </div>
+            <div 
+              className="prose prose-lg max-w-none text-lg leading-relaxed font-serif text-foreground/90"
+              dangerouslySetInnerHTML={{ __html: formatMarkdownText(section.content) }}
+            />
           </div>
           <div className={cn(section.imagePosition === "right" && "md:col-start-1 md:row-start-1")}>
             <img
@@ -298,11 +303,10 @@ export const PresellSection = ({ section, ctaText, onCtaClick, elementId = "untr
             {section.heading}
           </h2>
         )}
-        <div className="prose prose-lg max-w-none">
-          <p className="text-lg leading-relaxed whitespace-pre-wrap font-serif text-foreground/90">
-            {section.content}
-          </p>
-        </div>
+        <div 
+          className="prose prose-lg max-w-none text-lg leading-relaxed font-serif text-foreground/90"
+          dangerouslySetInnerHTML={{ __html: formatMarkdownText(section.content) }}
+        />
       </div>
     </div>
   );

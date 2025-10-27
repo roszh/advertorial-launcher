@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Textarea } from "./ui/textarea";
 import { Button } from "./ui/button";
 import { Check, X, Edit2, Bold, Italic, Trash2, Sparkles, Link as LinkIcon, Heading2 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, formatMarkdownText } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "./ui/input";
@@ -235,29 +235,6 @@ export const RichTextEditor = ({
     }
   };
 
-  const formatText = (markdownValue: string) => {
-    // Convert markdown to styled text for display
-    let formatted = markdownValue;
-    
-    // Subheadline: ## text
-    formatted = formatted.replace(/^##\s+(.+)$/gm, '<span class="text-lg md:text-xl font-semibold text-muted-foreground">$1</span>');
-    
-    // Links: [text](url)
-    formatted = formatted.replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" class="text-primary underline hover:no-underline">$1</a>');
-    
-    // Bold: **text** or __text__
-    formatted = formatted.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-    formatted = formatted.replace(/__(.+?)__/g, '<strong>$1</strong>');
-    
-    // Italic: *text* or _text_
-    formatted = formatted.replace(/\*(.+?)\*/g, '<em>$1</em>');
-    formatted = formatted.replace(/_(.+?)_/g, '<em>$1</em>');
-    
-    // Line breaks: \n to <br>
-    formatted = formatted.replace(/\n/g, '<br>');
-    
-    return formatted;
-  };
 
   if (isEditing) {
     return (
@@ -372,7 +349,7 @@ export const RichTextEditor = ({
   }
 
   const Tag = as;
-  const displayValue = formatText(value || "Click to edit...");
+  const displayValue = formatMarkdownText(value || "Click to edit...");
 
   return (
     <div 
