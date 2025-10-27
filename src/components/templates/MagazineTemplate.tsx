@@ -25,7 +25,9 @@ interface MagazineTemplateProps {
   isEditing?: boolean;
   userId?: string;
   subtitle?: string;
+  headline?: string;
   onUpdateSubtitle?: (subtitle: string) => void;
+  onUpdateHeadline?: (headline: string) => void;
   ctaVariant?: "ctaAmazon" | "ctaUrgent" | "ctaPremium" | "ctaTrust";
   onUpdateSection?: (index: number, section: Section) => void;
   onUpdateCta?: (text: string) => void;
@@ -39,10 +41,12 @@ export const MagazineTemplate = ({
   ctaText, 
   onCtaClick, 
   imageUrl, 
-  isEditing,
+  isEditing = false,
   userId,
   subtitle = "Featured Story",
+  headline = "",
   onUpdateSubtitle,
+  onUpdateHeadline,
   ctaVariant = "ctaAmazon",
   onUpdateSection,
   onUpdateCta,
@@ -217,16 +221,16 @@ export const MagazineTemplate = ({
               subtitle
             )}
           </div>
-          {isEditing ? (
+          {isEditing && onUpdateHeadline ? (
             <RichTextEditor
-              value={heroSection?.heading || "Your Compelling Headline Here"}
-              onSave={(value) => handleSectionUpdate(0, "heading", value)}
+              value={headline || "Your Compelling Headline Here"}
+              onSave={onUpdateHeadline}
               className="text-2xl md:text-4xl lg:text-5xl font-bold mb-4 md:mb-6 leading-tight font-serif text-center"
               as="h1"
             />
           ) : (
             <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold mb-4 md:mb-6 leading-tight font-serif">
-              {heroSection?.heading || "Your Compelling Headline Here"}
+              {headline || "Your Compelling Headline Here"}
             </h1>
           )}
           {isEditing ? (

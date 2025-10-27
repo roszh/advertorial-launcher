@@ -18,7 +18,7 @@ import { SectionEditor } from "@/components/SectionEditor";
 import { StickyCtaButton } from "@/components/StickyCtaButton";
 import { HtmlEditor } from "@/components/HtmlEditor";
 import { toast } from "@/hooks/use-toast";
-import { stripHtmlTags } from "@/lib/utils";
+import { stripHtmlTags, cn } from "@/lib/utils";
 import { Loader2, Save, Globe, Edit2, Plus, Sparkles, Code, X, Undo2 } from "lucide-react";
 
 interface Section {
@@ -61,6 +61,8 @@ const Index = () => {
   const [stickyCtaThreshold, setStickyCtaThreshold] = useState<number>(20);
   const [undoStack, setUndoStack] = useState<{ sections: Section[], timestamp: number } | null>(null);
   const [subtitle, setSubtitle] = useState<string>("Featured Story");
+  const [headline, setHeadline] = useState<string>("");
+  const [previewMode, setPreviewMode] = useState<"desktop" | "mobile">("desktop");
   const [showHtmlEditor, setShowHtmlEditor] = useState(false);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [availableTags, setAvailableTags] = useState<Array<{id: string, name: string, color: string}>>([]);
@@ -116,6 +118,13 @@ const Index = () => {
       setCtaStyle((data.cta_style as any) || "ctaAmazon");
       setStickyCtaThreshold((data.sticky_cta_threshold as number) || 20);
       setSubtitle(data.subtitle || "Featured Story");
+      
+      // Extract headline from first hero section if exists
+      const heroSection = content.sections?.find((s: Section) => s.type === "hero");
+      if (heroSection) {
+        setHeadline(heroSection.heading || heroSection.content || "");
+      }
+      
       setAnalysisResult({
         layout: "default",
         sections: content.sections,
@@ -264,6 +273,12 @@ const Index = () => {
       // Auto-generate title and slug
       const autoTitle = generateAutoTitle(cleanedData.sections, inputText);
       setPageTitle(autoTitle);
+      
+      // Extract headline from first hero section
+      const heroSection = cleanedData.sections?.find((s: Section) => s.type === "hero");
+      if (heroSection) {
+        setHeadline(heroSection.heading || heroSection.content || "");
+      }
       
       // Auto-save as draft
       const slug = generateSlug(autoTitle);
@@ -579,7 +594,9 @@ const Index = () => {
       isEditing: true,
       userId: user?.id,
       subtitle: subtitle,
+      headline: headline,
       onUpdateSubtitle: setSubtitle,
+      onUpdateHeadline: setHeadline,
       onUpdateSection: handleUpdateSection,
       onUpdateCta: handleUpdateCta,
       onAddSection: handleAddSectionAt,
@@ -703,6 +720,24 @@ const Index = () => {
                     <Code className="mr-1 h-3 w-3" />
                     HTML
                   </Button>
+                  <div className="flex gap-1 border rounded-md p-1">
+                    <Button
+                      variant={previewMode === "desktop" ? "default" : "ghost"}
+                      size="sm"
+                      onClick={() => setPreviewMode("desktop")}
+                      className="h-6 px-2 text-xs"
+                    >
+                      Desktop
+                    </Button>
+                    <Button
+                      variant={previewMode === "mobile" ? "default" : "ghost"}
+                      size="sm"
+                      onClick={() => setPreviewMode("mobile")}
+                      className="h-6 px-2 text-xs"
+                    >
+                      Mobile
+                    </Button>
+                  </div>
                   <Button onClick={handleReset} variant="ghost" size="sm" className="h-8 px-3 text-xs">
                     Cancel
                   </Button>
@@ -729,6 +764,26 @@ const Index = () => {
               </div>
 
               <TabsContent value="content" className="m-0 space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-medium mb-1 block">Headline</label>
+                    <Input
+                      placeholder="Main article headline..."
+                      value={headline}
+                      onChange={(e) => setHeadline(e.target.value)}
+                      className="h-9"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium mb-1 block">Subheadline</label>
+                    <Input
+                      placeholder="Article subheadline..."
+                      value={subtitle}
+                      onChange={(e) => setSubtitle(e.target.value)}
+                      className="h-9"
+                    />
+                  </div>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <div>
                     <label className="text-xs font-medium mb-1 block">Page Title</label>
@@ -945,7 +1000,12 @@ const Index = () => {
           </div>
         ) : (
           <>
-            {renderTemplate()}
+            <div className={cn(
+              "mx-auto transition-all duration-300",
+              previewMode === "mobile" ? "max-w-[375px]" : "w-full"
+            )}>
+              {renderTemplate()}
+            </div>
             <div className="container py-8">
               <div className="flex gap-2 justify-center">
                 <Button

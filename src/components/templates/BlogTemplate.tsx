@@ -25,7 +25,9 @@ interface BlogTemplateProps {
   isEditing?: boolean;
   userId?: string;
   subtitle?: string;
+  headline?: string;
   onUpdateSubtitle?: (subtitle: string) => void;
+  onUpdateHeadline?: (headline: string) => void;
   ctaVariant?: "ctaAmazon" | "ctaUrgent" | "ctaPremium" | "ctaTrust";
   onUpdateSection?: (index: number, section: Section) => void;
   onUpdateCta?: (text: string) => void;
@@ -39,10 +41,12 @@ export const BlogTemplate = ({
   ctaText, 
   onCtaClick, 
   imageUrl, 
-  isEditing,
+  isEditing = false,
   userId,
   subtitle = "Expert Insights",
+  headline = "",
   onUpdateSubtitle,
+  onUpdateHeadline,
   ctaVariant = "ctaAmazon",
   onUpdateSection,
   onUpdateCta,
@@ -261,10 +265,10 @@ export const BlogTemplate = ({
                 subtitle
               )}
             </div>
-            {isEditing ? (
+            {isEditing && onUpdateHeadline ? (
               <RichTextEditor
-                value={heroSection?.heading || "Discover the Ultimate Guide"}
-                onSave={(value) => handleSectionUpdate(0, "heading", value)}
+                value={headline || "Discover the Ultimate Guide"}
+                onSave={onUpdateHeadline}
                 className="text-xl md:text-3xl lg:text-4xl font-bold mb-3 md:mb-4 leading-tight"
                 as="h1"
               />
@@ -272,7 +276,7 @@ export const BlogTemplate = ({
               <h1 
                 className="text-xl md:text-3xl lg:text-4xl font-bold mb-3 md:mb-4 leading-tight"
                 dangerouslySetInnerHTML={{ 
-                  __html: (heroSection?.heading || "Discover the Ultimate Guide")
+                  __html: (headline || "Discover the Ultimate Guide")
                     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
                     .replace(/\*(.+?)\*/g, '<em>$1</em>') 
                 }}

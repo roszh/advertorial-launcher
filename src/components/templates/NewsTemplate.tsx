@@ -25,7 +25,9 @@ interface NewsTemplateProps {
   isEditing?: boolean;
   userId?: string;
   subtitle?: string;
+  headline?: string;
   onUpdateSubtitle?: (subtitle: string) => void;
+  onUpdateHeadline?: (headline: string) => void;
   ctaVariant?: "ctaAmazon" | "ctaUrgent" | "ctaPremium" | "ctaTrust";
   onUpdateSection?: (index: number, section: Section) => void;
   onUpdateCta?: (text: string) => void;
@@ -39,10 +41,12 @@ export const NewsTemplate = ({
   ctaText, 
   onCtaClick, 
   imageUrl, 
-  isEditing,
+  isEditing = false,
   userId,
   subtitle = "Breaking News",
+  headline = "",
   onUpdateSubtitle,
+  onUpdateHeadline,
   ctaVariant = "ctaAmazon",
   onUpdateSection,
   onUpdateCta,
@@ -240,10 +244,10 @@ export const NewsTemplate = ({
       </div>
 
       <header className="max-w-5xl mx-auto px-4 py-6 md:py-12">
-        {isEditing ? (
+        {isEditing && onUpdateHeadline ? (
           <RichTextEditor
-            value={heroSection?.heading || "Breaking: Major Development Unfolds"}
-            onSave={(value) => handleSectionUpdate(0, "heading", value)}
+            value={headline || "Breaking: Major Development Unfolds"}
+            onSave={onUpdateHeadline}
             className="text-2xl md:text-4xl lg:text-5xl font-bold mb-3 md:mb-4 leading-[1.1] font-serif"
             as="h1"
           />
@@ -251,7 +255,7 @@ export const NewsTemplate = ({
           <h1 
             className="text-2xl md:text-4xl lg:text-5xl font-bold mb-3 md:mb-4 leading-[1.1] font-serif"
             dangerouslySetInnerHTML={{ 
-              __html: (heroSection?.heading || "Breaking: Major Development Unfolds")
+              __html: (headline || "Breaking: Major Development Unfolds")
                 .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
                 .replace(/\*(.+?)\*/g, '<em>$1</em>') 
             }}
