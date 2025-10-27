@@ -14,6 +14,7 @@ interface Section {
   imagePosition?: "left" | "right" | "full" | "none";
   style?: "normal" | "emphasized" | "callout";
   imageUrl?: string;
+  ctaText?: string;
 }
 
 interface MagazineTemplateProps {
@@ -142,14 +143,29 @@ export const MagazineTemplate = ({
             
             {section.type === "cta" && (
               <div className="my-6 md:my-8 p-4 md:p-6 lg:p-8 bg-secondary/30 rounded-lg text-center">
-                <Button
-                  variant={ctaVariant}
-                  size="lg"
-                  onClick={() => onCtaClick(`button${actualIndex}`)}
-                  className="text-sm md:text-base lg:text-lg px-6 md:px-8 py-4 md:py-6 h-auto w-full md:w-auto"
-                >
-                  {ctaText}
-                </Button>
+                {isEditing ? (
+                  <Button
+                    variant={ctaVariant}
+                    size="lg"
+                    className="text-sm md:text-base lg:text-lg px-6 md:px-8 py-4 md:py-6 h-auto w-full md:w-auto"
+                  >
+                    <RichTextEditor
+                      value={section.ctaText || ctaText}
+                      onSave={(value) => handleSectionUpdate(actualIndex, "ctaText", value)}
+                      className="font-bold"
+                      as="p"
+                    />
+                  </Button>
+                ) : (
+                  <Button
+                    variant={ctaVariant}
+                    size="lg"
+                    onClick={() => onCtaClick(`button${actualIndex}`)}
+                    className="text-sm md:text-base lg:text-lg px-6 md:px-8 py-4 md:py-6 h-auto w-full md:w-auto"
+                  >
+                    {section.ctaText || ctaText}
+                  </Button>
+                )}
               </div>
             )}
           </section>
@@ -162,7 +178,8 @@ export const MagazineTemplate = ({
               onAddCtaBelow={() => {
                 const ctaSection = {
                   type: "cta" as const,
-                  content: ""
+                  content: "",
+                  ctaText: ctaText || "Click Here"
                 };
                 onUpdateSection?.(actualIndex + 1, ctaSection);
               }}

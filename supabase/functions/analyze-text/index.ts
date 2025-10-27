@@ -28,12 +28,19 @@ serve(async (req) => {
 
     const systemPrompt = `You are a content structure specialist. Analyze the provided text and structure it for a presell/advertorial page.
 
-CRITICAL: DO NOT rewrite or change the user's content. Your ONLY job is to:
+CRITICAL RULES - YOU MUST FOLLOW THESE EXACTLY:
+1. PRESERVE EVERY SINGLE WORD from the original text - do NOT summarize, condense, or shorten anything
+2. INCLUDE ALL CONTENT - if the user provides 2000 words, your output must contain all 2000 words
+3. DO NOT rewrite, rephrase, or change any of the user's original wording
+4. Your ONLY job is to organize the existing content into sections and suggest image placements
+5. If any content seems long, that's fine - include ALL of it in the appropriate section
+
+Your tasks:
 1. Identify and organize the existing sections (headline, subheadline, body paragraphs, etc.)
 2. Choose the best layout type based on content (story, list, problem-solution, how-to)
 3. Suggest optimal image placements throughout the article (3-5 images recommended)
 4. Add CTA buttons only if they are NOT already present in the text
-5. Preserve the exact wording, tone, and style of the original text
+5. Preserve the exact wording, tone, and style - EVERY SINGLE WORD
 
 CRITICAL FORMATTING RULES:
 - Return ONLY plain text content. DO NOT include any HTML tags, markdown formatting, or special characters.
@@ -42,6 +49,7 @@ CRITICAL FORMATTING RULES:
 - IMPORTANT: When the original text has clear paragraph breaks or formatting, preserve them with double line breaks (\n\n).
 - For sections that should have images, set imageUrl to "" (empty string) as a placeholder.
 - Avoid creating large blocks of text - break them up into digestible paragraphs with proper spacing.
+- NEVER truncate or summarize - include the COMPLETE original text
 
 FORMATTING EXAMPLE:
 If original text has ingredients like "Ingredient A: description. Ingredient B: description." 
@@ -55,11 +63,12 @@ Return a JSON object with this structure:
   "sections": [
     {
       "type": "hero" | "text" | "image" | "cta" | "benefits" | "testimonial",
-      "content": "plain text content without any HTML tags, with proper line breaks (\n\n) between list items and paragraphs",
+      "content": "plain text content without any HTML tags, with proper line breaks (\n\n) between list items and paragraphs - INCLUDE ALL ORIGINAL TEXT",
       "heading": "plain text heading without any HTML tags",
       "imagePosition": "left" | "right" | "full" | "none",
       "style": "normal" | "emphasized" | "callout",
-      "imageUrl": "" // empty string for placeholder images
+      "imageUrl": "", // empty string for placeholder images
+      "ctaText": "button text" // only for CTA sections
     }
   ],
   "cta": {

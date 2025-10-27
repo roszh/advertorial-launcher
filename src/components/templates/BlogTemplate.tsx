@@ -14,6 +14,7 @@ interface Section {
   imagePosition?: "left" | "right" | "full" | "none";
   style?: "normal" | "emphasized" | "callout";
   imageUrl?: string;
+  ctaText?: string;
 }
 
 interface BlogTemplateProps {
@@ -149,12 +150,12 @@ export const BlogTemplate = ({
                 <div className="bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10 rounded-lg p-4 md:p-6 lg:p-8">
                   {isEditing && section.heading ? (
                     <RichTextEditor
-                      value={section.heading}
+                      value={section.heading || ""}
                       onSave={(value) => handleSectionUpdate(actualIndex, "heading", value)}
                       className="text-lg md:text-xl lg:text-2xl font-bold mb-3 md:mb-4"
                       as="h3"
                     />
-                  ) : (
+                  ) : section.heading ? (
                     <h3 
                       className="text-lg md:text-xl lg:text-2xl font-bold mb-3 md:mb-4"
                       dangerouslySetInnerHTML={{ 
@@ -163,15 +164,30 @@ export const BlogTemplate = ({
                           .replace(/\*(.+?)\*/g, '<em>$1</em>') 
                       }}
                     />
+                  ) : null}
+                  {isEditing ? (
+                    <Button
+                      variant={ctaVariant}
+                      size="lg"
+                      className="text-sm md:text-base lg:text-lg px-6 md:px-10 py-4 md:py-6 h-auto w-full md:w-auto"
+                    >
+                      <RichTextEditor
+                        value={section.ctaText || ctaText}
+                        onSave={(value) => handleSectionUpdate(actualIndex, "ctaText", value)}
+                        className="font-bold"
+                        as="p"
+                      />
+                    </Button>
+                  ) : (
+                    <Button
+                      variant={ctaVariant}
+                      size="lg"
+                      onClick={() => onCtaClick(`button${actualIndex}`)}
+                      className="text-sm md:text-base lg:text-lg px-6 md:px-10 py-4 md:py-6 h-auto w-full md:w-auto"
+                    >
+                      {section.ctaText || ctaText}
+                    </Button>
                   )}
-                  <Button
-                    variant={ctaVariant}
-                    size="lg"
-                    onClick={() => onCtaClick(`button${actualIndex}`)}
-                    className="text-sm md:text-base lg:text-lg px-6 md:px-10 py-4 md:py-6 h-auto w-full md:w-auto"
-                  >
-                    {ctaText}
-                  </Button>
                 </div>
               </div>
             )}
@@ -185,7 +201,8 @@ export const BlogTemplate = ({
               onAddCtaBelow={() => {
                 const ctaSection = {
                   type: "cta" as const,
-                  content: ""
+                  content: "",
+                  ctaText: ctaText || "Click Here"
                 };
                 onUpdateSection?.(actualIndex + 1, ctaSection);
               }}

@@ -28,6 +28,7 @@ interface Section {
   imagePosition?: "left" | "right" | "full" | "none";
   style?: "normal" | "emphasized" | "callout";
   imageUrl?: string;
+  ctaText?: string;
 }
 
 interface AnalysisResult {

@@ -14,6 +14,7 @@ interface Section {
   imagePosition?: "left" | "right" | "full" | "none";
   style?: "normal" | "emphasized" | "callout";
   imageUrl?: string;
+  ctaText?: string;
 }
 
 interface NewsTemplateProps {
@@ -147,15 +148,41 @@ export const NewsTemplate = ({
             
             {section.type === "cta" && (
               <div className="my-6 md:my-10 p-4 md:p-6 bg-muted/50 border-l-4 border-primary">
-                <p className="text-base md:text-lg font-semibold mb-3 md:mb-4">{section.heading}</p>
-                <Button
-                  variant={ctaVariant}
-                  size="lg"
-                  onClick={() => onCtaClick(`button${actualIndex}`)}
-                  className="w-full"
-                >
-                  {ctaText}
-                </Button>
+                {section.heading && (
+                  isEditing ? (
+                    <RichTextEditor
+                      value={section.heading}
+                      onSave={(value) => handleSectionUpdate(actualIndex, "heading", value)}
+                      className="text-base md:text-lg font-semibold mb-3 md:mb-4"
+                      as="p"
+                    />
+                  ) : (
+                    <p className="text-base md:text-lg font-semibold mb-3 md:mb-4">{section.heading}</p>
+                  )
+                )}
+                {isEditing ? (
+                  <Button
+                    variant={ctaVariant}
+                    size="lg"
+                    className="w-full"
+                  >
+                    <RichTextEditor
+                      value={section.ctaText || ctaText}
+                      onSave={(value) => handleSectionUpdate(actualIndex, "ctaText", value)}
+                      className="font-bold"
+                      as="p"
+                    />
+                  </Button>
+                ) : (
+                  <Button
+                    variant={ctaVariant}
+                    size="lg"
+                    onClick={() => onCtaClick(`button${actualIndex}`)}
+                    className="w-full"
+                  >
+                    {section.ctaText || ctaText}
+                  </Button>
+                )}
               </div>
             )}
           </section>
@@ -168,7 +195,8 @@ export const NewsTemplate = ({
               onAddCtaBelow={() => {
                 const ctaSection = {
                   type: "cta" as const,
-                  content: ""
+                  content: "",
+                  ctaText: ctaText || "Click Here"
                 };
                 onUpdateSection?.(actualIndex + 1, ctaSection);
               }}
