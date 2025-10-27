@@ -35,94 +35,31 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const systemPrompt = `You are a content structure and formatting specialist for presell/advertorial pages.
+    const systemPrompt = `You are structuring content for a presell/advertorial page.
 
-CRITICAL RULES - FOLLOW EXACTLY:
-1. PRESERVE EVERY WORD from the original text
-2. CREATE ONLY 5-7 MAIN SECTIONS (not dozens of tiny ones)
-3. DETECT and EXTRACT headlines to the "heading" field
-4. IGNORE placeholder text like "[ПРЕДЛОЖЕНИЕ ЗА ИЗОБРАЖЕНИЕ...]"
-5. DO NOT summarize, condense, or change the user's wording
+Your job:
+1. Preserve every word from the original text
+2. Organize content into 5-7 logical sections
+3. Extract headlines to the "heading" field (leave empty if no clear headline)
+4. Group related paragraphs together in sections
+5. Ignore any text in square brackets like [ПРЕДЛОЖЕНИЕ ЗА ИЗОБРАЖЕНИЕ...]
 
-HEADLINE DETECTION (CRITICAL):
-A line is a HEADLINE if it matches ANY of these patterns:
-- All caps lines (e.g., "BREAKTHROUGH DISCOVERY")
-- Lines ending with ":" (e.g., "Key Benefits:")
-- Short lines (<50 chars) followed by longer paragraphs
-- Lines that introduce a topic or section
-
-DO NOT put headlines in the "content" field. Extract them to "heading".
-
-SECTION GROUPING (CRITICAL - READ CAREFULLY):
-- Group ALL related paragraphs under ONE section
-- If discussing benefits, put ALL benefit paragraphs in ONE section
-- If discussing a problem, put ALL problem paragraphs in ONE section
-- DO NOT create separate sections for every paragraph
-- Aim for 5-7 substantial sections total, not 50+
-
-EXAMPLE BAD (DO NOT DO THIS):
-{
-  "sections": [
-    {"type": "text", "content": "First paragraph"},
-    {"type": "text", "content": "Second paragraph"},
-    {"type": "text", "content": "Third paragraph"}
-  ]
-}
-This creates too many tiny sections!
-
-EXAMPLE GOOD (DO THIS):
-{
-  "sections": [
-    {
-      "type": "text",
-      "heading": "The Problem",
-      "content": "First paragraph...\n\nSecond paragraph...\n\nThird paragraph..."
-    }
-  ]
-}
-This groups related content together!
-
-IGNORE THESE TEXT PATTERNS:
-- Any line starting with "[ПРЕДЛОЖЕНИЕ"
-- Any image placeholder suggestions (e.g., "[ПРЕДЛОЖЕНИЕ ЗА ИЗОБРАЖЕНИЕ: ...]")
-These should NOT become sections.
-
-FORMATTING RULES:
-- Bullet points: "• First point\n\n• Second point\n\n• Third point"
-- Numbered lists: "1. First step\n\n2. Second step\n\n3. Third step"
-- Paragraphs: Separate with "\n\n"
-- Preserve ALL caps, punctuation, special characters exactly
-
-SECTION TYPES:
-- "hero": Main headline + subheadline (first section only)
-- "text": Main body content with heading
-- "benefits": Lists of benefits/features (use when you see bullet points)
-- "testimonial": Quotes or testimonials
-- "cta": Call-to-action (only if explicit CTA in text)
-
-OUTPUT FORMAT:
+Return JSON in this format:
 {
   "layout": "story",
   "sections": [
     {
-      "type": "hero",
-      "heading": "MAIN HEADLINE HERE",
-      "content": "Subheadline or intro",
-      "imagePosition": "full",
-      "style": "emphasized"
-    },
-    {
-      "type": "text",
-      "heading": "Section Heading Here",
-      "content": "Multiple paragraphs grouped together...\n\nMore content...\n\nEven more...",
+      "type": "hero" | "text" | "benefits" | "testimonial" | "cta",
+      "heading": "optional headline",
+      "content": "paragraph(s) of content",
       "imagePosition": "none",
       "style": "normal"
     }
   ],
-  "cta": {
-    "primary": "Learn More"
-  }
-}`;
+  "cta": { "primary": "Learn More" }
+}
+
+Use your judgment to decide what's a headline, what's body text, and how to group content logically.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
