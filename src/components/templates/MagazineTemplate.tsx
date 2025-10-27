@@ -4,6 +4,7 @@ import { InlineImageUpload } from "../InlineImageUpload";
 import { RichTextEditor } from "../RichTextEditor";
 import { SectionControls } from "../SectionControls";
 import { DraggableSections } from "../DraggableSections";
+import { PresellSection } from "../PresellSection";
 import placeholderImage from "@/assets/hero-image.jpg";
 import { useState } from "react";
 
@@ -87,6 +88,30 @@ export const MagazineTemplate = ({
           "group relative transition-all duration-300",
           isDeleting && "ring-4 ring-destructive ring-opacity-50 bg-destructive/5 rounded-lg animate-pulse"
         )}>
+          {(section.type === "quote" || section.type === "facebook-testimonial" || section.type === "bullet-box") ? (
+            <>
+              {isEditing ? (
+                <div className="relative">
+                  <PresellSection
+                    section={section}
+                    ctaText={ctaText}
+                    onCtaClick={onCtaClick}
+                    elementId={`section${actualIndex}`}
+                  />
+                  <div className="absolute top-4 right-4 bg-muted/80 backdrop-blur-sm rounded-lg p-2 text-xs">
+                    Click text to edit
+                  </div>
+                </div>
+              ) : (
+                <PresellSection
+                  section={section}
+                  ctaText={ctaText}
+                  onCtaClick={onCtaClick}
+                  elementId={`section${actualIndex}`}
+                />
+              )}
+            </>
+          ) : (
           <section className="mb-6 md:mb-8">
             {section.heading && (
               isEditing ? (
@@ -220,6 +245,7 @@ export const MagazineTemplate = ({
               </div>
             )}
           </section>
+          )}
           
           {isEditing && onAddSection && onDeleteSection && (
             <SectionControls
