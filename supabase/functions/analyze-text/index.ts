@@ -142,7 +142,8 @@ EXAMPLE OUTPUT:
           { role: "system", content: systemPrompt },
           { role: "user", content: `Structure this text for a presell page (preserve the original wording):\n\n${text}` }
         ],
-        response_format: { type: "json_object" }
+        response_format: { type: "json_object" },
+        max_completion_tokens: 16000
       }),
     });
 
@@ -176,7 +177,7 @@ EXAMPLE OUTPUT:
     }
 
     const data = await response.json();
-    console.log("AI response received:", JSON.stringify(data).substring(0, 200));
+    console.log("AI response received. Length:", JSON.stringify(data).length, "Preview:", JSON.stringify(data).substring(0, 200));
     
     if (!data.choices || !data.choices[0] || !data.choices[0].message || !data.choices[0].message.content) {
       console.error("Invalid AI response structure:", JSON.stringify(data));
@@ -227,18 +228,76 @@ EXAMPLE OUTPUT:
       const inputLen = text.length;
       const outputLen = (result.sections || []).reduce((acc: number, s: any) => acc + String(s.content || "").length, 0);
       if (outputLen < Math.max(inputLen * 0.9, inputLen - 200)) {
-        const paragraphs = text.split(/\n{2,}/).map(p => p.trim()).filter(Boolean);
-        const rebuilt = paragraphs.map(p => ({
-          type: "text",
-          content: p,
-          heading: undefined,
-          imagePosition: "none",
-          style: "normal",
-          imageUrl: ""
-        }));
-        // No image placeholders added - user will add them manually
-        result = { layout: "story", sections: rebuilt, cta: result.cta || { primary: "Learn More" } };
-        console.log("AI output detected as truncated; rebuilt from input text.");
+        console.log("AI output detected as truncated; rebuilding with structure from input text.");
+        
+        const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+        const rebuilt: any[] = [];
+        let currentSection: any = null;
+        
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i];
+          const nextLine = lines[i + 1];
+          
+          // Detect headlines: all caps, short (<80 chars), or ends with ":"
+          const isHeadline = (
+            line === line.toUpperCase() && line.length < 80 ||
+            line.endsWith(':') ||
+            (line.length < 50 && nextLine && nextLine.length > line.length * 1.5)
+          );
+          
+          if (isHeadline) {
+            // Save previous section
+            if (currentSection && currentSection.content.trim()) {
+              rebuilt.push(currentSection);
+            }
+            // Start new section
+            currentSection = {
+              type: "text",
+              heading: line.replace(/:$/, ''),
+              content: "",
+              imagePosition: "none",
+              style: "normal",
+              imageUrl: ""
+            };
+          } else if (line.match(/^[•\-\*]\s/) || line.match(/^\d+\.\s/)) {
+            // Bullet point or numbered list
+            if (!currentSection) {
+              currentSection = {
+                type: "benefits",
+                heading: undefined,
+                content: "",
+                imagePosition: "none",
+                style: "callout",
+                imageUrl: ""
+              };
+            }
+            currentSection.content += (currentSection.content ? '\n\n' : '') + line;
+          } else {
+            // Regular paragraph
+            if (!currentSection) {
+              currentSection = {
+                type: "text",
+                heading: undefined,
+                content: "",
+                imagePosition: "none",
+                style: "normal",
+                imageUrl: ""
+              };
+            }
+            currentSection.content += (currentSection.content ? '\n\n' : '') + line;
+          }
+        }
+        
+        // Add final section
+        if (currentSection && currentSection.content.trim()) {
+          rebuilt.push(currentSection);
+        }
+        
+        result = { 
+          layout: "story", 
+          sections: rebuilt.length > 0 ? rebuilt : [{ type: "text", content: text, heading: undefined, imagePosition: "none", style: "normal", imageUrl: "" }],
+          cta: result.cta || { primary: "Learn More" } 
+        };
       }
       
       console.log("Successfully parsed AI response");

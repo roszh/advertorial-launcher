@@ -69,6 +69,9 @@ const Index = () => {
   const [showNewTagDialog, setShowNewTagDialog] = useState(false);
   const [newTagName, setNewTagName] = useState("");
   const [newTagColor, setNewTagColor] = useState("#3b82f6");
+  const [showAddMoreDialog, setShowAddMoreDialog] = useState(false);
+  const [addMoreText, setAddMoreText] = useState("");
+  const [isAddingMore, setIsAddingMore] = useState(false);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -639,6 +642,54 @@ const Index = () => {
     toast({ title: `${type === "image" ? "Image" : "Paragraph"} section added!` });
   };
 
+  const handleAddMoreText = async () => {
+    if (!addMoreText.trim() || !analysisResult) {
+      toast({ 
+        title: "Please enter some text", 
+        variant: "destructive" 
+      });
+      return;
+    }
+    
+    setIsAddingMore(true);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke("analyze-text", {
+        body: { text: addMoreText }
+      });
+      
+      if (error) throw error;
+      
+      if (data && data.sections) {
+        // Filter out hero section from new content (we already have one)
+        const newSections = data.sections.filter((s: Section) => s.type !== "hero");
+        
+        // Append new sections to existing ones
+        setAnalysisResult({
+          ...analysisResult,
+          sections: [...analysisResult.sections, ...newSections]
+        });
+        
+        toast({ 
+          title: `Added ${newSections.length} new section${newSections.length > 1 ? 's' : ''}!`,
+          description: "Scroll down to see the new content"
+        });
+        
+        setShowAddMoreDialog(false);
+        setAddMoreText("");
+      }
+    } catch (error: any) {
+      console.error("Error adding more text:", error);
+      toast({ 
+        title: "Error parsing text", 
+        description: error.message,
+        variant: "destructive" 
+      });
+    } finally {
+      setIsAddingMore(false);
+    }
+  };
+
   const handleOptimizeWithAI = async () => {
     if (!analysisResult) return;
     
@@ -1046,6 +1097,13 @@ const Index = () => {
                   <Plus className="h-4 w-4 mr-2" />
                   Add Section
                 </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowAddMoreDialog(true)}
+                >
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Parse & Add More Text
+                </Button>
               </div>
             </div>
           </>
@@ -1055,6 +1113,61 @@ const Index = () => {
           text={analysisResult.cta.primary} 
           onClick={() => ctaUrl && window.open(ctaUrl, "_blank")} 
         />
+
+        {/* Parse & Add More Text Dialog */}
+        <Dialog open={showAddMoreDialog} onOpenChange={setShowAddMoreDialog}>
+          <DialogContent className="bg-background max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Parse & Add More Text</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="add-more-text">
+                  Paste additional text to add to your page
+                </Label>
+                <Textarea
+                  id="add-more-text"
+                  placeholder="Paste your additional content here... The AI will structure it and add it to the end of your page."
+                  value={addMoreText}
+                  onChange={(e) => setAddMoreText(e.target.value)}
+                  className="min-h-[300px] font-mono text-sm"
+                  disabled={isAddingMore}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Tip: For best results with long texts (5,000+ words), paste in chunks of ~3,000 words at a time.
+                </p>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setShowAddMoreDialog(false);
+                  setAddMoreText("");
+                }}
+                disabled={isAddingMore}
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleAddMoreText}
+                disabled={isAddingMore}
+              >
+                {isAddingMore ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Parsing...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    Parse & Add
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* New Tag Dialog */}
         <Dialog open={showNewTagDialog} onOpenChange={setShowNewTagDialog}>
