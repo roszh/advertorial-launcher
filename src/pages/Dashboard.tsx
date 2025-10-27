@@ -248,7 +248,13 @@ export default function Dashboard() {
                       <CardTitle>{page.title}</CardTitle>
                       <CardDescription>
                         Created {new Date(page.created_at).toLocaleDateString()}
-                        {page.published_at && ` • Published ${new Date(page.published_at).toLocaleDateString()}`}
+                        {page.published_at && ` • Published ${new Date(page.published_at).toLocaleString('en-GB', { 
+                          day: '2-digit', 
+                          month: '2-digit', 
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}`}
                       </CardDescription>
                       {page.tags && page.tags.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-2">
