@@ -15,6 +15,7 @@ export default function Settings() {
   const [googleAnalyticsId, setGoogleAnalyticsId] = useState("");
   const [facebookPixelId, setFacebookPixelId] = useState("");
   const [triplewhaleToken, setTriplewhaleToken] = useState("");
+  const [microsoftClarityId, setMicrosoftClarityId] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -41,7 +42,7 @@ export default function Settings() {
   const loadProfile = async (userId: string) => {
     const { data } = await supabase
       .from("profiles")
-      .select("full_name, google_analytics_id, facebook_pixel_id, triplewhale_token")
+      .select("full_name, google_analytics_id, facebook_pixel_id, triplewhale_token, microsoft_clarity_id")
       .eq("id", userId)
       .single();
     
@@ -50,6 +51,7 @@ export default function Settings() {
       setGoogleAnalyticsId(data.google_analytics_id || "");
       setFacebookPixelId(data.facebook_pixel_id || "");
       setTriplewhaleToken(data.triplewhale_token || "");
+      setMicrosoftClarityId(data.microsoft_clarity_id || "");
     }
   };
 
@@ -63,7 +65,8 @@ export default function Settings() {
         full_name: fullName,
         google_analytics_id: googleAnalyticsId || null,
         facebook_pixel_id: facebookPixelId || null,
-        triplewhale_token: triplewhaleToken || null
+        triplewhale_token: triplewhaleToken || null,
+        microsoft_clarity_id: microsoftClarityId || null
       })
       .eq("id", user?.id);
 
@@ -150,6 +153,19 @@ export default function Settings() {
                 />
                 <p className="text-xs text-muted-foreground">
                   Enter your Triple Whale tracking token
+                </p>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="microsoftClarity">Microsoft Clarity ID</Label>
+                <Input
+                  id="microsoftClarity"
+                  placeholder="abc123def456"
+                  value={microsoftClarityId}
+                  onChange={(e) => setMicrosoftClarityId(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Enter your Microsoft Clarity project ID
                 </p>
               </div>
               

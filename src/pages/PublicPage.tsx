@@ -38,6 +38,7 @@ export default function PublicPage() {
     googleAnalyticsId?: string;
     facebookPixelId?: string;
     triplewhaleToken?: string;
+    microsoftClarityId?: string;
   }>({});
 
   useEffect(() => {
@@ -78,7 +79,7 @@ export default function PublicPage() {
         if (pageOwner) {
           const { data: profile } = await supabase
             .from("profiles")
-            .select("google_analytics_id, facebook_pixel_id, triplewhale_token")
+            .select("google_analytics_id, facebook_pixel_id, triplewhale_token, microsoft_clarity_id")
             .eq("id", pageOwner.user_id)
             .single();
 
@@ -87,6 +88,7 @@ export default function PublicPage() {
               googleAnalyticsId: profile.google_analytics_id || undefined,
               facebookPixelId: profile.facebook_pixel_id || undefined,
               triplewhaleToken: profile.triplewhale_token || undefined,
+              microsoftClarityId: profile.microsoft_clarity_id || undefined,
             });
           }
         }
@@ -171,6 +173,20 @@ export default function PublicPage() {
         w.TriplePixel('page', 'PageView');})();
       `;
       document.head.appendChild(twScript);
+    }
+
+    // Microsoft Clarity
+    if (trackingScripts.microsoftClarityId) {
+      const clarityScript = document.createElement('script');
+      clarityScript.type = 'text/javascript';
+      clarityScript.innerHTML = `
+        (function(c,l,a,r,i,t,y){
+          c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+          t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+          y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+        })(window, document, "clarity", "script", "${trackingScripts.microsoftClarityId}");
+      `;
+      document.head.appendChild(clarityScript);
     }
   }, [trackingScripts]);
 

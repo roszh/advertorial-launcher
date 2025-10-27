@@ -129,6 +129,7 @@ export type Database = {
           full_name: string | null
           google_analytics_id: string | null
           id: string
+          microsoft_clarity_id: string | null
           triplewhale_token: string | null
           updated_at: string | null
         }
@@ -140,6 +141,7 @@ export type Database = {
           full_name?: string | null
           google_analytics_id?: string | null
           id: string
+          microsoft_clarity_id?: string | null
           triplewhale_token?: string | null
           updated_at?: string | null
         }
@@ -151,6 +153,7 @@ export type Database = {
           full_name?: string | null
           google_analytics_id?: string | null
           id?: string
+          microsoft_clarity_id?: string | null
           triplewhale_token?: string | null
           updated_at?: string | null
         }
