@@ -921,26 +921,6 @@ const Index = () => {
               </div>
 
               <TabsContent value="content" className="m-0 space-y-3">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs font-medium mb-1 block">Headline</label>
-                    <Input
-                      placeholder="Main article headline..."
-                      value={headline}
-                      onChange={(e) => setHeadline(e.target.value)}
-                      className="h-9"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium mb-1 block">Subheadline</label>
-                    <Input
-                      placeholder="Article subheadline..."
-                      value={subtitle}
-                      onChange={(e) => setSubtitle(e.target.value)}
-                      className="h-9"
-                    />
-                  </div>
-                </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <div>
                     <label className="text-xs font-medium mb-1 block">Page Title</label>
