@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { ImageUpload } from "@/components/ImageUpload";
 import { MagazineTemplate } from "@/components/templates/MagazineTemplate";
 import { NewsTemplate } from "@/components/templates/NewsTemplate";
@@ -60,6 +61,9 @@ const Index = () => {
   const [showHtmlEditor, setShowHtmlEditor] = useState(false);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [availableTags, setAvailableTags] = useState<Array<{id: string, name: string, color: string}>>([]);
+  const [showNewTagDialog, setShowNewTagDialog] = useState(false);
+  const [newTagName, setNewTagName] = useState("");
+  const [newTagColor, setNewTagColor] = useState("#3b82f6");
 
   useEffect(() => {
     const checkUser = async () => {
@@ -134,6 +138,38 @@ const Index = () => {
       .order("name");
     setAvailableTags(data || []);
   };
+
+  const handleCreateTag = async () => {
+    if (!newTagName.trim()) {
+      toast({ title: "Please enter a tag name", variant: "destructive" });
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from("tags")
+      .insert({ user_id: user?.id, name: newTagName.trim(), color: newTagColor })
+      .select();
+
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Tag created!" });
+      setNewTagName("");
+      setNewTagColor("#3b82f6");
+      setShowNewTagDialog(false);
+      fetchTags();
+      
+      // Automatically select the newly created tag
+      if (data && data[0]) {
+        setSelectedTags([...selectedTags, data[0].id]);
+      }
+    }
+  };
+
+  const colorPalette = [
+    "#3b82f6", "#22c55e", "#ef4444", "#eab308",
+    "#a855f7", "#ec4899", "#f97316", "#14b8a6"
+  ];
 
   const handleAnalyze = async () => {
     if (!inputText.trim()) {
@@ -554,7 +590,7 @@ const Index = () => {
         <div className="border-b bg-background/95 backdrop-blur sticky top-0 z-50">
           <div className="container py-3">
             <div className="flex flex-col gap-3">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs font-medium mb-1 block">Page Title</label>
                   <Input
@@ -572,6 +608,59 @@ const Index = () => {
                     onChange={(e) => setCTAUrl(e.target.value)}
                     className="h-9"
                   />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-medium mb-1 block">Tags</label>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {selectedTags.map(tagId => {
+                      const tag = availableTags.find(t => t.id === tagId);
+                      return tag ? (
+                        <Badge 
+                          key={tagId}
+                          style={{backgroundColor: tag.color, color: 'white'}}
+                          className="cursor-pointer text-xs"
+                          onClick={() => setSelectedTags(prev => prev.filter(id => id !== tagId))}
+                        >
+                          {tag.name}
+                          <X className="ml-1 h-3 w-3" />
+                        </Badge>
+                      ) : null;
+                    })}
+                    <Select 
+                      value="" 
+                      onValueChange={(val) => {
+                        if (val === "create-new") {
+                          setShowNewTagDialog(true);
+                        } else if (val && !selectedTags.includes(val)) {
+                          setSelectedTags([...selectedTags, val]);
+                        }
+                      }}
+                    >
+                      <SelectTrigger className="h-7 w-[120px] text-xs">
+                        <SelectValue placeholder="Add tag..." />
+                      </SelectTrigger>
+                      <SelectContent className="bg-background">
+                        <SelectItem value="create-new" className="text-xs font-semibold text-primary">
+                          <Plus className="inline h-3 w-3 mr-1" />
+                          Create new tag
+                        </SelectItem>
+                        {availableTags.length > 0 && <div className="h-px bg-border my-1" />}
+                        {availableTags
+                          .filter(tag => !selectedTags.includes(tag.id))
+                          .map(tag => (
+                            <SelectItem key={tag.id} value={tag.id} className="text-xs">
+                              <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full" style={{backgroundColor: tag.color}} />
+                                {tag.name}
+                              </div>
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
                 <div>
                   <label className="text-xs font-medium mb-1 block">Sticky CTA Shows at {stickyCtaThreshold}%</label>
@@ -652,66 +741,6 @@ const Index = () => {
                   </Button>
                 </div>
 
-                <div className="h-4 w-px bg-border" />
-
-                {/* Tag Selector */}
-                <div className="flex items-center gap-2">
-                  <Label className="text-xs">Tags:</Label>
-                  {selectedTags.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {selectedTags.map(tagId => {
-                        const tag = availableTags.find(t => t.id === tagId);
-                        return tag ? (
-                          <Badge 
-                            key={tagId}
-                            style={{backgroundColor: tag.color, color: 'white'}}
-                            className="cursor-pointer text-xs h-6"
-                            onClick={() => setSelectedTags(prev => prev.filter(id => id !== tagId))}
-                          >
-                            {tag.name}
-                            <X className="ml-1 h-3 w-3" />
-                          </Badge>
-                        ) : null;
-                      })}
-                    </div>
-                  )}
-                  {availableTags.length > 0 ? (
-                    <Select 
-                      value="" 
-                      onValueChange={(val) => {
-                        if (val && !selectedTags.includes(val)) {
-                          setSelectedTags([...selectedTags, val]);
-                        }
-                      }}
-                    >
-                      <SelectTrigger className="h-6 w-[100px] text-xs">
-                        <SelectValue placeholder="Add tag" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableTags
-                          .filter(tag => !selectedTags.includes(tag.id))
-                          .map(tag => (
-                            <SelectItem key={tag.id} value={tag.id} className="text-xs">
-                              <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 rounded-full" style={{backgroundColor: tag.color}} />
-                                {tag.name}
-                              </div>
-                            </SelectItem>
-                          ))}
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <Button 
-                      variant="link" 
-                      size="sm" 
-                      onClick={() => navigate('/settings')}
-                      className="h-6 px-2 text-xs"
-                    >
-                      Create tags
-                    </Button>
-                  )}
-                </div>
-                
                 <div className="h-4 w-px bg-border" />
                 
                 {undoStack && (
@@ -827,6 +856,52 @@ const Index = () => {
           text={analysisResult.cta.primary} 
           onClick={() => ctaUrl && window.open(ctaUrl, "_blank")} 
         />
+
+        {/* New Tag Dialog */}
+        <Dialog open={showNewTagDialog} onOpenChange={setShowNewTagDialog}>
+          <DialogContent className="bg-background">
+            <DialogHeader>
+              <DialogTitle>Create New Tag</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="tag-name">Tag Name</Label>
+                <Input
+                  id="tag-name"
+                  placeholder="e.g., Summer Campaign"
+                  value={newTagName}
+                  onChange={(e) => setNewTagName(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleCreateTag()}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Tag Color</Label>
+                <div className="flex gap-2">
+                  {colorPalette.map((color) => (
+                    <button
+                      key={color}
+                      type="button"
+                      className="w-10 h-10 rounded-md border-2 transition-all hover:scale-110"
+                      style={{ 
+                        backgroundColor: color,
+                        borderColor: newTagColor === color ? "hsl(var(--primary))" : "transparent"
+                      }}
+                      onClick={() => setNewTagColor(color)}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowNewTagDialog(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleCreateTag}>
+                Create Tag
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     );
   }
