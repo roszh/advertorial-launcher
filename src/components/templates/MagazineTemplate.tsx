@@ -130,17 +130,57 @@ export const MagazineTemplate = ({
                     enableAiOptimize={true}
                   />
                 ) : (
-                  section.content.split('\n\n').map((paragraph, pIndex) => (
-                    <p 
-                      key={pIndex} 
-                      className="text-sm md:text-base lg:text-lg leading-relaxed mb-3 md:mb-4 text-foreground/90 font-serif break-words"
-                      dangerouslySetInnerHTML={{ 
-                        __html: paragraph
-                          .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-                          .replace(/\*(.+?)\*/g, '<em>$1</em>') 
-                      }}
-                    />
-                  ))
+                  section.content.split('\n\n').map((paragraph, pIndex) => {
+                    const trimmed = paragraph.trim();
+                    
+                    // Detect bullet points (•, -, *)
+                    if (trimmed.match(/^[•\-\*]\s/)) {
+                      return (
+                        <div key={pIndex} className="flex gap-2 md:gap-3 mb-2 md:mb-3 text-sm md:text-base lg:text-lg leading-relaxed text-foreground/90 font-serif">
+                          <span className="flex-shrink-0 font-bold">•</span>
+                          <span 
+                            className="flex-1 break-words"
+                            dangerouslySetInnerHTML={{ 
+                              __html: trimmed.replace(/^[•\-\*]\s*/, '')
+                                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                                .replace(/\*(.+?)\*/g, '<em>$1</em>') 
+                            }}
+                          />
+                        </div>
+                      );
+                    }
+                    
+                    // Detect numbered lists (1., 2., etc.)
+                    const numberMatch = trimmed.match(/^(\d+)\.\s/);
+                    if (numberMatch) {
+                      return (
+                        <div key={pIndex} className="flex gap-2 md:gap-3 mb-2 md:mb-3 text-sm md:text-base lg:text-lg leading-relaxed text-foreground/90 font-serif">
+                          <span className="flex-shrink-0 font-bold">{numberMatch[1]}.</span>
+                          <span 
+                            className="flex-1 break-words"
+                            dangerouslySetInnerHTML={{ 
+                              __html: trimmed.replace(/^\d+\.\s*/, '')
+                                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                                .replace(/\*(.+?)\*/g, '<em>$1</em>') 
+                            }}
+                          />
+                        </div>
+                      );
+                    }
+                    
+                    // Regular paragraph
+                    return (
+                      <p 
+                        key={pIndex} 
+                        className="text-sm md:text-base lg:text-lg leading-relaxed mb-3 md:mb-4 text-foreground/90 font-serif break-words"
+                        dangerouslySetInnerHTML={{ 
+                          __html: paragraph
+                            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                            .replace(/\*(.+?)\*/g, '<em>$1</em>') 
+                        }}
+                      />
+                    );
+                  })
                 )}
               </div>
             )}

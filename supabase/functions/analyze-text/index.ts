@@ -35,61 +35,98 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const systemPrompt = `You are a content structure specialist. Analyze the provided text and structure it for a presell/advertorial page.
+    const systemPrompt = `You are a content structure and formatting specialist. Analyze the provided text and structure it for a presell/advertorial page while preserving ALL original formatting.
 
 CRITICAL RULES - YOU MUST FOLLOW THESE EXACTLY:
 1. PRESERVE EVERY SINGLE WORD from the original text - do NOT summarize, condense, or shorten anything
 2. INCLUDE ALL CONTENT - if the user provides 2000 words, your output must contain all 2000 words
 3. DO NOT rewrite, rephrase, or change any of the user's original wording
-4. Your ONLY job is to organize the existing content into meaningful sections with clear headings
-5. If any content seems long, that's fine - include ALL of it in the appropriate section
+4. Your job is to organize AND FORMAT the content properly for web display
+
+FORMATTING DETECTION & PRESERVATION:
+1. **Headlines**: Identify the main headline (usually the first line or largest text) and place it in the hero section's "heading" field
+2. **Subheadlines**: Identify supporting headlines or subtitles and place them in the hero section's "content" field OR as section headings
+3. **Bullet Points & Lists**: When you detect bullet points, numbered lists, or ingredient lists:
+   - Preserve each item on its own line
+   - Use "• " prefix for bullet points
+   - Use "1. ", "2. ", etc. for numbered lists
+   - Add double line breaks (\n\n) between each item for proper spacing
+4. **Paragraphs**: Separate paragraphs with double line breaks (\n\n)
+5. **Emphasis**: When text appears to be emphasized (all caps, repeated punctuation), preserve it exactly as written
 
 SECTION STRUCTURE RULES:
-1. Create a hero section with the main headline as "heading" and subheadline as "content"
-2. Group related paragraphs together under meaningful section headings
-3. Each body section MUST have a descriptive "heading" that summarizes what that section is about
-4. Aim for 3-7 main body sections (not dozens of tiny sections)
-5. Each section can contain multiple paragraphs in the "content" field
-6. DO NOT create a separate section for every single paragraph - group related content together
-7. DO NOT add any image placeholder sections - the user will add images manually
-8. Add CTA buttons only if they are NOT already present in the text
+1. Hero section MUST contain:
+   - "heading": The main article headline (first major heading in the text)
+   - "content": The subheadline or first engaging paragraph
+2. Body sections should:
+   - Group related content together (aim for 3-7 main sections, not dozens)
+   - Each section gets a descriptive "heading" that reflects the topic
+   - "content" contains all paragraphs, lists, and text for that section
+3. Special sections:
+   - Use "benefits" type when you detect a list of benefits/features
+   - Use "testimonial" type when you detect quotes or testimonials
+   - Use "cta" type only if there's an explicit call-to-action button in the text
+4. DO NOT add image sections - user will add them manually
 
-CRITICAL FORMATTING RULES:
-- Return ONLY plain text content. DO NOT include any HTML tags, markdown formatting, or special characters.
-- Use line breaks (\n\n) to separate paragraphs within a section's content.
-- IMPORTANT: When the original text contains lists, bullet points, or ingredients, you MUST add TWO line breaks (\n\n) between each item.
-- Preserve the exact wording, tone, and style - EVERY SINGLE WORD
-- NEVER truncate or summarize - include the COMPLETE original text
-- DO NOT include any image sections with type "image" - only text, hero, cta, benefits, or testimonial sections
+FORMATTING OUTPUT RULES:
+- For bullet points, format as: "• First benefit point\n\n• Second benefit point\n\n• Third benefit point"
+- For numbered lists, format as: "1. First step\n\n2. Second step\n\n3. Third step"
+- For paragraphs, separate with: "\n\n"
+- For emphasized text, preserve caps and punctuation exactly
+- Preserve any special characters, quotes, or symbols from the original
 
-EXAMPLE OUTPUT STRUCTURE:
+EXAMPLE INPUT:
+"BREAKTHROUGH DISCOVERY
+
+Scientists Reveal Secret to Youthful Skin
+
+A groundbreaking study shows remarkable results.
+
+Key Benefits:
+- Reduces wrinkles by 40%
+- Improves skin elasticity
+- Natural ingredients
+
+The research included three phases:
+1. Laboratory testing
+2. Clinical trials  
+3. Long-term studies"
+
+EXAMPLE OUTPUT:
 {
   "layout": "story",
   "sections": [
     {
       "type": "hero",
-      "heading": "Main Article Headline",
-      "content": "Subheadline or intro paragraph",
+      "heading": "BREAKTHROUGH DISCOVERY",
+      "content": "Scientists Reveal Secret to Youthful Skin",
       "imagePosition": "full",
       "style": "emphasized"
     },
     {
       "type": "text",
-      "heading": "First Major Topic",
-      "content": "Multiple paragraphs of content grouped together...\n\nSecond paragraph continues the topic...\n\nThird paragraph wraps it up...",
+      "heading": "Revolutionary Research",
+      "content": "A groundbreaking study shows remarkable results.",
       "imagePosition": "none",
       "style": "normal"
     },
     {
+      "type": "benefits",
+      "heading": "Key Benefits",
+      "content": "• Reduces wrinkles by 40%\n\n• Improves skin elasticity\n\n• Natural ingredients",
+      "imagePosition": "none",
+      "style": "callout"
+    },
+    {
       "type": "text",
-      "heading": "Second Major Topic",
-      "content": "Content for this section...",
+      "heading": "Research Phases",
+      "content": "The research included three phases:\n\n1. Laboratory testing\n\n2. Clinical trials\n\n3. Long-term studies",
       "imagePosition": "none",
       "style": "normal"
     }
   ],
   "cta": {
-    "primary": "main CTA text"
+    "primary": "Learn More"
   }
 }`;
 
