@@ -138,6 +138,110 @@ export const SectionEditor = ({
             </select>
           </div>
         )}
+
+        {section.author !== undefined && (
+          <div>
+            <label className="text-sm font-medium mb-2 block">Author</label>
+            <Input
+              value={editedSection.author || ""}
+              onChange={(e) =>
+                setEditedSection({ ...editedSection, author: e.target.value })
+              }
+              placeholder="Author name..."
+            />
+          </div>
+        )}
+
+        {section.authorRole !== undefined && (
+          <div>
+            <label className="text-sm font-medium mb-2 block">Author Role</label>
+            <Input
+              value={editedSection.authorRole || ""}
+              onChange={(e) =>
+                setEditedSection({ ...editedSection, authorRole: e.target.value })
+              }
+              placeholder="Author role..."
+            />
+          </div>
+        )}
+
+        {section.timestamp !== undefined && (
+          <div>
+            <label className="text-sm font-medium mb-2 block">Timestamp</label>
+            <Input
+              value={editedSection.timestamp || ""}
+              onChange={(e) =>
+                setEditedSection({ ...editedSection, timestamp: e.target.value })
+              }
+              placeholder="e.g. 2 days ago"
+            />
+          </div>
+        )}
+
+        {section.reactions !== undefined && (
+          <div>
+            <label className="text-sm font-medium mb-2 block">Reactions</label>
+            <Input
+              type="number"
+              value={editedSection.reactions || 0}
+              onChange={(e) =>
+                setEditedSection({ ...editedSection, reactions: parseInt(e.target.value) || 0 })
+              }
+              placeholder="Number of reactions"
+            />
+          </div>
+        )}
+
+        {section.items !== undefined && (
+          <div>
+            <label className="text-sm font-medium mb-2 block">Bullet Points</label>
+            <Textarea
+              value={editedSection.items?.join("\n") || ""}
+              onChange={(e) =>
+                setEditedSection({ 
+                  ...editedSection, 
+                  items: e.target.value.split("\n").filter(i => i.trim()) 
+                })
+              }
+              placeholder="Enter one bullet point per line..."
+              className="min-h-[100px]"
+            />
+          </div>
+        )}
+
+        {section.boxColor !== undefined && (
+          <div>
+            <label className="text-sm font-medium mb-2 block">Box Color</label>
+            <select
+              className="w-full rounded-md border border-input bg-background px-3 py-2"
+              value={editedSection.boxColor}
+              onChange={(e) =>
+                setEditedSection({
+                  ...editedSection,
+                  boxColor: e.target.value as any,
+                })
+              }
+            >
+              <option value="green">Green</option>
+              <option value="blue">Blue</option>
+              <option value="purple">Purple</option>
+              <option value="yellow">Yellow</option>
+            </select>
+          </div>
+        )}
+
+        {section.ctaText !== undefined && (
+          <div>
+            <label className="text-sm font-medium mb-2 block">CTA Button Text</label>
+            <Input
+              value={editedSection.ctaText || ""}
+              onChange={(e) =>
+                setEditedSection({ ...editedSection, ctaText: e.target.value })
+              }
+              placeholder="Button text..."
+            />
+          </div>
+        )}
       </div>
 
       <div className="flex gap-2 pt-4">
