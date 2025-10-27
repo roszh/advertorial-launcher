@@ -18,6 +18,7 @@ interface Section {
 interface PageData {
   id?: string;
   title: string;
+  headline?: string;
   subtitle?: string;
   content: {
     sections: Section[];
@@ -56,6 +57,7 @@ export default function PublicPage() {
         setPageData({
           id: data.id || undefined,
           title: data.title,
+          headline: data.headline,
           subtitle: data.subtitle || (template === "news" ? "Breaking News" : template === "blog" ? "Expert Insights" : "Featured Story"),
           content: data.content as any,
           cta_text: data.cta_text || "",
@@ -225,6 +227,7 @@ export default function PublicPage() {
     onCtaClick: handleCtaClick,
     ctaVariant: (pageData.cta_style as any) || "ctaAmazon",
     imageUrl: pageData.image_url,
+    headline: pageData.headline,
     subtitle: pageData.subtitle,
   };
 

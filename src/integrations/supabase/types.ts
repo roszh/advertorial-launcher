@@ -283,6 +283,7 @@ export type Database = {
           cta_url: string | null
           facebook_pixel_id: string | null
           google_analytics_id: string | null
+          headline: string | null
           id: string | null
           image_url: string | null
           microsoft_clarity_id: string | null
