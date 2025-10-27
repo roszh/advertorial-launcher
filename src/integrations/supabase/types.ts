@@ -63,6 +63,56 @@ export type Database = {
           },
         ]
       }
+      page_tags: {
+        Row: {
+          created_at: string | null
+          id: string
+          page_id: string
+          tag_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          page_id: string
+          tag_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          page_id?: string
+          tag_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "page_tags_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "page_analytics_summary"
+            referencedColumns: ["page_id"]
+          },
+          {
+            foreignKeyName: "page_tags_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "pages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "page_tags_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "published_pages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "page_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pages: {
         Row: {
           content: Json
@@ -156,6 +206,30 @@ export type Database = {
           microsoft_clarity_id?: string | null
           triplewhale_token?: string | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      tags: {
+        Row: {
+          color: string
+          created_at: string | null
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string | null
+          id?: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          color?: string
+          created_at?: string | null
+          id?: string
+          name?: string
+          user_id?: string
         }
         Relationships: []
       }

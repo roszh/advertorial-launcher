@@ -5,6 +5,9 @@ import { Navigation } from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { ImageUpload } from "@/components/ImageUpload";
 import { MagazineTemplate } from "@/components/templates/MagazineTemplate";
 import { NewsTemplate } from "@/components/templates/NewsTemplate";
@@ -14,7 +17,7 @@ import { StickyCtaButton } from "@/components/StickyCtaButton";
 import { HtmlEditor } from "@/components/HtmlEditor";
 import { toast } from "@/hooks/use-toast";
 import { stripHtmlTags } from "@/lib/utils";
-import { Loader2, Save, Globe, Edit2, Plus, Sparkles, Code } from "lucide-react";
+import { Loader2, Save, Globe, Edit2, Plus, Sparkles, Code, X } from "lucide-react";
 
 interface Section {
   type: "hero" | "text" | "image" | "cta" | "benefits" | "testimonial";
@@ -55,6 +58,8 @@ const Index = () => {
   const [undoStack, setUndoStack] = useState<{ sections: Section[], timestamp: number } | null>(null);
   const [subtitle, setSubtitle] = useState<string>("Featured Story");
   const [showHtmlEditor, setShowHtmlEditor] = useState(false);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [availableTags, setAvailableTags] = useState<Array<{id: string, name: string, color: string}>>([]);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -64,6 +69,7 @@ const Index = () => {
         return;
       }
       setUser(session.user);
+      fetchTags();
 
       if (editId) {
         loadExistingPage(editId);
@@ -108,7 +114,25 @@ const Index = () => {
         cta: { primary: data.cta_text || "Get Started" }
       });
       setIsEditorMode(true);
+
+      // Load page tags
+      const { data: pageTagsData } = await supabase
+        .from("page_tags")
+        .select("tag_id")
+        .eq("page_id", pageId);
+      
+      if (pageTagsData) {
+        setSelectedTags(pageTagsData.map(pt => pt.tag_id));
+      }
     }
+  };
+
+  const fetchTags = async () => {
+    const { data } = await supabase
+      .from("tags")
+      .select("*")
+      .order("name");
+    setAvailableTags(data || []);
   };
 
   const handleAnalyze = async () => {
@@ -196,6 +220,8 @@ const Index = () => {
         published_at: status === "published" ? new Date().toISOString() : null
       };
 
+      let pageId = editId;
+
       if (editId) {
         const { error } = await supabase
           .from("pages")
@@ -203,13 +229,38 @@ const Index = () => {
           .eq("id", editId);
 
         if (error) throw error;
-        toast({ title: `Page ${status === "published" ? "published" : "saved"}!` });
       } else {
-        const { error } = await supabase.from("pages").insert([pageData]);
+        const { data: insertData, error } = await supabase
+          .from("pages")
+          .insert([pageData])
+          .select();
+        
         if (error) throw error;
-        toast({ title: `Page ${status === "published" ? "published" : "saved"}!` });
+        pageId = insertData?.[0]?.id || null;
       }
 
+      // Handle tags
+      if (pageId) {
+        // Delete existing page_tags
+        await supabase
+          .from("page_tags")
+          .delete()
+          .eq("page_id", pageId);
+
+        // Insert new page_tags
+        if (selectedTags.length > 0) {
+          const pageTagsToInsert = selectedTags.map(tagId => ({
+            page_id: pageId,
+            tag_id: tagId
+          }));
+
+          await supabase
+            .from("page_tags")
+            .insert(pageTagsToInsert);
+        }
+      }
+
+      toast({ title: `Page ${status === "published" ? "published" : "saved"}!` });
       navigate("/dashboard");
     } catch (error: any) {
       console.error("Save error:", error);
@@ -601,6 +652,66 @@ const Index = () => {
                   </Button>
                 </div>
 
+                <div className="h-4 w-px bg-border" />
+
+                {/* Tag Selector */}
+                <div className="flex items-center gap-2">
+                  <Label className="text-xs">Tags:</Label>
+                  {selectedTags.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {selectedTags.map(tagId => {
+                        const tag = availableTags.find(t => t.id === tagId);
+                        return tag ? (
+                          <Badge 
+                            key={tagId}
+                            style={{backgroundColor: tag.color, color: 'white'}}
+                            className="cursor-pointer text-xs h-6"
+                            onClick={() => setSelectedTags(prev => prev.filter(id => id !== tagId))}
+                          >
+                            {tag.name}
+                            <X className="ml-1 h-3 w-3" />
+                          </Badge>
+                        ) : null;
+                      })}
+                    </div>
+                  )}
+                  {availableTags.length > 0 ? (
+                    <Select 
+                      value="" 
+                      onValueChange={(val) => {
+                        if (val && !selectedTags.includes(val)) {
+                          setSelectedTags([...selectedTags, val]);
+                        }
+                      }}
+                    >
+                      <SelectTrigger className="h-6 w-[100px] text-xs">
+                        <SelectValue placeholder="Add tag" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableTags
+                          .filter(tag => !selectedTags.includes(tag.id))
+                          .map(tag => (
+                            <SelectItem key={tag.id} value={tag.id} className="text-xs">
+                              <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full" style={{backgroundColor: tag.color}} />
+                                {tag.name}
+                              </div>
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <Button 
+                      variant="link" 
+                      size="sm" 
+                      onClick={() => navigate('/settings')}
+                      className="h-6 px-2 text-xs"
+                    >
+                      Create tags
+                    </Button>
+                  )}
+                </div>
+                
                 <div className="h-4 w-px bg-border" />
                 
                 {undoStack && (

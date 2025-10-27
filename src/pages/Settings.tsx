@@ -6,7 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
+import { X } from "lucide-react";
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -17,6 +19,9 @@ export default function Settings() {
   const [triplewhaleToken, setTriplewhaleToken] = useState("");
   const [microsoftClarityId, setMicrosoftClarityId] = useState("");
   const [loading, setLoading] = useState(false);
+  const [tags, setTags] = useState<Array<{id: string, name: string, color: string}>>([]);
+  const [newTagName, setNewTagName] = useState("");
+  const [newTagColor, setNewTagColor] = useState("#3b82f6");
 
   useEffect(() => {
     const checkUser = async () => {
@@ -53,6 +58,20 @@ export default function Settings() {
       setTriplewhaleToken(data.triplewhale_token || "");
       setMicrosoftClarityId(data.microsoft_clarity_id || "");
     }
+
+    loadTags(userId);
+  };
+
+  const loadTags = async (userId: string) => {
+    const { data } = await supabase
+      .from("tags")
+      .select("*")
+      .eq("user_id", userId)
+      .order("name");
+    
+    if (data) {
+      setTags(data);
+    }
   };
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
@@ -77,6 +96,60 @@ export default function Settings() {
     }
     setLoading(false);
   };
+
+  const handleCreateTag = async () => {
+    if (!newTagName.trim()) {
+      toast({ title: "Please enter a tag name", variant: "destructive" });
+      return;
+    }
+
+    const { error } = await supabase
+      .from("tags")
+      .insert({ user_id: user?.id, name: newTagName.trim(), color: newTagColor });
+
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Tag created!" });
+      setNewTagName("");
+      setNewTagColor("#3b82f6");
+      if (user) loadTags(user.id);
+    }
+  };
+
+  const handleDeleteTag = async (tagId: string) => {
+    if (!confirm("Delete this tag? It will be removed from all pages.")) return;
+
+    const { error } = await supabase
+      .from("tags")
+      .delete()
+      .eq("id", tagId);
+
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Tag deleted" });
+      if (user) loadTags(user.id);
+    }
+  };
+
+  const handleUpdateTagColor = async (tagId: string, newColor: string) => {
+    const { error } = await supabase
+      .from("tags")
+      .update({ color: newColor })
+      .eq("id", tagId);
+
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      if (user) loadTags(user.id);
+    }
+  };
+
+  const colorPalette = [
+    "#3b82f6", "#22c55e", "#ef4444", "#eab308",
+    "#a855f7", "#ec4899", "#f97316", "#14b8a6"
+  ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -174,6 +247,80 @@ export default function Settings() {
                 {loading ? "Saving..." : "Save Tracking Settings"}
               </Button>
             </form>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Tags</CardTitle>
+            <CardDescription>Create and manage tags to organize your pages</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Create New Tag</Label>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Tag name"
+                    value={newTagName}
+                    onChange={(e) => setNewTagName(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleCreateTag()}
+                  />
+                  <div className="flex gap-1">
+                    {colorPalette.map((color) => (
+                      <button
+                        key={color}
+                        type="button"
+                        className="w-8 h-8 rounded border-2 transition-all hover:scale-110"
+                        style={{ 
+                          backgroundColor: color,
+                          borderColor: newTagColor === color ? "hsl(var(--primary))" : "transparent"
+                        }}
+                        onClick={() => setNewTagColor(color)}
+                      />
+                    ))}
+                  </div>
+                  <Button onClick={handleCreateTag}>Add</Button>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Existing Tags</Label>
+                {tags.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No tags yet. Create your first one above!</p>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {tags.map((tag) => (
+                      <div key={tag.id} className="flex items-center gap-1">
+                        <Badge 
+                          style={{ backgroundColor: tag.color, color: "white" }}
+                          className="cursor-pointer group relative"
+                        >
+                          {tag.name}
+                          <button
+                            onClick={() => handleDeleteTag(tag.id)}
+                            className="ml-2 hover:bg-white/20 rounded-full p-0.5"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </Badge>
+                        <div className="flex gap-0.5">
+                          {colorPalette.slice(0, 4).map((color) => (
+                            <button
+                              key={color}
+                              type="button"
+                              className="w-4 h-4 rounded-full border"
+                              style={{ backgroundColor: color }}
+                              onClick={() => handleUpdateTagColor(tag.id, color)}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>

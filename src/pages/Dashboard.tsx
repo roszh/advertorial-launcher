@@ -5,6 +5,7 @@ import { Navigation } from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import { Eye, Edit, Trash2, Globe, Copy, BarChart3 } from "lucide-react";
 
@@ -15,6 +16,7 @@ interface Page {
   status: string;
   created_at: string;
   published_at: string | null;
+  tags?: Array<{id: string, name: string, color: string}>;
 }
 
 export default function Dashboard() {
@@ -23,6 +25,8 @@ export default function Dashboard() {
   const [pages, setPages] = useState<Page[]>([]);
   const [filter, setFilter] = useState<"all" | "draft" | "published">("all");
   const [loading, setLoading] = useState(true);
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [availableTags, setAvailableTags] = useState<Array<{id: string, name: string, color: string}>>([]);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -33,6 +37,7 @@ export default function Dashboard() {
       }
       setUser(session.user);
       fetchPages();
+      fetchTags();
     };
 
     checkUser();
@@ -47,17 +52,34 @@ export default function Dashboard() {
 
   const fetchPages = async () => {
     setLoading(true);
-    const { data, error } = await supabase
+    const { data: pagesData, error } = await supabase
       .from("pages")
-      .select("*")
+      .select(`
+        *,
+        page_tags (
+          tags (id, name, color)
+        )
+      `)
       .order("created_at", { ascending: false });
 
     if (error) {
       toast({ title: "Error loading pages", description: error.message, variant: "destructive" });
     } else {
-      setPages(data || []);
+      const pagesWithTags = pagesData?.map(page => ({
+        ...page,
+        tags: page.page_tags?.map((pt: any) => pt.tags).filter(Boolean) || []
+      })) || [];
+      setPages(pagesWithTags);
     }
     setLoading(false);
+  };
+
+  const fetchTags = async () => {
+    const { data } = await supabase
+      .from("tags")
+      .select("*")
+      .order("name");
+    setAvailableTags(data || []);
   };
 
   const handleDelete = async (id: string) => {
@@ -111,7 +133,7 @@ export default function Dashboard() {
     const newTitle = `${pageData.title} (Copy)`;
 
     // Insert the cloned page
-    const { error: insertError } = await supabase
+    const { data: insertResult, error: insertError } = await supabase
       .from("pages")
       .insert({
         user_id: user.id,
@@ -126,35 +148,85 @@ export default function Dashboard() {
         cta_url: pageData.cta_url,
         image_url: pageData.image_url,
         published_at: null
-      });
+      })
+      .select();
 
     if (insertError) {
       toast({ title: "Error", description: insertError.message, variant: "destructive" });
-    } else {
-      toast({ title: "Page cloned successfully!", description: "The copy has been saved as a draft." });
-      fetchPages();
+      return;
     }
+
+    // Copy tags from original page
+    if (insertResult && insertResult[0]) {
+      const newPageId = insertResult[0].id;
+      const { data: originalTags } = await supabase
+        .from("page_tags")
+        .select("tag_id")
+        .eq("page_id", pageId);
+
+      if (originalTags && originalTags.length > 0) {
+        const newPageTags = originalTags.map(pt => ({
+          page_id: newPageId,
+          tag_id: pt.tag_id
+        }));
+
+        await supabase
+          .from("page_tags")
+          .insert(newPageTags);
+      }
+    }
+
+    toast({ title: "Page cloned successfully!", description: "The copy has been saved as a draft." });
+    fetchPages();
   };
 
-  const filteredPages = pages.filter(p => filter === "all" || p.status === filter);
+  const filteredPages = pages.filter(p => {
+    const statusMatch = filter === "all" || p.status === filter;
+    const tagMatch = !selectedTag || p.tags?.some(t => t.id === selectedTag);
+    return statusMatch && tagMatch;
+  });
 
   return (
     <div className="min-h-screen bg-background">
       <Navigation user={user} />
       <div className="container mx-auto py-8 px-4">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">My Pages</h1>
-          <div className="flex gap-2">
-            <Button variant={filter === "all" ? "default" : "outline"} onClick={() => setFilter("all")}>
-              All
-            </Button>
-            <Button variant={filter === "draft" ? "default" : "outline"} onClick={() => setFilter("draft")}>
-              Drafts
-            </Button>
-            <Button variant={filter === "published" ? "default" : "outline"} onClick={() => setFilter("published")}>
-              Published
-            </Button>
+        <div className="mb-6">
+          <div className="flex justify-between items-center mb-4">
+            <h1 className="text-3xl font-bold">My Pages</h1>
+            <div className="flex gap-2">
+              <Button variant={filter === "all" ? "default" : "outline"} onClick={() => setFilter("all")}>
+                All
+              </Button>
+              <Button variant={filter === "draft" ? "default" : "outline"} onClick={() => setFilter("draft")}>
+                Drafts
+              </Button>
+              <Button variant={filter === "published" ? "default" : "outline"} onClick={() => setFilter("published")}>
+                Published
+              </Button>
+            </div>
           </div>
+          
+          {availableTags.length > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Filter by tag:</span>
+              <Select value={selectedTag || "all"} onValueChange={(val) => setSelectedTag(val === "all" ? null : val)}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="All Tags" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Tags</SelectItem>
+                  {availableTags.map(tag => (
+                    <SelectItem key={tag.id} value={tag.id}>
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full" style={{backgroundColor: tag.color}} />
+                        {tag.name}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
 
         {loading ? (
@@ -172,12 +244,25 @@ export default function Dashboard() {
               <Card key={page.id}>
                 <CardHeader>
                   <div className="flex justify-between items-start">
-                    <div>
+                    <div className="flex-1">
                       <CardTitle>{page.title}</CardTitle>
                       <CardDescription>
                         Created {new Date(page.created_at).toLocaleDateString()}
                         {page.published_at && ` • Published ${new Date(page.published_at).toLocaleDateString()}`}
                       </CardDescription>
+                      {page.tags && page.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {page.tags.map(tag => (
+                            <Badge 
+                              key={tag.id}
+                              style={{backgroundColor: tag.color, color: 'white'}}
+                              className="text-xs"
+                            >
+                              {tag.name}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
                     </div>
                     <Badge variant={page.status === "published" ? "default" : "secondary"}>
                       {page.status}
