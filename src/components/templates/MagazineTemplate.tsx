@@ -160,8 +160,7 @@ export const MagazineTemplate = ({
               onAddCtaBelow={() => {
                 const ctaSection = {
                   type: "cta" as const,
-                  content: "Ready to take action?",
-                  heading: "Get Started Now"
+                  content: ""
                 };
                 onUpdateSection?.(actualIndex + 1, ctaSection);
               }}
