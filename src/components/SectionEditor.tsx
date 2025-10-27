@@ -6,11 +6,20 @@ import { Save, X, Trash2, ArrowUp, ArrowDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Section {
-  type: "hero" | "text" | "image" | "cta" | "benefits" | "testimonial";
+  type: "hero" | "text" | "image" | "cta" | "benefits" | "testimonial" | "quote" | "facebook-testimonial" | "bullet-box";
   content: string;
   heading?: string;
   imagePosition?: "left" | "right" | "full" | "none";
   style?: "normal" | "emphasized" | "callout";
+  imageUrl?: string;
+  ctaText?: string;
+  author?: string;
+  authorRole?: string;
+  authorAvatar?: string;
+  timestamp?: string;
+  reactions?: number;
+  items?: string[];
+  boxColor?: "green" | "blue" | "purple" | "yellow";
 }
 
 interface SectionEditorProps {

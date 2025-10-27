@@ -8,13 +8,20 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 interface Section {
-  type: "hero" | "text" | "image" | "cta" | "benefits" | "testimonial";
+  type: "hero" | "text" | "image" | "cta" | "benefits" | "testimonial" | "quote" | "facebook-testimonial" | "bullet-box";
   content: string;
   heading?: string;
   imagePosition?: "left" | "right" | "full" | "none";
   style?: "normal" | "emphasized" | "callout";
   imageUrl?: string;
   ctaText?: string;
+  author?: string;
+  authorRole?: string;
+  authorAvatar?: string;
+  timestamp?: string;
+  reactions?: number;
+  items?: string[];
+  boxColor?: "green" | "blue" | "purple" | "yellow";
 }
 
 interface NewsTemplateProps {
@@ -234,23 +241,24 @@ export const NewsTemplate = ({
           {isEditing && onAddSection && onDeleteSection && (
             <SectionControls
               index={actualIndex}
-              onAddTextBelow={() => onAddSection(actualIndex, "text")}
-              onAddHeadlineBelow={() => {
-                const headlineSection = {
-                  type: "text" as const,
-                  content: "",
-                  heading: "New Section Heading"
-                };
-                onUpdateSection?.(actualIndex + 1, headlineSection);
-              }}
-              onAddImageBelow={() => onAddSection(actualIndex, "image")}
-              onAddCtaBelow={() => {
-                const ctaSection = {
-                  type: "cta" as const,
-                  content: "",
-                  ctaText: ctaText || "Click Here"
-                };
-                onUpdateSection?.(actualIndex + 1, ctaSection);
+              onAddSectionBelow={(type) => {
+                if (type === "text" || type === "image") {
+                  onAddSection(actualIndex, type);
+                } else if (type === "headline") {
+                  const headlineSection = {
+                    type: "text" as const,
+                    content: "",
+                    heading: "New Section Heading"
+                  };
+                  onUpdateSection?.(actualIndex + 1, headlineSection);
+                } else if (type === "cta") {
+                  const ctaSection = {
+                    type: "cta" as const,
+                    content: "",
+                    ctaText: ctaText || "Click Here"
+                  };
+                  onUpdateSection?.(actualIndex + 1, ctaSection);
+                }
               }}
               onDeleteSection={() => onDeleteSection(actualIndex)}
               onCloneSection={() => {

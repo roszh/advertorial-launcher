@@ -17,18 +17,26 @@ import { BlogTemplate } from "@/components/templates/BlogTemplate";
 import { SectionEditor } from "@/components/SectionEditor";
 import { StickyCtaButton } from "@/components/StickyCtaButton";
 import { HtmlEditor } from "@/components/HtmlEditor";
+import { SectionTemplateModal } from "@/components/SectionTemplateModal";
 import { toast } from "@/hooks/use-toast";
 import { stripHtmlTags, cn } from "@/lib/utils";
 import { Loader2, Save, Globe, Edit2, Plus, Sparkles, Code, X, Undo2 } from "lucide-react";
 
 interface Section {
-  type: "hero" | "text" | "image" | "cta" | "benefits" | "testimonial";
+  type: "hero" | "text" | "image" | "cta" | "benefits" | "testimonial" | "quote" | "facebook-testimonial" | "bullet-box";
   content: string;
   heading?: string;
   imagePosition?: "left" | "right" | "full" | "none";
   style?: "normal" | "emphasized" | "callout";
   imageUrl?: string;
   ctaText?: string;
+  author?: string;
+  authorRole?: string;
+  authorAvatar?: string;
+  timestamp?: string;
+  reactions?: number;
+  items?: string[];
+  boxColor?: "green" | "blue" | "purple" | "yellow";
 }
 
 interface AnalysisResult {
@@ -72,6 +80,7 @@ const Index = () => {
   const [showAddMoreDialog, setShowAddMoreDialog] = useState(false);
   const [addMoreText, setAddMoreText] = useState("");
   const [isAddingMore, setIsAddingMore] = useState(false);
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -651,6 +660,59 @@ const Index = () => {
     toast({ title: `${type === "image" ? "Image" : "Paragraph"} section added!` });
   };
 
+  const handleSelectTemplate = (type: string) => {
+    if (!analysisResult) return;
+    
+    let newSection: Section;
+    
+    switch (type) {
+      case "quote":
+        newSection = {
+          type: "quote",
+          content: "Enter your quote here...",
+          author: "Author Name",
+          authorRole: "Role or Title",
+          style: "normal",
+        };
+        break;
+      case "facebook-testimonial":
+        newSection = {
+          type: "facebook-testimonial",
+          content: "Share your experience here...",
+          author: "User Name",
+          timestamp: "2 days ago",
+          reactions: 0,
+          style: "normal",
+        };
+        break;
+      case "bullet-box":
+        newSection = {
+          type: "bullet-box",
+          content: "",
+          heading: "Key Points",
+          items: ["Point 1", "Point 2", "Point 3"],
+          boxColor: "blue",
+          style: "normal",
+        };
+        break;
+      default:
+        newSection = {
+          type: "text",
+          content: "Enter content here...",
+          heading: type === "headline" ? "New Section" : undefined,
+          style: "normal",
+        };
+    }
+    
+    setAnalysisResult({
+      ...analysisResult,
+      sections: [...analysisResult.sections, newSection],
+    });
+    
+    setShowTemplateModal(false);
+    toast({ title: "Section added!" });
+  };
+
   const handleAddMoreText = async () => {
     if (!addMoreText.trim() || !analysisResult) {
       toast({ 
@@ -1101,7 +1163,7 @@ const Index = () => {
                 </Button>
                 <Button
                   variant="outline"
-                  onClick={handleAddSection}
+                  onClick={() => setShowTemplateModal(true)}
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Add Section
@@ -1223,6 +1285,13 @@ const Index = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Section Template Modal */}
+        <SectionTemplateModal
+          open={showTemplateModal}
+          onOpenChange={setShowTemplateModal}
+          onSelectTemplate={handleSelectTemplate}
+        />
       </div>
     );
   }

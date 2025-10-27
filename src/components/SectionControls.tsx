@@ -1,14 +1,12 @@
 import { useState } from "react";
 import { Button } from "./ui/button";
-import { Plus, Trash2, ImagePlus, AlertCircle, Copy, MousePointerClick } from "lucide-react";
+import { Trash2, AlertCircle, Copy, Plus, Type, Image as ImageIcon, MousePointerClick, Quote, MessageSquare, List } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuLabel } from "./ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
 interface SectionControlsProps {
   index: number;
-  onAddTextBelow: () => void;
-  onAddImageBelow: () => void;
-  onAddHeadlineBelow: () => void;
-  onAddCtaBelow?: () => void;
+  onAddSectionBelow: (type: string) => void;
   onDeleteSection: () => void;
   onCloneSection?: () => void;
   className?: string;
@@ -17,10 +15,7 @@ interface SectionControlsProps {
 
 export const SectionControls = ({
   index,
-  onAddTextBelow,
-  onAddImageBelow,
-  onAddHeadlineBelow,
-  onAddCtaBelow,
+  onAddSectionBelow,
   onDeleteSection,
   onCloneSection,
   className,
@@ -43,49 +38,55 @@ export const SectionControls = ({
       "flex items-center justify-center gap-2 py-4 opacity-0 group-hover:opacity-100 transition-all duration-300",
       className
     )}>
-      <div className="flex gap-1 bg-background border rounded-lg shadow-lg p-1 animate-fade-in">
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={onAddTextBelow}
-          title="Add paragraph below"
-          className="hover-scale"
-        >
-          <Plus className="h-4 w-4 mr-1" />
-          Text
-        </Button>
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={onAddHeadlineBelow}
-          title="Add section headline below"
-          className="hover-scale"
-        >
-          <Plus className="h-4 w-4 mr-1" />
-          Headline
-        </Button>
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={onAddImageBelow}
-          title="Add image section below"
-          className="hover-scale"
-        >
-          <ImagePlus className="h-4 w-4 mr-1" />
-          Image
-        </Button>
-        {onAddCtaBelow && (
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={onAddCtaBelow}
-            title="Add CTA button section below"
-            className="hover-scale"
-          >
-            <MousePointerClick className="h-4 w-4 mr-1" />
-            Button
-          </Button>
-        )}
+      <div className="flex gap-1 bg-background border rounded-lg shadow-lg p-1 animate-fade-in z-50">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="hover-scale"
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              Add Section
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-56 bg-background z-50" align="center">
+            <DropdownMenuLabel>Basic</DropdownMenuLabel>
+            <DropdownMenuItem onClick={() => onAddSectionBelow("text")} className="cursor-pointer">
+              <Type className="h-4 w-4 mr-2" />
+              Text
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onAddSectionBelow("headline")} className="cursor-pointer">
+              <Type className="h-4 w-4 mr-2" />
+              Headline
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onAddSectionBelow("image")} className="cursor-pointer">
+              <ImageIcon className="h-4 w-4 mr-2" />
+              Image
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onAddSectionBelow("cta")} className="cursor-pointer">
+              <MousePointerClick className="h-4 w-4 mr-2" />
+              Button
+            </DropdownMenuItem>
+            
+            <DropdownMenuSeparator />
+            
+            <DropdownMenuLabel>Enhanced</DropdownMenuLabel>
+            <DropdownMenuItem onClick={() => onAddSectionBelow("quote")} className="cursor-pointer">
+              <Quote className="h-4 w-4 mr-2" />
+              Quote
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onAddSectionBelow("facebook-testimonial")} className="cursor-pointer">
+              <MessageSquare className="h-4 w-4 mr-2" />
+              Social Testimonial
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onAddSectionBelow("bullet-box")} className="cursor-pointer">
+              <List className="h-4 w-4 mr-2" />
+              Bullet Box
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        
         {onCloneSection && (
           <Button
             size="sm"

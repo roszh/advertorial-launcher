@@ -5,12 +5,19 @@ import { toast } from "@/hooks/use-toast";
 import { Code, Eye } from "lucide-react";
 
 interface Section {
-  type: "hero" | "text" | "image" | "cta" | "benefits" | "testimonial";
+  type: "hero" | "text" | "image" | "cta" | "benefits" | "testimonial" | "quote" | "facebook-testimonial" | "bullet-box";
   content: string;
   heading?: string;
   imagePosition?: "left" | "right" | "full" | "none";
   style?: "normal" | "emphasized" | "callout";
   imageUrl?: string;
+  author?: string;
+  authorRole?: string;
+  authorAvatar?: string;
+  timestamp?: string;
+  reactions?: number;
+  items?: string[];
+  boxColor?: "green" | "blue" | "purple" | "yellow";
 }
 
 interface HtmlEditorProps {
