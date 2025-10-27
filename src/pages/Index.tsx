@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ImageUpload } from "@/components/ImageUpload";
 import { MagazineTemplate } from "@/components/templates/MagazineTemplate";
@@ -1132,20 +1133,29 @@ const Index = () => {
           />
         )}
 
-        {editingSectionIndex !== null ? (
-          <div className="container py-8">
-            <SectionEditor
-              section={analysisResult.sections[editingSectionIndex]}
-              index={editingSectionIndex}
-              totalSections={analysisResult.sections.length}
-              onSave={(updatedSection) => handleSaveSection(editingSectionIndex, updatedSection)}
-              onDelete={() => handleDeleteSection(editingSectionIndex)}
-              onMoveUp={() => handleMoveSection(editingSectionIndex, "up")}
-              onMoveDown={() => handleMoveSection(editingSectionIndex, "down")}
-              onCancel={() => setEditingSectionIndex(null)}
-            />
-          </div>
-        ) : (
+        <Sheet open={editingSectionIndex !== null} onOpenChange={(open) => !open && setEditingSectionIndex(null)}>
+          <SheetContent side="bottom" className="h-[90vh] overflow-y-auto">
+            <SheetHeader>
+              <SheetTitle>Edit Section</SheetTitle>
+            </SheetHeader>
+            {editingSectionIndex !== null && (
+              <div className="mt-4">
+                <SectionEditor
+                  section={analysisResult.sections[editingSectionIndex]}
+                  index={editingSectionIndex}
+                  totalSections={analysisResult.sections.length}
+                  onSave={(updatedSection) => handleSaveSection(editingSectionIndex, updatedSection)}
+                  onDelete={() => handleDeleteSection(editingSectionIndex)}
+                  onMoveUp={() => handleMoveSection(editingSectionIndex, "up")}
+                  onMoveDown={() => handleMoveSection(editingSectionIndex, "down")}
+                  onCancel={() => setEditingSectionIndex(null)}
+                />
+              </div>
+            )}
+          </SheetContent>
+        </Sheet>
+
+        {editingSectionIndex === null && (
           <>
             <div className={cn(
               "mx-auto transition-all duration-300",
