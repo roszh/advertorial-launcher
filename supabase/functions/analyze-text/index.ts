@@ -128,7 +128,30 @@ Return a JSON object with this structure:
 
     let result;
     try {
-      result = JSON.parse(data.choices[0].message.content);
+      const content = data.choices[0].message.content;
+      
+      // Extract JSON from the response (in case there's text before/after)
+      let jsonText = content;
+      const jsonStart = content.indexOf('{');
+      const jsonEnd = content.lastIndexOf('}');
+      
+      if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+        jsonText = content.substring(jsonStart, jsonEnd + 1);
+      }
+      
+      result = JSON.parse(jsonText);
+      
+      // Clean up null values and ensure proper types
+      if (result.sections) {
+        result.sections = result.sections.map((section: any) => ({
+          ...section,
+          content: section.content || "",
+          heading: section.heading || undefined,
+          imageUrl: section.imageUrl === null ? "" : section.imageUrl,
+          ctaText: section.ctaText || undefined
+        }));
+      }
+      
       console.log("Successfully parsed AI response");
     } catch (parseError) {
       console.error("Failed to parse AI response as JSON:", data.choices[0].message.content);
