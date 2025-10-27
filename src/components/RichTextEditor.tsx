@@ -188,7 +188,7 @@ export const RichTextEditor = ({
     let formatted = markdownValue;
     
     // Links: [text](url)
-    formatted = formatted.replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-primary underline hover:no-underline">$1</a>');
+    formatted = formatted.replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" class="text-primary underline hover:no-underline">$1</a>');
     
     // Bold: **text** or __text__
     formatted = formatted.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');

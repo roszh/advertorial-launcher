@@ -116,31 +116,33 @@ export const BlogTemplate = ({
               </div>
             )}
             
-            <div className="space-y-3 md:space-y-4 lg:space-y-5">
-              {isEditing ? (
-                <RichTextEditor
-                  value={section.content}
-                  onSave={(value) => handleSectionUpdate(actualIndex, "content", value)}
-                  onDelete={() => onDeleteSection?.(actualIndex)}
-                  multiline
-                  className="text-sm md:text-base lg:text-lg leading-[1.7] md:leading-[1.8] text-foreground/90 break-words"
-                  as="p"
-                  enableAiOptimize={true}
-                />
-              ) : (
-                section.content.split('\n\n').map((paragraph, pIndex) => (
-                  <p 
-                    key={pIndex} 
+            {section.type !== "cta" && (
+              <div className="space-y-3 md:space-y-4 lg:space-y-5">
+                {isEditing ? (
+                  <RichTextEditor
+                    value={section.content}
+                    onSave={(value) => handleSectionUpdate(actualIndex, "content", value)}
+                    onDelete={() => onDeleteSection?.(actualIndex)}
+                    multiline
                     className="text-sm md:text-base lg:text-lg leading-[1.7] md:leading-[1.8] text-foreground/90 break-words"
-                    dangerouslySetInnerHTML={{ 
-                      __html: paragraph
-                        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-                        .replace(/\*(.+?)\*/g, '<em>$1</em>') 
-                    }}
+                    as="p"
+                    enableAiOptimize={true}
                   />
-                ))
-              )}
-            </div>
+                ) : (
+                  section.content.split('\n\n').map((paragraph, pIndex) => (
+                    <p 
+                      key={pIndex} 
+                      className="text-sm md:text-base lg:text-lg leading-[1.7] md:leading-[1.8] text-foreground/90 break-words"
+                      dangerouslySetInnerHTML={{ 
+                        __html: paragraph
+                          .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                          .replace(/\*(.+?)\*/g, '<em>$1</em>') 
+                      }}
+                    />
+                  ))
+                )}
+              </div>
+            )}
             
             {section.type === "cta" && (
               <div className="my-8 md:my-12 text-center">

@@ -112,31 +112,33 @@ export const MagazineTemplate = ({
               </div>
             )}
             
-            <div className="prose prose-base md:prose-lg max-w-none break-words">
-              {isEditing ? (
-                <RichTextEditor
-                  value={section.content}
-                  onSave={(value) => handleSectionUpdate(actualIndex, "content", value)}
-                  onDelete={() => onDeleteSection?.(actualIndex)}
-                  multiline
-                  className="text-sm md:text-base lg:text-lg leading-relaxed text-foreground/90 font-serif"
-                  as="p"
-                  enableAiOptimize={true}
-                />
-              ) : (
-                section.content.split('\n\n').map((paragraph, pIndex) => (
-                  <p 
-                    key={pIndex} 
-                    className="text-sm md:text-base lg:text-lg leading-relaxed mb-3 md:mb-4 text-foreground/90 font-serif break-words"
-                    dangerouslySetInnerHTML={{ 
-                      __html: paragraph
-                        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-                        .replace(/\*(.+?)\*/g, '<em>$1</em>') 
-                    }}
+            {section.type !== "cta" && (
+              <div className="prose prose-base md:prose-lg max-w-none break-words">
+                {isEditing ? (
+                  <RichTextEditor
+                    value={section.content}
+                    onSave={(value) => handleSectionUpdate(actualIndex, "content", value)}
+                    onDelete={() => onDeleteSection?.(actualIndex)}
+                    multiline
+                    className="text-sm md:text-base lg:text-lg leading-relaxed text-foreground/90 font-serif"
+                    as="p"
+                    enableAiOptimize={true}
                   />
-                ))
-              )}
-            </div>
+                ) : (
+                  section.content.split('\n\n').map((paragraph, pIndex) => (
+                    <p 
+                      key={pIndex} 
+                      className="text-sm md:text-base lg:text-lg leading-relaxed mb-3 md:mb-4 text-foreground/90 font-serif break-words"
+                      dangerouslySetInnerHTML={{ 
+                        __html: paragraph
+                          .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                          .replace(/\*(.+?)\*/g, '<em>$1</em>') 
+                      }}
+                    />
+                  ))
+                )}
+              </div>
+            )}
             
             {section.type === "cta" && (
               <div className="my-6 md:my-8 p-4 md:p-6 lg:p-8 bg-secondary/30 rounded-lg text-center">

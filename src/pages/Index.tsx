@@ -50,6 +50,7 @@ const Index = () => {
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [isEditorMode, setIsEditorMode] = useState(false);
   const [pageTitle, setPageTitle] = useState("");
+  const [pageSlug, setPageSlug] = useState("");
   const [ctaUrl, setCTAUrl] = useState("");
   const [saving, setSaving] = useState(false);
   const [editingSectionIndex, setEditingSectionIndex] = useState<number | null>(null);
@@ -106,6 +107,7 @@ const Index = () => {
     if (data) {
       const content = data.content as any;
       setPageTitle(data.title);
+      setPageSlug(data.slug || "");
       setCTAUrl(data.cta_url || "");
       setImageUrl(data.image_url || "");
       const template = data.template as "magazine" | "news" | "blog";
@@ -264,6 +266,7 @@ const Index = () => {
       
       // Auto-save as draft
       const slug = generateSlug(autoTitle);
+      setPageSlug(slug);
       const pageData = {
         user_id: user.id,
         title: autoTitle,
@@ -331,7 +334,7 @@ const Index = () => {
 
     setSaving(true);
     try {
-      const slug = generateSlug(pageTitle);
+      const slug = pageSlug || generateSlug(pageTitle);
       const pageData = {
         user_id: user.id,
         title: pageTitle,
@@ -725,13 +728,27 @@ const Index = () => {
               </div>
 
               <TabsContent value="content" className="m-0 space-y-3">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <div>
                     <label className="text-xs font-medium mb-1 block">Page Title</label>
                     <Input
                       placeholder="Enter page title..."
                       value={pageTitle}
-                      onChange={(e) => setPageTitle(e.target.value)}
+                      onChange={(e) => {
+                        setPageTitle(e.target.value);
+                        if (!pageSlug || pageSlug === generateSlug(pageTitle)) {
+                          setPageSlug(generateSlug(e.target.value));
+                        }
+                      }}
+                      className="h-9"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium mb-1 block">URL Slug</label>
+                    <Input
+                      placeholder="your-page-url"
+                      value={pageSlug}
+                      onChange={(e) => setPageSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/^-|-$/g, ''))}
                       className="h-9"
                     />
                   </div>
