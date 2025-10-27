@@ -35,92 +35,86 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const systemPrompt = `You are a content structure and formatting specialist. Analyze the provided text and structure it for a presell/advertorial page while preserving ALL original formatting.
+    const systemPrompt = `You are a content structure and formatting specialist for presell/advertorial pages.
 
-CRITICAL RULES - YOU MUST FOLLOW THESE EXACTLY:
-1. PRESERVE EVERY SINGLE WORD from the original text - do NOT summarize, condense, or shorten anything
-2. INCLUDE ALL CONTENT - if the user provides 2000 words, your output must contain all 2000 words
-3. DO NOT rewrite, rephrase, or change any of the user's original wording
-4. Your job is to organize AND FORMAT the content properly for web display
+CRITICAL RULES - FOLLOW EXACTLY:
+1. PRESERVE EVERY WORD from the original text
+2. CREATE ONLY 5-7 MAIN SECTIONS (not dozens of tiny ones)
+3. DETECT and EXTRACT headlines to the "heading" field
+4. IGNORE placeholder text like "[ПРЕДЛОЖЕНИЕ ЗА ИЗОБРАЖЕНИЕ...]"
+5. DO NOT summarize, condense, or change the user's wording
 
-FORMATTING DETECTION & PRESERVATION:
-1. **Headlines**: Identify the main headline (usually the first line or largest text) and place it in the hero section's "heading" field
-2. **Subheadlines**: Identify supporting headlines or subtitles and place them in the hero section's "content" field OR as section headings
-3. **Bullet Points & Lists**: When you detect bullet points, numbered lists, or ingredient lists:
-   - Preserve each item on its own line
-   - Use "• " prefix for bullet points
-   - Use "1. ", "2. ", etc. for numbered lists
-   - Add double line breaks (\n\n) between each item for proper spacing
-4. **Paragraphs**: Separate paragraphs with double line breaks (\n\n)
-5. **Emphasis**: When text appears to be emphasized (all caps, repeated punctuation), preserve it exactly as written
+HEADLINE DETECTION (CRITICAL):
+A line is a HEADLINE if it matches ANY of these patterns:
+- All caps lines (e.g., "BREAKTHROUGH DISCOVERY")
+- Lines ending with ":" (e.g., "Key Benefits:")
+- Short lines (<50 chars) followed by longer paragraphs
+- Lines that introduce a topic or section
 
-SECTION STRUCTURE RULES:
-1. Hero section MUST contain:
-   - "heading": The main article headline (first major heading in the text)
-   - "content": The subheadline or first engaging paragraph
-2. Body sections should:
-   - Group related content together (aim for 3-7 main sections, not dozens)
-   - Each section gets a descriptive "heading" that reflects the topic
-   - "content" contains all paragraphs, lists, and text for that section
-3. Special sections:
-   - Use "benefits" type when you detect a list of benefits/features
-   - Use "testimonial" type when you detect quotes or testimonials
-   - Use "cta" type only if there's an explicit call-to-action button in the text
-4. DO NOT add image sections - user will add them manually
+DO NOT put headlines in the "content" field. Extract them to "heading".
 
-FORMATTING OUTPUT RULES:
-- For bullet points, format as: "• First benefit point\n\n• Second benefit point\n\n• Third benefit point"
-- For numbered lists, format as: "1. First step\n\n2. Second step\n\n3. Third step"
-- For paragraphs, separate with: "\n\n"
-- For emphasized text, preserve caps and punctuation exactly
-- Preserve any special characters, quotes, or symbols from the original
+SECTION GROUPING (CRITICAL - READ CAREFULLY):
+- Group ALL related paragraphs under ONE section
+- If discussing benefits, put ALL benefit paragraphs in ONE section
+- If discussing a problem, put ALL problem paragraphs in ONE section
+- DO NOT create separate sections for every paragraph
+- Aim for 5-7 substantial sections total, not 50+
 
-EXAMPLE INPUT:
-"BREAKTHROUGH DISCOVERY
+EXAMPLE BAD (DO NOT DO THIS):
+{
+  "sections": [
+    {"type": "text", "content": "First paragraph"},
+    {"type": "text", "content": "Second paragraph"},
+    {"type": "text", "content": "Third paragraph"}
+  ]
+}
+This creates too many tiny sections!
 
-Scientists Reveal Secret to Youthful Skin
+EXAMPLE GOOD (DO THIS):
+{
+  "sections": [
+    {
+      "type": "text",
+      "heading": "The Problem",
+      "content": "First paragraph...\n\nSecond paragraph...\n\nThird paragraph..."
+    }
+  ]
+}
+This groups related content together!
 
-A groundbreaking study shows remarkable results.
+IGNORE THESE TEXT PATTERNS:
+- Any line starting with "[ПРЕДЛОЖЕНИЕ"
+- Any image placeholder suggestions (e.g., "[ПРЕДЛОЖЕНИЕ ЗА ИЗОБРАЖЕНИЕ: ...]")
+These should NOT become sections.
 
-Key Benefits:
-- Reduces wrinkles by 40%
-- Improves skin elasticity
-- Natural ingredients
+FORMATTING RULES:
+- Bullet points: "• First point\n\n• Second point\n\n• Third point"
+- Numbered lists: "1. First step\n\n2. Second step\n\n3. Third step"
+- Paragraphs: Separate with "\n\n"
+- Preserve ALL caps, punctuation, special characters exactly
 
-The research included three phases:
-1. Laboratory testing
-2. Clinical trials  
-3. Long-term studies"
+SECTION TYPES:
+- "hero": Main headline + subheadline (first section only)
+- "text": Main body content with heading
+- "benefits": Lists of benefits/features (use when you see bullet points)
+- "testimonial": Quotes or testimonials
+- "cta": Call-to-action (only if explicit CTA in text)
 
-EXAMPLE OUTPUT:
+OUTPUT FORMAT:
 {
   "layout": "story",
   "sections": [
     {
       "type": "hero",
-      "heading": "BREAKTHROUGH DISCOVERY",
-      "content": "Scientists Reveal Secret to Youthful Skin",
+      "heading": "MAIN HEADLINE HERE",
+      "content": "Subheadline or intro",
       "imagePosition": "full",
       "style": "emphasized"
     },
     {
       "type": "text",
-      "heading": "Revolutionary Research",
-      "content": "A groundbreaking study shows remarkable results.",
-      "imagePosition": "none",
-      "style": "normal"
-    },
-    {
-      "type": "benefits",
-      "heading": "Key Benefits",
-      "content": "• Reduces wrinkles by 40%\n\n• Improves skin elasticity\n\n• Natural ingredients",
-      "imagePosition": "none",
-      "style": "callout"
-    },
-    {
-      "type": "text",
-      "heading": "Research Phases",
-      "content": "The research included three phases:\n\n1. Laboratory testing\n\n2. Clinical trials\n\n3. Long-term studies",
+      "heading": "Section Heading Here",
+      "content": "Multiple paragraphs grouped together...\n\nMore content...\n\nEven more...",
       "imagePosition": "none",
       "style": "normal"
     }
@@ -222,6 +216,82 @@ EXAMPLE OUTPUT:
             imageUrl: section.imageUrl === null ? "" : section.imageUrl,
             ctaText: section.ctaText || undefined
           }));
+      }
+      
+      // POST-PROCESSING VALIDATION: Fix common AI mistakes
+      if (result.sections) {
+        // 1. Remove image placeholder sections
+        result.sections = result.sections.filter((section: any) => {
+          const content = section.content || "";
+          const heading = section.heading || "";
+          return !content.startsWith('[ПРЕДЛОЖЕНИЕ') && 
+                 !content.includes('[ПРЕДЛОЖЕНИЕ ЗА ИЗОБРАЖЕНИЕ') &&
+                 !heading.startsWith('[ПРЕДЛОЖЕНИЕ');
+        });
+
+        // 2. Detect missing headlines in section content and promote them
+        result.sections = result.sections.map((section: any) => {
+          if (!section.heading && section.content) {
+            const lines = section.content.split('\n').filter((l: string) => l.trim());
+            if (lines.length > 0) {
+              const firstLine = lines[0].trim();
+              
+              // Check if first line matches headline patterns
+              const isHeadline = (
+                firstLine === firstLine.toUpperCase() && firstLine.length > 5 && firstLine.length < 100 ||
+                firstLine.endsWith(':') ||
+                (firstLine.length < 50 && lines.length > 1 && lines[1].length > firstLine.length * 1.5)
+              );
+              
+              if (isHeadline) {
+                // Extract headline and remove from content
+                const remainingContent = lines.slice(1).join('\n\n');
+                return {
+                  ...section,
+                  heading: firstLine.replace(/:$/, ''),
+                  content: remainingContent
+                };
+              }
+            }
+          }
+          return section;
+        });
+
+        // 3. Merge over-segmented sections (if >15 sections, AI failed to group properly)
+        if (result.sections.length > 15) {
+          console.log(`Over-segmentation detected: ${result.sections.length} sections. Merging...`);
+          
+          const merged: any[] = [];
+          let currentGroup: any = null;
+          
+          for (const section of result.sections) {
+            // Always keep hero section separate
+            if (section.type === 'hero') {
+              if (currentGroup) merged.push(currentGroup);
+              merged.push(section);
+              currentGroup = null;
+              continue;
+            }
+            
+            // If section has a heading, start a new group
+            if (section.heading) {
+              if (currentGroup) merged.push(currentGroup);
+              currentGroup = { ...section };
+            } else {
+              // No heading - merge into current group
+              if (!currentGroup) {
+                currentGroup = { ...section };
+              } else {
+                currentGroup.content += '\n\n' + section.content;
+              }
+            }
+          }
+          
+          if (currentGroup) merged.push(currentGroup);
+          
+          result.sections = merged;
+          console.log(`Merged into ${result.sections.length} sections`);
+        }
       }
       
       // If AI output seems truncated, rebuild from full input to ensure complete delivery
