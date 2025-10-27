@@ -608,26 +608,6 @@ const Index = () => {
                     <Code className="mr-1 h-3 w-3" />
                     HTML
                   </Button>
-                  <Button 
-                    onClick={handleOptimizeWithAI} 
-                    disabled={isAnalyzing} 
-                    variant="secondary"
-                    size="sm"
-                    className="h-8 px-3 text-xs"
-                    title="Re-optimize entire page content with AI"
-                  >
-                    {isAnalyzing ? (
-                      <>
-                        <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-                        Optimizing...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="mr-1 h-3 w-3" />
-                        AI Enhance
-                      </>
-                    )}
-                  </Button>
                   <Button onClick={handleReset} variant="ghost" size="sm" className="h-8 px-3 text-xs">
                     Cancel
                   </Button>
@@ -798,9 +778,7 @@ const Index = () => {
                     </Button>
                   </div>
                 </div>
-              </TabsContent>
 
-              <TabsContent value="settings" className="m-0 space-y-3">
                 <div>
                   <label className="text-xs font-medium mb-2 block">
                     Sticky CTA Appears at {stickyCtaThreshold}% scroll
@@ -822,6 +800,9 @@ const Index = () => {
                     The sticky button will appear when users scroll down this percentage of the page
                   </p>
                 </div>
+              </TabsContent>
+
+              <TabsContent value="settings" className="m-0 space-y-3">
               </TabsContent>
             </Tabs>
           </div>
