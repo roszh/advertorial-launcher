@@ -42,6 +42,7 @@ interface BlogTemplateProps {
   onAddSection?: (index: number, type: "text" | "image") => void;
   onDeleteSection?: (index: number) => void;
   onReorderSections?: (newOrder: string[]) => void;
+  onEditSection?: (index: number) => void;
 }
 
 export const BlogTemplate = ({ 
@@ -60,7 +61,8 @@ export const BlogTemplate = ({
   onUpdateCta,
   onAddSection,
   onDeleteSection,
-  onReorderSections
+  onReorderSections,
+  onEditSection
 }: BlogTemplateProps) => {
   const heroSection = sections[0];
   const bodySections = sections.slice(1);
@@ -89,28 +91,14 @@ export const BlogTemplate = ({
           isDeleting && "ring-4 ring-destructive ring-opacity-50 bg-destructive/5 rounded-lg animate-pulse"
         )}>
           {(section.type === "quote" || section.type === "facebook-testimonial" || section.type === "bullet-box") ? (
-            <>
-              {isEditing ? (
-                <div className="relative">
-                  <PresellSection
-                    section={section}
-                    ctaText={ctaText}
-                    onCtaClick={onCtaClick}
-                    elementId={`section${actualIndex}`}
-                  />
-                  <div className="absolute top-4 right-4 bg-muted/80 backdrop-blur-sm rounded-lg p-2 text-xs">
-                    Click text to edit
-                  </div>
-                </div>
-              ) : (
-                <PresellSection
-                  section={section}
-                  ctaText={ctaText}
-                  onCtaClick={onCtaClick}
-                  elementId={`section${actualIndex}`}
-                />
-              )}
-            </>
+            <PresellSection
+              section={section}
+              ctaText={ctaText}
+              onCtaClick={onCtaClick}
+              elementId={`section${actualIndex}`}
+              isEditing={isEditing}
+              onEdit={() => onEditSection?.(actualIndex)}
+            />
           ) : (
           <section className="mb-6 md:mb-8 lg:mb-10">
             {section.heading && (

@@ -619,6 +619,7 @@ const Index = () => {
       onAddSection: handleAddSectionAt,
       onDeleteSection: handleDeleteSection,
       onReorderSections: handleReorderSections,
+      onEditSection: setEditingSectionIndex,
     };
 
     switch (selectedTemplate) {

@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
+import { Edit2 } from "lucide-react";
 import heroImage from "@/assets/hero-image.jpg";
 import successImage from "@/assets/success-image.jpg";
 import trustBg from "@/assets/trust-bg.jpg";
@@ -22,6 +23,8 @@ interface PresellSectionProps {
   ctaText: string;
   onCtaClick: (elementId: string) => void;
   elementId?: string;
+  isEditing?: boolean;
+  onEdit?: () => void;
 }
 
 const getImageForSection = (type: string) => {
@@ -37,7 +40,7 @@ const getImageForSection = (type: string) => {
   }
 };
 
-export const PresellSection = ({ section, ctaText, onCtaClick, elementId = "untracked" }: PresellSectionProps) => {
+export const PresellSection = ({ section, ctaText, onCtaClick, elementId = "untracked", isEditing = false, onEdit }: PresellSectionProps) => {
   const isHero = section.type === "hero";
   const isCta = section.type === "cta";
   const isQuote = section.type === "quote";
@@ -51,7 +54,13 @@ export const PresellSection = ({ section, ctaText, onCtaClick, elementId = "untr
     return (
       <div className="py-12 md:py-16 px-4">
         <div className="max-w-3xl mx-auto">
-          <div className="relative bg-gradient-to-br from-primary/5 to-accent/5 rounded-2xl p-6 md:p-12 border border-primary/10">
+          <div 
+            className={cn(
+              "relative bg-gradient-to-br from-primary/5 to-accent/5 rounded-2xl p-6 md:p-12 border border-primary/10",
+              isEditing && "cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all"
+            )}
+            onClick={isEditing ? onEdit : undefined}
+          >
             <div className="absolute -top-4 -left-4 text-6xl md:text-8xl text-primary/20 font-serif">"</div>
             <blockquote className="relative z-10">
               <p className="text-lg md:text-2xl font-serif italic leading-relaxed mb-6">
@@ -73,6 +82,11 @@ export const PresellSection = ({ section, ctaText, onCtaClick, elementId = "untr
                 )}
               </div>
             </div>
+            {isEditing && (
+              <div className="absolute top-4 right-4 bg-primary text-primary-foreground rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <Edit2 className="w-4 h-4" />
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -84,7 +98,13 @@ export const PresellSection = ({ section, ctaText, onCtaClick, elementId = "untr
     return (
       <div className="py-8 md:py-12 px-4">
         <div className="max-w-2xl mx-auto">
-          <div className="bg-background dark:bg-gray-900 rounded-lg shadow-lg p-4 md:p-6 border border-border">
+          <div 
+            className={cn(
+              "bg-background dark:bg-gray-900 rounded-lg shadow-lg p-4 md:p-6 border border-border relative group",
+              isEditing && "cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all"
+            )}
+            onClick={isEditing ? onEdit : undefined}
+          >
             <div className="flex items-start gap-3 mb-4">
               <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-secondary flex items-center justify-center flex-shrink-0 overflow-hidden">
                 {section.authorAvatar ? (
@@ -113,6 +133,11 @@ export const PresellSection = ({ section, ctaText, onCtaClick, elementId = "untr
                 <span>{section.reactions || 0}</span>
               </div>
             </div>
+            {isEditing && (
+              <div className="absolute top-4 right-4 bg-primary text-primary-foreground rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <Edit2 className="w-4 h-4" />
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -138,10 +163,14 @@ export const PresellSection = ({ section, ctaText, onCtaClick, elementId = "untr
     return (
       <div className="py-8 md:py-12 px-4">
         <div className="max-w-4xl mx-auto">
-          <div className={cn(
-            "rounded-xl p-6 md:p-8 border-2",
-            colorClasses[section.boxColor || "blue"]
-          )}>
+          <div 
+            className={cn(
+              "rounded-xl p-6 md:p-8 border-2 relative group",
+              colorClasses[section.boxColor || "blue"],
+              isEditing && "cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all"
+            )}
+            onClick={isEditing ? onEdit : undefined}
+          >
             {section.heading && (
               <h3 className="text-xl md:text-3xl font-bold mb-4 md:mb-6">{section.heading}</h3>
             )}
@@ -159,6 +188,11 @@ export const PresellSection = ({ section, ctaText, onCtaClick, elementId = "untr
                 </li>
               ))}
             </ul>
+            {isEditing && (
+              <div className="absolute top-4 right-4 bg-primary text-primary-foreground rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <Edit2 className="w-4 h-4" />
+              </div>
+            )}
           </div>
         </div>
       </div>
