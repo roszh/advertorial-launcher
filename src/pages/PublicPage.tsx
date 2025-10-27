@@ -69,29 +69,13 @@ export default function PublicPage() {
         // Set page title
         document.title = data.title;
 
-        // Fetch page owner's tracking scripts
-        const { data: pageOwner } = await supabase
-          .from("pages")
-          .select("user_id")
-          .eq("id", data.id)
-          .single();
-
-        if (pageOwner) {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("google_analytics_id, facebook_pixel_id, triplewhale_token, microsoft_clarity_id")
-            .eq("id", pageOwner.user_id)
-            .single();
-
-          if (profile) {
-            setTrackingScripts({
-              googleAnalyticsId: profile.google_analytics_id || undefined,
-              facebookPixelId: profile.facebook_pixel_id || undefined,
-              triplewhaleToken: profile.triplewhale_token || undefined,
-              microsoftClarityId: profile.microsoft_clarity_id || undefined,
-            });
-          }
-        }
+        // Set tracking scripts directly from the view
+        setTrackingScripts({
+          googleAnalyticsId: data.google_analytics_id || undefined,
+          facebookPixelId: data.facebook_pixel_id || undefined,
+          triplewhaleToken: data.triplewhale_token || undefined,
+          microsoftClarityId: data.microsoft_clarity_id || undefined,
+        });
       }
       setLoading(false);
     };
