@@ -195,6 +195,18 @@ Return a JSON object with this structure:
       }
       
       console.log("Successfully parsed AI response");
+      
+      // Ensure a proper hero section with heading/subheadline exists
+      const hasHero = (result.sections || []).some((s: any) => s.type === "hero" && (s.heading || s.content));
+      if (!hasHero) {
+        const combined = text;
+        const parts = combined.split(/\n{2,}/).map(p => p.trim()).filter(Boolean);
+        const heading = parts.shift() || "";
+        const sub = parts.length ? parts.shift() : "";
+        const hero = { type: "hero", heading, content: sub || "", imagePosition: "full", style: "emphasized", imageUrl: "" };
+        const remaining = parts.map(p => ({ type: "text", content: p, imagePosition: "none", style: "normal" }));
+        result.sections = [hero, ...remaining];
+      }
     } catch (parseError) {
       console.error("Failed to parse AI response as JSON:", data.choices[0].message.content);
       // Fallback: return full text in a single section so user always gets content

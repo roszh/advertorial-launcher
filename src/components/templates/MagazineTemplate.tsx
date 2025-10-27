@@ -94,9 +94,9 @@ export const MagazineTemplate = ({
               )
             )}
             
-            {section.imageUrl !== undefined && (
+            {(section.type === "image" || !!section.imageUrl) && (
               <div className="mb-4 md:mb-6">
-                {isEditing && userId ? (
+                {isEditing && userId && section.type === "image" ? (
                   <InlineImageUpload
                     currentImageUrl={section.imageUrl}
                     onImageUploaded={(url) => handleSectionUpdate(actualIndex, "imageUrl", url)}
