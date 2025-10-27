@@ -144,15 +144,16 @@ export default function Settings() {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="triplewhale">Triple Whale Token</Label>
-                <Input
+                <Label htmlFor="triplewhale">Triple Whale Snippet</Label>
+                <textarea
                   id="triplewhale"
-                  placeholder="Your Triple Whale tracking token"
+                  placeholder="Paste your complete Triple Whale HTML snippet here (including <script> and <link> tags)"
                   value={triplewhaleToken}
                   onChange={(e) => setTriplewhaleToken(e.target.value)}
+                  className="w-full min-h-[120px] px-3 py-2 text-sm rounded-md border border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 font-mono"
                 />
                 <p className="text-xs text-muted-foreground">
-                  Enter your Triple Whale tracking token
+                  Paste your complete Triple Whale "headless" HTML snippet (starts with &lt;link&gt; and &lt;script&gt; tags)
                 </p>
               </div>
               

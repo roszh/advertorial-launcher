@@ -161,18 +161,15 @@ export default function PublicPage() {
       document.body.appendChild(fbNoScript);
     }
 
-    // Triple Whale
+    // Triple Whale - inject raw HTML snippet
     if (trackingScripts.triplewhaleToken) {
-      const twScript = document.createElement('script');
-      twScript.innerHTML = `
-        (function(){var w=window;var d=document;var s=d.createElement('script');
-        s.src='https://cdn.triplewhale.com/pixel/v2.js';s.async=true;
-        d.getElementsByTagName('head')[0].appendChild(s);
-        w.TriplePixel=w.TriplePixel||function(){(w.TriplePixel.q=w.TriplePixel.q||[]).push(arguments);};
-        w.TriplePixel('init', '${trackingScripts.triplewhaleToken}');
-        w.TriplePixel('page', 'PageView');})();
-      `;
-      document.head.appendChild(twScript);
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = trackingScripts.triplewhaleToken.trim();
+      
+      // Insert all elements from the snippet into head
+      Array.from(tempDiv.children).forEach(element => {
+        document.head.appendChild(element.cloneNode(true));
+      });
     }
 
     // Microsoft Clarity
