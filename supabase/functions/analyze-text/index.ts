@@ -47,7 +47,7 @@ CRITICAL RULES - YOU MUST FOLLOW THESE EXACTLY:
 Your tasks:
 1. Identify and organize the existing sections (headline, subheadline, body paragraphs, etc.)
 2. Choose the best layout type based on content (story, list, problem-solution, how-to)
-3. Suggest optimal image placements throughout the article (3-5 images recommended)
+3. Suggest image placements sparingly: use 0-2 image placeholders total, and only if they clearly enhance readability; prefer exactly 1 placeholder for long articles
 4. Add CTA buttons only if they are NOT already present in the text
 5. Preserve the exact wording, tone, and style - EVERY SINGLE WORD
 
@@ -64,7 +64,7 @@ FORMATTING EXAMPLE:
 If original text has ingredients like "Ingredient A: description. Ingredient B: description." 
 You should format as: "Ingredient A: description.\n\nIngredient B: description."
 
-IMPORTANT: Include 3-5 sections with empty imageUrl strings ("") throughout the article to indicate where images should be placed. These will be click-to-upload placeholders for the user.
+IMPORTANT: Include at most 2 sections with empty imageUrl strings ("") and only when clearly beneficial. Prefer exactly 1 placeholder roughly after the first third of the article for long texts.
 
 Return a JSON object with this structure:
 {
@@ -146,10 +146,10 @@ Return a JSON object with this structure:
         style: "normal",
         imageUrl: ""
       }));
-      // Add 3 placeholder image sections roughly evenly spaced
-      const interval = Math.max(2, Math.ceil(rebuilt.length / 4));
-      for (let i = interval; i < rebuilt.length; i += interval) {
-        rebuilt.splice(i, 0, { type: "image", content: "", heading: undefined, imagePosition: "full", style: "normal", imageUrl: "" });
+      // Add up to 1 placeholder image section for long texts
+      if (rebuilt.length >= 6) {
+        const insertAt = Math.floor(rebuilt.length / 3);
+        rebuilt.splice(insertAt, 0, { type: "image", content: "", heading: undefined, imagePosition: "full", style: "normal", imageUrl: "" });
       }
       const fallback = { layout: "story", sections: rebuilt, cta: { primary: "Learn More" } } as const;
       return new Response(JSON.stringify(fallback), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -194,9 +194,10 @@ Return a JSON object with this structure:
           style: "normal",
           imageUrl: ""
         }));
-        const interval = Math.max(2, Math.ceil(rebuilt.length / 4));
-        for (let i = interval; i < rebuilt.length; i += interval) {
-          rebuilt.splice(i, 0, { type: "image", content: "", heading: undefined, imagePosition: "full", style: "normal", imageUrl: "" });
+        // Add a single placeholder image for long texts
+        if (rebuilt.length >= 6) {
+          const insertAt = Math.floor(rebuilt.length / 3);
+          rebuilt.splice(insertAt, 0, { type: "image", content: "", heading: undefined, imagePosition: "full", style: "normal", imageUrl: "" });
         }
         result = { layout: "story", sections: rebuilt, cta: result.cta || { primary: "Learn More" } };
         console.log("AI output detected as truncated; rebuilt from input text.");
