@@ -90,7 +90,10 @@ export const SectionTemplateModal = ({ open, onOpenChange, onSelectTemplate }: S
                   return (
                     <button
                       key={template.type}
-                      onClick={() => onSelectTemplate(template.type)}
+                      onClick={() => {
+                        console.log("Modal button clicked, type:", template.type);
+                        onSelectTemplate(template.type);
+                      }}
                       className="group relative flex items-start gap-4 p-4 rounded-lg border border-border bg-background hover:bg-secondary/50 hover:border-primary transition-all duration-200 text-left"
                     >
                       <div className={cn(
