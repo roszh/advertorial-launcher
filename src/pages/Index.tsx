@@ -279,7 +279,7 @@ const Index = () => {
       }
       
       // Auto-save as draft
-      const slug = generateSlug(autoTitle);
+      const slug = generateSlug(autoTitle, !editId);
       setPageSlug(slug);
       const pageData = {
         user_id: user.id,
@@ -328,11 +328,20 @@ const Index = () => {
     }
   };
 
-  const generateSlug = (title: string) => {
-    return title
+  const generateSlug = (title: string, addUniqueSuffix: boolean = false) => {
+    const baseSlug = title
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-|-$/g, "");
+    
+    if (addUniqueSuffix) {
+      // Add timestamp + short random string for uniqueness
+      const timestamp = Date.now().toString(36); // Convert to base36 for shorter string
+      const random = Math.random().toString(36).substring(2, 6); // 4 random chars
+      return `${baseSlug}-${timestamp}${random}`;
+    }
+    
+    return baseSlug;
   };
 
   const handleSave = async (status: "draft" | "published") => {
