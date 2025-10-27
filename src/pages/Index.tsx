@@ -295,9 +295,10 @@ const Index = () => {
         
         if (error) throw error;
         
-        // Update the URL to include the new page ID for editing
+        // Update the URL without causing a redirect/reload
         if (insertData?.[0]?.id) {
-          navigate(`/dashboard?edit=${insertData[0].id}`, { replace: true });
+          const newUrl = `/dashboard?edit=${insertData[0].id}`;
+          window.history.replaceState({}, '', newUrl);
         }
       }
       
