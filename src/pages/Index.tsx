@@ -661,11 +661,7 @@ const Index = () => {
   };
 
   const handleSelectTemplate = (type: string) => {
-    console.log("handleSelectTemplate called with type:", type);
-    if (!analysisResult) {
-      console.log("No analysisResult, returning");
-      return;
-    }
+    if (!analysisResult) return;
     
     let newSection: Section;
     
@@ -713,7 +709,6 @@ const Index = () => {
       sections: [...analysisResult.sections, newSection],
     });
     
-    console.log("New section added, closing modal");
     setShowTemplateModal(false);
     toast({ title: "Section added!" });
   };

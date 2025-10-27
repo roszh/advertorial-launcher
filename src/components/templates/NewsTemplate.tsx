@@ -244,20 +244,61 @@ export const NewsTemplate = ({
               onAddSectionBelow={(type) => {
                 if (type === "text" || type === "image") {
                   onAddSection(actualIndex, type);
+                } else if (type === "quote") {
+                  onAddSection(actualIndex, "text");
+                  setTimeout(() => {
+                    onUpdateSection?.(actualIndex + 1, {
+                      type: "quote",
+                      content: "Enter your quote here...",
+                      author: "Author Name",
+                      authorRole: "Role or Title",
+                      style: "normal"
+                    });
+                  }, 0);
+                } else if (type === "facebook-testimonial") {
+                  onAddSection(actualIndex, "text");
+                  setTimeout(() => {
+                    onUpdateSection?.(actualIndex + 1, {
+                      type: "facebook-testimonial",
+                      content: "Share your experience here...",
+                      author: "User Name",
+                      timestamp: "2 days ago",
+                      reactions: 0,
+                      style: "normal"
+                    });
+                  }, 0);
+                } else if (type === "bullet-box") {
+                  onAddSection(actualIndex, "text");
+                  setTimeout(() => {
+                    onUpdateSection?.(actualIndex + 1, {
+                      type: "bullet-box",
+                      content: "",
+                      heading: "Key Points",
+                      items: ["Point 1", "Point 2", "Point 3"],
+                      boxColor: "blue",
+                      style: "normal"
+                    });
+                  }, 0);
                 } else if (type === "headline") {
-                  const headlineSection = {
-                    type: "text" as const,
-                    content: "",
-                    heading: "New Section Heading"
-                  };
-                  onUpdateSection?.(actualIndex + 1, headlineSection);
+                  onAddSection(actualIndex, "text");
+                  setTimeout(() => {
+                    onUpdateSection?.(actualIndex + 1, {
+                      type: "text",
+                      content: "",
+                      heading: "New Section Heading",
+                      style: "normal"
+                    });
+                  }, 0);
                 } else if (type === "cta") {
-                  const ctaSection = {
-                    type: "cta" as const,
-                    content: "",
-                    ctaText: ctaText || "Click Here"
-                  };
-                  onUpdateSection?.(actualIndex + 1, ctaSection);
+                  onAddSection(actualIndex, "text");
+                  setTimeout(() => {
+                    onUpdateSection?.(actualIndex + 1, {
+                      type: "cta",
+                      content: "",
+                      ctaText: ctaText || "Click Here",
+                      style: "normal"
+                    });
+                  }, 0);
                 }
               }}
               onDeleteSection={() => onDeleteSection(actualIndex)}
