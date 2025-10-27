@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ImageUpload } from "@/components/ImageUpload";
 import { MagazineTemplate } from "@/components/templates/MagazineTemplate";
 import { NewsTemplate } from "@/components/templates/NewsTemplate";
@@ -21,7 +22,7 @@ import { HtmlEditor } from "@/components/HtmlEditor";
 import { SectionTemplateModal } from "@/components/SectionTemplateModal";
 import { toast } from "@/hooks/use-toast";
 import { stripHtmlTags, cn } from "@/lib/utils";
-import { Loader2, Save, Globe, Edit2, Plus, Sparkles, Code, X, Undo2 } from "lucide-react";
+import { Loader2, Save, Globe, Edit2, Plus, Sparkles, Code, X, Undo2, ChevronDown } from "lucide-react";
 
 interface Section {
   type: "hero" | "text" | "image" | "cta" | "benefits" | "testimonial" | "quote" | "facebook-testimonial" | "bullet-box";
@@ -82,6 +83,8 @@ const Index = () => {
   const [addMoreText, setAddMoreText] = useState("");
   const [isAddingMore, setIsAddingMore] = useState(false);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+  const [isDesignOptionsExpanded, setIsDesignOptionsExpanded] = useState(false);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -107,6 +110,38 @@ const Index = () => {
 
     return () => subscription.unsubscribe();
   }, [navigate, editId]);
+
+  // Auto-hide header on scroll down, show on scroll up
+  useEffect(() => {
+    let lastScrollY = window.scrollY;
+    let ticking = false;
+
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const currentScrollY = window.scrollY;
+          
+          // Always show header at top of page
+          if (currentScrollY < 50) {
+            setIsHeaderVisible(true);
+          } else if (currentScrollY > lastScrollY) {
+            // Scrolling down - hide header
+            setIsHeaderVisible(false);
+          } else {
+            // Scrolling up - show header
+            setIsHeaderVisible(true);
+          }
+          
+          lastScrollY = currentScrollY;
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const loadExistingPage = async (pageId: string) => {
     const { data, error } = await supabase
@@ -819,7 +854,10 @@ const Index = () => {
       <div className="min-h-screen bg-background">
         <Navigation user={user} />
         
-        <div className="border-b bg-background/95 backdrop-blur sticky top-0 z-50">
+        <div className={cn(
+          "border-b bg-background/95 backdrop-blur sticky top-0 z-50 transition-transform duration-300 ease-in-out",
+          !isHeaderVisible && "-translate-y-full"
+        )}>
           <div className="container py-2">
             <Tabs defaultValue="content" className="w-full">
               <div className="flex items-center justify-between mb-2">
@@ -1020,69 +1058,89 @@ const Index = () => {
                   </div>
                 </div>
 
-                <div>
-                  <label className="text-xs font-medium mb-2 block">CTA Button Style (updates live preview)</label>
-                  <div className="grid grid-cols-4 gap-2">
-                    <Button
-                      variant={ctaStyle === "ctaAmazon" ? "ctaAmazon" : "outline"}
-                      size="sm"
-                      onClick={() => setCtaStyle("ctaAmazon")}
-                      className="h-16 flex flex-col gap-1"
+                <Collapsible open={isDesignOptionsExpanded} onOpenChange={setIsDesignOptionsExpanded}>
+                  <CollapsibleTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full h-9 flex items-center justify-between"
                     >
-                      <span className="text-2xl">🛒</span>
-                      <span className="text-xs">Amazon</span>
+                      <span className="text-xs font-medium">
+                        {isDesignOptionsExpanded ? "Hide" : "Show"} Design Options
+                      </span>
+                      <ChevronDown className={cn(
+                        "h-4 w-4 transition-transform",
+                        isDesignOptionsExpanded && "rotate-180"
+                      )} />
                     </Button>
-                    <Button
-                      variant={ctaStyle === "ctaUrgent" ? "ctaUrgent" : "outline"}
-                      size="sm"
-                      onClick={() => setCtaStyle("ctaUrgent")}
-                      className="h-16 flex flex-col gap-1"
-                    >
-                      <span className="text-2xl">⚡</span>
-                      <span className="text-xs">Urgent</span>
-                    </Button>
-                    <Button
-                      variant={ctaStyle === "ctaPremium" ? "ctaPremium" : "outline"}
-                      size="sm"
-                      onClick={() => setCtaStyle("ctaPremium")}
-                      className="h-16 flex flex-col gap-1"
-                    >
-                      <span className="text-2xl">✨</span>
-                      <span className="text-xs">Premium</span>
-                    </Button>
-                    <Button
-                      variant={ctaStyle === "ctaTrust" ? "ctaTrust" : "outline"}
-                      size="sm"
-                      onClick={() => setCtaStyle("ctaTrust")}
-                      className="h-16 flex flex-col gap-1"
-                    >
-                      <span className="text-2xl">🛡️</span>
-                      <span className="text-xs">Trust</span>
-                    </Button>
-                  </div>
-                </div>
+                  </CollapsibleTrigger>
+                  
+                  <CollapsibleContent className="space-y-3 mt-3">
+                    <div>
+                      <label className="text-xs font-medium mb-2 block">CTA Button Style (updates live preview)</label>
+                      <div className="grid grid-cols-4 gap-2">
+                        <Button
+                          variant={ctaStyle === "ctaAmazon" ? "ctaAmazon" : "outline"}
+                          size="sm"
+                          onClick={() => setCtaStyle("ctaAmazon")}
+                          className="h-16 flex flex-col gap-1"
+                        >
+                          <span className="text-2xl">🛒</span>
+                          <span className="text-xs">Amazon</span>
+                        </Button>
+                        <Button
+                          variant={ctaStyle === "ctaUrgent" ? "ctaUrgent" : "outline"}
+                          size="sm"
+                          onClick={() => setCtaStyle("ctaUrgent")}
+                          className="h-16 flex flex-col gap-1"
+                        >
+                          <span className="text-2xl">⚡</span>
+                          <span className="text-xs">Urgent</span>
+                        </Button>
+                        <Button
+                          variant={ctaStyle === "ctaPremium" ? "ctaPremium" : "outline"}
+                          size="sm"
+                          onClick={() => setCtaStyle("ctaPremium")}
+                          className="h-16 flex flex-col gap-1"
+                        >
+                          <span className="text-2xl">✨</span>
+                          <span className="text-xs">Premium</span>
+                        </Button>
+                        <Button
+                          variant={ctaStyle === "ctaTrust" ? "ctaTrust" : "outline"}
+                          size="sm"
+                          onClick={() => setCtaStyle("ctaTrust")}
+                          className="h-16 flex flex-col gap-1"
+                        >
+                          <span className="text-2xl">🛡️</span>
+                          <span className="text-xs">Trust</span>
+                        </Button>
+                      </div>
+                    </div>
 
-                <div>
-                  <label className="text-xs font-medium mb-2 block">
-                    Sticky CTA Appears at {stickyCtaThreshold}% scroll
-                  </label>
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs text-muted-foreground">0%</span>
-                    <input
-                      type="range"
-                      min="0"
-                      max="100"
-                      step="5"
-                      value={stickyCtaThreshold}
-                      onChange={(e) => setStickyCtaThreshold(Number(e.target.value))}
-                      className="flex-1 h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
-                    />
-                    <span className="text-xs text-muted-foreground">100%</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    The sticky button will appear when users scroll down this percentage of the page
-                  </p>
-                </div>
+                    <div>
+                      <label className="text-xs font-medium mb-2 block">
+                        Sticky CTA Appears at {stickyCtaThreshold}% scroll
+                      </label>
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs text-muted-foreground">0%</span>
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          step="5"
+                          value={stickyCtaThreshold}
+                          onChange={(e) => setStickyCtaThreshold(Number(e.target.value))}
+                          className="flex-1 h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
+                        />
+                        <span className="text-xs text-muted-foreground">100%</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        The sticky button will appear when users scroll down this percentage of the page
+                      </p>
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
               </TabsContent>
 
               <TabsContent value="settings" className="m-0 space-y-3">
