@@ -19,7 +19,7 @@ import { StickyCtaButton } from "@/components/StickyCtaButton";
 import { HtmlEditor } from "@/components/HtmlEditor";
 import { toast } from "@/hooks/use-toast";
 import { stripHtmlTags } from "@/lib/utils";
-import { Loader2, Save, Globe, Edit2, Plus, Sparkles, Code, X } from "lucide-react";
+import { Loader2, Save, Globe, Edit2, Plus, Sparkles, Code, X, Undo2 } from "lucide-react";
 
 interface Section {
   type: "hero" | "text" | "image" | "cta" | "benefits" | "testimonial";
@@ -599,24 +599,14 @@ const Index = () => {
                 </TabsList>
                 
                 <div className="flex gap-2 items-center">
-                  {undoStack && (
-                    <Button 
-                      onClick={handleUndo} 
-                      variant="destructive" 
-                      size="sm" 
-                      className="h-8 px-3 text-xs"
-                    >
-                      <span className="mr-1">↩️</span>
-                      Undo
-                    </Button>
-                  )}
-                  <Button onClick={() => handleSave("draft")} disabled={saving} variant="ghost" size="sm" className="h-8 px-3 text-xs">
-                    <Save className="mr-1 h-3 w-3" />
-                    Draft
-                  </Button>
-                  <Button onClick={() => handleSave("published")} disabled={saving} size="sm" className="h-8 px-3 text-xs">
-                    <Globe className="mr-1 h-3 w-3" />
-                    Publish
+                  <Button 
+                    onClick={() => setShowHtmlEditor(true)} 
+                    variant="outline" 
+                    size="sm" 
+                    className="h-8 px-3 text-xs"
+                  >
+                    <Code className="mr-1 h-3 w-3" />
+                    HTML
                   </Button>
                   <Button 
                     onClick={handleOptimizeWithAI} 
@@ -641,14 +631,24 @@ const Index = () => {
                   <Button onClick={handleReset} variant="ghost" size="sm" className="h-8 px-3 text-xs">
                     Cancel
                   </Button>
+                  <Button onClick={() => handleSave("draft")} disabled={saving} variant="ghost" size="sm" className="h-8 px-3 text-xs">
+                    <Save className="mr-1 h-3 w-3" />
+                    Draft
+                  </Button>
                   <Button 
-                    onClick={() => setShowHtmlEditor(true)} 
+                    onClick={handleUndo} 
+                    disabled={!undoStack || saving}
                     variant="outline" 
                     size="sm" 
                     className="h-8 px-3 text-xs"
+                    title={undoStack ? "Undo last change" : "No changes to undo"}
                   >
-                    <Code className="mr-1 h-3 w-3" />
-                    HTML
+                    <Undo2 className="mr-1 h-3 w-3" />
+                    Undo
+                  </Button>
+                  <Button onClick={() => handleSave("published")} disabled={saving} size="sm" className="h-8 px-3 text-xs">
+                    <Globe className="mr-1 h-3 w-3" />
+                    Publish
                   </Button>
                 </div>
               </div>
