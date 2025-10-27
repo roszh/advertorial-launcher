@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { Button } from "./ui/button";
-import { Plus, Trash2, ImagePlus, AlertCircle, Copy } from "lucide-react";
+import { Plus, Trash2, ImagePlus, AlertCircle, Copy, MousePointerClick } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface SectionControlsProps {
   index: number;
   onAddTextBelow: () => void;
   onAddImageBelow: () => void;
+  onAddCtaBelow?: () => void;
   onDeleteSection: () => void;
   onCloneSection?: () => void;
   className?: string;
@@ -17,6 +18,7 @@ export const SectionControls = ({
   index,
   onAddTextBelow,
   onAddImageBelow,
+  onAddCtaBelow,
   onDeleteSection,
   onCloneSection,
   className,
@@ -60,6 +62,18 @@ export const SectionControls = ({
           <ImagePlus className="h-4 w-4 mr-1" />
           Image
         </Button>
+        {onAddCtaBelow && (
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={onAddCtaBelow}
+            title="Add CTA button section below"
+            className="hover-scale"
+          >
+            <MousePointerClick className="h-4 w-4 mr-1" />
+            Button
+          </Button>
+        )}
         {onCloneSection && (
           <Button
             size="sm"

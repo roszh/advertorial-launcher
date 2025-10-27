@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect } from "react";
 import { Textarea } from "./ui/textarea";
 import { Button } from "./ui/button";
-import { Check, X, Edit2, Bold, Italic, Trash2, Sparkles } from "lucide-react";
+import { Check, X, Edit2, Bold, Italic, Trash2, Sparkles, Link as LinkIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Input } from "./ui/input";
 
 interface RichTextEditorProps {
   value: string;
@@ -30,6 +31,8 @@ export const RichTextEditor = ({
   const [isBold, setIsBold] = useState(false);
   const [isItalic, setIsItalic] = useState(false);
   const [isOptimizing, setIsOptimizing] = useState(false);
+  const [showLinkInput, setShowLinkInput] = useState(false);
+  const [linkUrl, setLinkUrl] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
 
@@ -104,6 +107,52 @@ export const RichTextEditor = ({
     }
   };
 
+  const insertLink = () => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = editValue.substring(start, end);
+    
+    if (!selectedText) {
+      toast({
+        title: "Select text first",
+        description: "Please select the text you want to turn into a link",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setShowLinkInput(true);
+  };
+
+  const applyLink = () => {
+    const textarea = textareaRef.current;
+    if (!textarea || !linkUrl.trim()) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = editValue.substring(start, end);
+    
+    if (selectedText) {
+      const url = linkUrl.startsWith('http') ? linkUrl : `https://${linkUrl}`;
+      const linkMarkdown = `[${selectedText}](${url})`;
+      const newValue = 
+        editValue.substring(0, start) + 
+        linkMarkdown + 
+        editValue.substring(end);
+      setEditValue(newValue);
+      
+      setShowLinkInput(false);
+      setLinkUrl("");
+      
+      setTimeout(() => {
+        textarea.focus();
+      }, 0);
+    }
+  };
+
   const handleAiOptimize = async () => {
     if (!editValue.trim()) return;
     
@@ -137,6 +186,9 @@ export const RichTextEditor = ({
   const formatText = (markdownValue: string) => {
     // Convert markdown to styled text for display
     let formatted = markdownValue;
+    
+    // Links: [text](url)
+    formatted = formatted.replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-primary underline hover:no-underline">$1</a>');
     
     // Bold: **text** or __text__
     formatted = formatted.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
@@ -199,6 +251,14 @@ export const RichTextEditor = ({
             >
               <Italic className="h-4 w-4" />
             </Button>
+            <Button 
+              size="sm" 
+              variant="outline"
+              onClick={insertLink}
+              title="Insert link (select text first)"
+            >
+              <LinkIcon className="h-4 w-4" />
+            </Button>
           </div>
           {enableAiOptimize && (
             <Button 
@@ -221,8 +281,40 @@ export const RichTextEditor = ({
             Cancel
           </Button>
         </div>
+        {showLinkInput && (
+          <div className="flex gap-2 items-center p-2 bg-muted rounded-lg">
+            <Input
+              type="text"
+              placeholder="Enter URL (e.g., example.com)"
+              value={linkUrl}
+              onChange={(e) => setLinkUrl(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  applyLink();
+                } else if (e.key === "Escape") {
+                  setShowLinkInput(false);
+                  setLinkUrl("");
+                }
+              }}
+              className="flex-1"
+            />
+            <Button size="sm" onClick={applyLink}>
+              <Check className="h-4 w-4" />
+            </Button>
+            <Button 
+              size="sm" 
+              variant="outline" 
+              onClick={() => {
+                setShowLinkInput(false);
+                setLinkUrl("");
+              }}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
         <p className="text-xs text-muted-foreground">
-          Tip: Select text and click Bold/Italic to format, or use **bold** and *italic* syntax
+          Tip: Select text and click Bold/Italic/Link to format, or use **bold**, *italic*, and [text](url) syntax
         </p>
       </div>
     );

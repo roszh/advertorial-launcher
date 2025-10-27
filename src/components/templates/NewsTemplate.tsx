@@ -163,6 +163,14 @@ export const NewsTemplate = ({
               index={actualIndex}
               onAddTextBelow={() => onAddSection(actualIndex, "text")}
               onAddImageBelow={() => onAddSection(actualIndex, "image")}
+              onAddCtaBelow={() => {
+                const ctaSection = {
+                  type: "cta" as const,
+                  content: "Ready to take action?",
+                  heading: "Get Started Now"
+                };
+                onUpdateSection?.(actualIndex + 1, ctaSection);
+              }}
               onDeleteSection={() => onDeleteSection(actualIndex)}
               onCloneSection={() => {
                 const clonedSection = { ...section };
