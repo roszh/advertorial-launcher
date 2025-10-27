@@ -107,15 +107,38 @@ Return a JSON object with this structure:
     }
 
     const data = await response.json();
-    const result = JSON.parse(data.choices[0].message.content);
+    console.log("AI response received:", JSON.stringify(data).substring(0, 200));
+    
+    if (!data.choices || !data.choices[0] || !data.choices[0].message || !data.choices[0].message.content) {
+      console.error("Invalid AI response structure:", JSON.stringify(data));
+      return new Response(
+        JSON.stringify({ error: "Invalid response from AI service" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    let result;
+    try {
+      result = JSON.parse(data.choices[0].message.content);
+      console.log("Successfully parsed AI response");
+    } catch (parseError) {
+      console.error("Failed to parse AI response as JSON:", data.choices[0].message.content);
+      return new Response(
+        JSON.stringify({ error: "AI returned invalid JSON format. Please try again." }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
     console.error("Error in analyze-text function:", error);
+    console.error("Error stack:", error instanceof Error ? error.stack : "No stack trace");
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
+      JSON.stringify({ 
+        error: error instanceof Error ? error.message : "Unknown error occurred. Please try again." 
+      }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
