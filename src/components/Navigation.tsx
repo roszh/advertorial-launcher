@@ -23,7 +23,7 @@ export function Navigation({ user }: NavigationProps) {
       <div className="container flex h-14 items-center">
         <Link to="/" className="flex items-center space-x-2 mr-6">
           <FileText className="h-6 w-6" />
-          <span className="font-bold">Presell Generator</span>
+          <span className="font-bold">Advertorial Launcher</span>
         </Link>
         <div className="flex items-center space-x-4 flex-1">
           <Link to="/">
