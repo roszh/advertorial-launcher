@@ -9,6 +9,7 @@ import placeholderImage from "@/assets/hero-image.jpg";
 import { useState } from "react";
 
 interface Section {
+  id?: string;
   type: "hero" | "text" | "image" | "cta" | "benefits" | "testimonial" | "quote" | "facebook-testimonial" | "bullet-box";
   content: string;
   heading?: string;
@@ -84,7 +85,7 @@ export const MagazineTemplate = ({
     const isDeleting = deletingIndex === actualIndex;
     
     return {
-      id: actualIndex.toString(),
+      id: section.id!,
       content: (
         <div className={cn(
           "group relative transition-all duration-300",

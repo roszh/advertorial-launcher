@@ -25,6 +25,7 @@ import { stripHtmlTags, cn } from "@/lib/utils";
 import { Loader2, Save, Globe, Edit2, Plus, Sparkles, Code, X, Undo2, ChevronDown } from "lucide-react";
 
 interface Section {
+  id?: string;
   type: "hero" | "text" | "image" | "cta" | "benefits" | "testimonial" | "quote" | "facebook-testimonial" | "bullet-box";
   content: string;
   heading?: string;
@@ -49,6 +50,13 @@ interface AnalysisResult {
     secondary?: string;
   };
 }
+
+const ensureSectionId = (section: Section): Section & { id: string } => {
+  return {
+    ...section,
+    id: section.id || crypto.randomUUID()
+  };
+};
 
 const Index = () => {
   const navigate = useNavigate();
@@ -170,7 +178,7 @@ const Index = () => {
       
       setAnalysisResult({
         layout: "default",
-        sections: content.sections,
+        sections: content.sections.map((s: Section) => ensureSectionId(s)),
         cta: { primary: data.cta_text || "Get Started" }
       });
       setIsEditorMode(true);
@@ -300,10 +308,10 @@ const Index = () => {
 
       const data = await response.json();
       
-      // Strip HTML tags from all content
+      // Strip HTML tags from all content and ensure IDs
       const cleanedData = {
         ...data,
-        sections: data.sections.map((section: Section) => ({
+        sections: data.sections.map((section: Section) => ensureSectionId({
           ...section,
           heading: section.heading ? stripHtmlTags(section.heading) : section.heading,
           content: stripHtmlTags(section.content),
@@ -569,10 +577,10 @@ const Index = () => {
   const handleReorderSections = (newOrder: string[]) => {
     if (!analysisResult) return;
     
-    // Create a map of section index to section
-    const sectionMap = new Map(analysisResult.sections.map((section, idx) => [idx.toString(), section]));
+    // Create a map of section ID to section
+    const sectionMap = new Map(analysisResult.sections.map(section => [section.id!, section]));
     
-    // Reorder sections based on the new order
+    // Reorder sections based on the new order of IDs
     const reorderedSections = newOrder.map(id => {
       const section = sectionMap.get(id);
       if (!section) throw new Error(`Section with id ${id} not found`);
@@ -589,13 +597,13 @@ const Index = () => {
   const handleAddSection = () => {
     if (!analysisResult) return;
     
-    const newSection: Section = {
+    const newSection: Section = ensureSectionId({
       type: "text",
       content: "Enter your content here...",
       heading: "New Section",
       imagePosition: "none",
       style: "normal",
-    };
+    });
     
     setAnalysisResult({
       ...analysisResult,
@@ -672,7 +680,7 @@ const Index = () => {
   const handleAddSectionAt = (afterIndex: number, type: "text" | "image") => {
     if (!analysisResult) return;
     
-    const newSection: Section = type === "image" 
+    const newSection: Section = ensureSectionId(type === "image" 
       ? {
           type: "image",
           content: "",
@@ -685,7 +693,7 @@ const Index = () => {
           content: "Enter your paragraph here...",
           imagePosition: "none",
           style: "normal",
-        };
+        });
     
     const newSections = [...analysisResult.sections];
     newSections.splice(afterIndex + 1, 0, newSection);
