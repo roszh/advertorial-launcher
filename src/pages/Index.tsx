@@ -1044,58 +1044,59 @@ const Index = () => {
                     />
                   </div>
                 </div>
-                <div>
-                  <label className="text-xs font-medium mb-1 block">Tags</label>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {selectedTags.map(tagId => {
-                      const tag = availableTags.find(t => t.id === tagId);
-                      return tag ? (
-                        <Badge 
-                          key={tagId}
-                          style={{backgroundColor: tag.color, color: 'white'}}
-                          className="cursor-pointer text-xs"
-                          onClick={() => setSelectedTags(prev => prev.filter(id => id !== tagId))}
-                        >
-                          {tag.name}
-                          <X className="ml-1 h-3 w-3" />
-                        </Badge>
-                      ) : null;
-                    })}
-                    <Select 
-                      value="" 
-                      onValueChange={(val) => {
-                        if (val === "create-new") {
-                          setShowNewTagDialog(true);
-                        } else if (val && !selectedTags.includes(val)) {
-                          setSelectedTags([...selectedTags, val]);
-                        }
-                      }}
-                    >
-                      <SelectTrigger className="h-7 w-[120px] text-xs">
-                        <SelectValue placeholder="Add tag..." />
-                      </SelectTrigger>
-                      <SelectContent className="bg-background z-50">
-                        <SelectItem value="create-new" className="text-xs font-semibold text-primary">
-                          <Plus className="inline h-3 w-3 mr-1" />
-                          Create new tag
-                        </SelectItem>
-                        {availableTags.length > 0 && <div className="h-px bg-border my-1" />}
-                        {availableTags
-                          .filter(tag => !selectedTags.includes(tag.id))
-                          .map(tag => (
-                            <SelectItem key={tag.id} value={tag.id} className="text-xs">
-                              <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 rounded-full" style={{backgroundColor: tag.color}} />
-                                {tag.name}
-                              </div>
-                            </SelectItem>
-                          ))}
-                      </SelectContent>
-                    </Select>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-medium mb-1 block">Tags</label>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {selectedTags.map(tagId => {
+                        const tag = availableTags.find(t => t.id === tagId);
+                        return tag ? (
+                          <Badge 
+                            key={tagId}
+                            style={{backgroundColor: tag.color, color: 'white'}}
+                            className="cursor-pointer text-xs"
+                            onClick={() => setSelectedTags(prev => prev.filter(id => id !== tagId))}
+                          >
+                            {tag.name}
+                            <X className="ml-1 h-3 w-3" />
+                          </Badge>
+                        ) : null;
+                      })}
+                      <Select 
+                        value="" 
+                        onValueChange={(val) => {
+                          if (val === "create-new") {
+                            setShowNewTagDialog(true);
+                          } else if (val && !selectedTags.includes(val)) {
+                            setSelectedTags([...selectedTags, val]);
+                          }
+                        }}
+                      >
+                        <SelectTrigger className="h-7 w-[120px] text-xs">
+                          <SelectValue placeholder="Add tag..." />
+                        </SelectTrigger>
+                        <SelectContent className="bg-background z-50">
+                          <SelectItem value="create-new" className="text-xs font-semibold text-primary">
+                            <Plus className="inline h-3 w-3 mr-1" />
+                            Create new tag
+                          </SelectItem>
+                          {availableTags.length > 0 && <div className="h-px bg-border my-1" />}
+                          {availableTags
+                            .filter(tag => !selectedTags.includes(tag.id))
+                            .map(tag => (
+                              <SelectItem key={tag.id} value={tag.id} className="text-xs">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-2 h-2 rounded-full" style={{backgroundColor: tag.color}} />
+                                  {tag.name}
+                                </div>
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
-                </div>
 
-                <div>
+                  <div>
                   <label className="text-xs font-medium mb-1 block flex items-center gap-2">
                     Country Setup
                     <Badge variant="destructive" className="text-xs">Required</Badge>
@@ -1135,78 +1136,7 @@ const Index = () => {
                     Choose which tracking scripts to load for this page. Configure Country Setups in Settings.
                   </p>
                 </div>
-
-                {selectedCountrySetupId && selectedSetupDetails && (
-                  <Collapsible className="mt-3">
-                    <CollapsibleTrigger asChild>
-                      <Button variant="outline" className="w-full justify-between h-9 text-xs">
-                        <span className="flex items-center gap-2">
-                          🔍 Preview Tracking Scripts
-                        </span>
-                        <ChevronDown className="h-4 w-4" />
-                      </Button>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent className="mt-2 p-3 border rounded-lg bg-muted/50">
-                      {(() => {
-                        const scripts = [
-                          { name: "Google Analytics", id: selectedSetupDetails.google_analytics_id, icon: "📊" },
-                          { name: "Facebook Pixel", id: selectedSetupDetails.facebook_pixel_id, icon: "📘" },
-                          { name: "Triple Whale", id: selectedSetupDetails.triplewhale_token, icon: "🐋" },
-                          { name: "Microsoft Clarity", id: selectedSetupDetails.microsoft_clarity_id, icon: "🔍" }
-                        ];
-                        
-                        const activeScripts = scripts.filter(s => s.id);
-                        const inactiveScripts = scripts.filter(s => !s.id);
-                        
-                        return (
-                          <div className="space-y-2">
-                            <p className="text-xs font-medium">When this page is published, the following scripts will load:</p>
-                            
-                            {activeScripts.length > 0 && (
-                              <div className="space-y-1">
-                                <p className="text-xs font-semibold text-green-600">✓ Active Scripts ({activeScripts.length})</p>
-                                {activeScripts.map(s => (
-                                  <div key={s.name} className="flex items-center gap-2 text-xs pl-4">
-                                    <span>{s.icon}</span>
-                                    <span>{s.name}</span>
-                                    <Badge variant="outline" className="text-xs font-mono">
-                                      {s.id?.substring(0, 12)}...
-                                    </Badge>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                            
-                            {inactiveScripts.length > 0 && (
-                              <div className="space-y-1 mt-2">
-                                <p className="text-xs font-semibold text-muted-foreground">⚪ Not Configured ({inactiveScripts.length})</p>
-                                {inactiveScripts.map(s => (
-                                  <div key={s.name} className="flex items-center gap-2 text-xs pl-4 text-muted-foreground">
-                                    <span>{s.icon}</span>
-                                    <span>{s.name}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                            
-                            {activeScripts.length === 0 && (
-                              <div className="p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-800">
-                                ⚠️ No tracking scripts configured in this Country Setup. 
-                                <Button 
-                                  variant="link" 
-                                  className="p-0 h-auto ml-1 text-xs"
-                                  onClick={() => navigate("/settings")}
-                                >
-                                  Configure in Settings
-                                </Button>
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })()}
-                    </CollapsibleContent>
-                  </Collapsible>
-                )}
+              </div>
               </TabsContent>
 
               <TabsContent value="design" className="m-0 space-y-3">
