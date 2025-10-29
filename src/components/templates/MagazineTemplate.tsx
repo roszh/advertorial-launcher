@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn, formatMarkdownText } from "@/lib/utils";
 import { Button } from "../ui/button";
 import { InlineImageUpload } from "../InlineImageUpload";
 import { RichTextEditor } from "../RichTextEditor";
@@ -117,7 +117,7 @@ export const MagazineTemplate = ({
               ) : (
                 <h2 
                   className="text-[22px] md:text-2xl lg:text-3xl font-bold mb-3 md:mb-4 font-serif leading-tight"
-                  dangerouslySetInnerHTML={{ __html: section.heading.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\*(.+?)\*/g, '<em>$1</em>') }}
+                  dangerouslySetInnerHTML={{ __html: formatMarkdownText(section.heading) }}
                 />
               )
             )}
@@ -167,9 +167,7 @@ export const MagazineTemplate = ({
                           <span 
                             className="flex-1 break-words"
                             dangerouslySetInnerHTML={{ 
-                              __html: trimmed.replace(/^[•\-\*]\s*/, '')
-                                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-                                .replace(/\*(.+?)\*/g, '<em>$1</em>') 
+                              __html: formatMarkdownText(trimmed.replace(/^[•\-\*]\s*/, ''))
                             }}
                           />
                         </div>
@@ -185,9 +183,7 @@ export const MagazineTemplate = ({
                           <span 
                             className="flex-1 break-words"
                             dangerouslySetInnerHTML={{ 
-                              __html: trimmed.replace(/^\d+\.\s*/, '')
-                                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-                                .replace(/\*(.+?)\*/g, '<em>$1</em>') 
+                              __html: formatMarkdownText(trimmed.replace(/^\d+\.\s*/, ''))
                             }}
                           />
                         </div>

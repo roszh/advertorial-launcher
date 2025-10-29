@@ -6,7 +6,7 @@ import { DraggableSections } from "../DraggableSections";
 import { PresellSection } from "../PresellSection";
 import placeholderImage from "@/assets/hero-image.jpg";
 import { useState } from "react";
-import { cn } from "@/lib/utils";
+import { cn, formatMarkdownText } from "@/lib/utils";
 
 interface Section {
   id?: string;
@@ -118,9 +118,7 @@ export const BlogTemplate = ({
                 <h2 
                   className="text-[22px] md:text-2xl lg:text-3xl font-bold mb-3 md:mb-4 lg:mb-5 leading-tight"
                   dangerouslySetInnerHTML={{ 
-                    __html: section.heading
-                      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-                      .replace(/\*(.+?)\*/g, '<em>$1</em>') 
+                    __html: formatMarkdownText(section.heading)
                   }}
                 />
               )
@@ -171,9 +169,7 @@ export const BlogTemplate = ({
                           <span 
                             className="flex-1 break-words"
                             dangerouslySetInnerHTML={{ 
-                              __html: trimmed.replace(/^[•\-\*]\s*/, '')
-                                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-                                .replace(/\*(.+?)\*/g, '<em>$1</em>') 
+                              __html: formatMarkdownText(trimmed.replace(/^[•\-\*]\s*/, ''))
                             }}
                           />
                         </div>
@@ -189,9 +185,7 @@ export const BlogTemplate = ({
                           <span 
                             className="flex-1 break-words"
                             dangerouslySetInnerHTML={{ 
-                              __html: trimmed.replace(/^\d+\.\s*/, '')
-                                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-                                .replace(/\*(.+?)\*/g, '<em>$1</em>') 
+                              __html: formatMarkdownText(trimmed.replace(/^\d+\.\s*/, ''))
                             }}
                           />
                         </div>
@@ -204,9 +198,7 @@ export const BlogTemplate = ({
                         key={pIndex} 
                         className="text-lg md:text-base lg:text-lg leading-[1.7] md:leading-[1.8] text-foreground/90 break-words"
                         dangerouslySetInnerHTML={{ 
-                          __html: paragraph
-                            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-                            .replace(/\*(.+?)\*/g, '<em>$1</em>') 
+                          __html: formatMarkdownText(paragraph)
                         }}
                       />
                     );
@@ -229,9 +221,7 @@ export const BlogTemplate = ({
                     <h3 
                       className="text-lg md:text-xl lg:text-2xl font-bold mb-3 md:mb-4"
                       dangerouslySetInnerHTML={{ 
-                        __html: (section.heading || "")
-                          .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-                          .replace(/\*(.+?)\*/g, '<em>$1</em>') 
+                        __html: formatMarkdownText(section.heading || "")
                       }}
                     />
                   ) : null}
@@ -406,9 +396,7 @@ export const BlogTemplate = ({
               <h1 
                 className="text-[25px] md:text-3xl lg:text-4xl font-bold mb-3 md:mb-4 leading-tight"
                 dangerouslySetInnerHTML={{ 
-                  __html: (headline || "Discover the Ultimate Guide")
-                    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-                    .replace(/\*(.+?)\*/g, '<em>$1</em>') 
+                  __html: formatMarkdownText(headline || "Discover the Ultimate Guide")
                 }}
               />
             )}
@@ -424,9 +412,7 @@ export const BlogTemplate = ({
               <p 
                 className="text-lg md:text-base lg:text-lg text-muted-foreground leading-relaxed"
                 dangerouslySetInnerHTML={{ 
-                  __html: (heroSection?.content || "")
-                    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-                    .replace(/\*(.+?)\*/g, '<em>$1</em>') 
+                  __html: formatMarkdownText(heroSection?.content || "")
                 }}
               />
             )}
