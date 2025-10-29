@@ -469,7 +469,7 @@ const Index = () => {
 
     setSaving(true);
     try {
-      const slug = pageSlug || generateSlug(pageTitle);
+      const slug = pageSlug || generateSlug(pageTitle, !editId);
       const pageData = {
         user_id: user.id,
         title: pageTitle,
@@ -1019,7 +1019,7 @@ const Index = () => {
                       onChange={(e) => {
                         setPageTitle(e.target.value);
                         if (!pageSlug || pageSlug === generateSlug(pageTitle)) {
-                          setPageSlug(generateSlug(e.target.value));
+                          setPageSlug(generateSlug(e.target.value, !editId));
                         }
                       }}
                       className="h-10 bg-background border-border/50 focus:border-primary transition-colors"
