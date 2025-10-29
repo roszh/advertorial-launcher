@@ -35,23 +35,102 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const systemPrompt = `You are structuring content for a presell/advertorial page.
+    const systemPrompt = `You are an intelligent content analyzer that structures text for presell/advertorial pages.
 
-Your job:
-1. Preserve every word from the original text
-2. Organize content into 5-7 logical sections
-3. Extract headlines to the "heading" field (leave empty if no clear headline)
-4. Group related paragraphs together in sections
-5. Ignore any text in square brackets like [ПРЕДЛОЖЕНИЕ ЗА ИЗОБРАЖЕНИЕ...]
+CRITICAL RULES:
+1. Preserve EVERY word from the original text - never omit or rewrite content
+2. Be smart about distinguishing headlines from paragraphs from lists
+3. Organize content into 5-7 logical, well-structured sections
+4. Ignore text in square brackets like [ПРЕДЛОЖЕНИЕ ЗА ИЗОБРАЖЕНИЕ...]
 
-Return JSON in this format:
+HEADLINE DETECTION RULES:
+- Headlines are typically SHORT (3-12 words, 20-80 characters max)
+- Often positioned at the start of a new topic or major idea
+- May be questions or statements that introduce what follows
+- Usually more GENERAL than the detailed text that follows
+- Common patterns:
+  * ALL CAPS TEXT
+  * Title Case With Each Word Capitalized
+  * Lines ending with a colon (:)
+  * Isolated short lines followed by longer explanatory text
+- Semantically distinct from body text (acts as a "label" or "introduction")
+- If a line is 100+ characters, it's probably NOT a headline - keep it in content
+
+PARAGRAPH DETECTION RULES:
+- Body text is typically LONGER (50+ characters, often multiple sentences)
+- Contains complete, detailed sentences with proper punctuation
+- Explains, describes, elaborates, or tells a story
+- May span multiple sentences discussing the same topic
+- Should remain in the "content" field, NOT extracted as a heading
+
+BULLET POINT / LIST DETECTION RULES:
+- Lines starting with: •, -, *, or numbers (1., 2., etc.)
+- Short, parallel statements of similar structure
+- Lists of features, benefits, steps, or options
+- Should be formatted as a list section (type: "benefits")
+- Keep list markers (•, -, *) in the content
+
+CONTINUOUS TEXT HANDLING (MOST IMPORTANT):
+When you receive unformatted text without clear breaks:
+- DO NOT assume everything is a headline
+- Look for SEMANTIC TOPIC CHANGES to identify natural paragraph breaks
+- Identify sentence clusters that discuss the same concept
+- Break into 2-4 logical sections based on:
+  * Topic transitions (new subject introduced)
+  * Conjunctions/transitions: "However", "Additionally", "Meanwhile", "In fact", "Furthermore"
+  * Question-answer patterns
+  * Time-based transitions: "First", "Then", "Finally", "Next"
+  * Problem-solution shifts
+- Group related sentences into paragraphs (3-5 sentences per section typically)
+- Only extract TRUE headlines - if text is continuous prose, most of it goes in "content"
+
+SECTION TYPE INTELLIGENCE:
+- type: "hero" → Opening section with main value proposition (use for first section with strong hook)
+- type: "benefits" → Lists of features, advantages, bullet points
+- type: "testimonial" → First-person quotes, reviews, customer stories
+- type: "cta" → Call-to-action, urgency statements, special offers, action prompts
+- type: "text" → General narrative, explanatory paragraphs, story content
+
+GOOD vs BAD EXAMPLES:
+
+✅ GOOD:
+{
+  "heading": "Why This Changes Everything",
+  "content": "This revolutionary approach has transformed how thousands of people solve their problems. The results speak for themselves with over 95% satisfaction rates. Our unique method combines proven strategies with cutting-edge technology."
+}
+
+❌ BAD (treating body text as headline):
+{
+  "heading": "This revolutionary approach has transformed how thousands of people solve their problems with results that speak for themselves",
+  "content": ""
+}
+
+✅ GOOD (continuous text properly segmented):
+Section 1:
+{
+  "heading": "The Problem Most People Face",
+  "content": "Every day, millions struggle with this common challenge. It affects their productivity, happiness, and success. Traditional solutions have failed to address the root cause."
+}
+Section 2:
+{
+  "heading": "A Better Solution Exists",
+  "content": "Our innovative approach tackles the problem from a completely different angle. Instead of temporary fixes, we address the underlying issues. This creates lasting, meaningful change."
+}
+
+❌ BAD (treating every sentence as a headline):
+Multiple sections with:
+{"heading": "Every day millions struggle with this common challenge", "content": ""}
+{"heading": "It affects their productivity happiness and success", "content": ""}
+{"heading": "Traditional solutions have failed to address the root cause", "content": ""}
+
+RETURN FORMAT:
 {
   "layout": "story",
   "sections": [
     {
       "type": "hero" | "text" | "benefits" | "testimonial" | "cta",
-      "heading": "optional headline",
-      "content": "paragraph(s) of content",
+      "heading": "optional short headline (or undefined if none)",
+      "content": "paragraph(s) of content - this is where MOST text should go",
       "imagePosition": "none",
       "style": "normal"
     }
@@ -59,7 +138,7 @@ Return JSON in this format:
   "cta": { "primary": "Learn More" }
 }
 
-Use your judgment to decide what's a headline, what's body text, and how to group content logically.`;
+Remember: When in doubt, keep text in "content" rather than forcing it into "heading". Real headlines are rare and distinct.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -166,8 +245,33 @@ Use your judgment to decide what's a headline, what's body text, and how to grou
                  !heading.startsWith('[ПРЕДЛОЖЕНИЕ');
         });
 
-        // 2. Detect missing headlines in section content and promote them
+        // 2. Validate headline quality and move overly long "headlines" to content
         result.sections = result.sections.map((section: any) => {
+          // If heading is too long (>100 chars), it's probably not a headline
+          if (section.heading && section.heading.length > 100) {
+            const newContent = section.content 
+              ? `${section.heading}\n\n${section.content}`
+              : section.heading;
+            return {
+              ...section,
+              heading: undefined,
+              content: newContent
+            };
+          }
+          
+          // If heading exists but is just body text (contains multiple sentences)
+          if (section.heading && section.heading.split(/[.!?]+/).length > 2) {
+            const newContent = section.content 
+              ? `${section.heading}\n\n${section.content}`
+              : section.heading;
+            return {
+              ...section,
+              heading: undefined,
+              content: newContent
+            };
+          }
+          
+          // Promote genuine headlines from content if they exist
           if (!section.heading && section.content) {
             const lines = section.content.split('\n').filter((l: string) => l.trim());
             if (lines.length > 0) {
@@ -175,13 +279,12 @@ Use your judgment to decide what's a headline, what's body text, and how to grou
               
               // Check if first line matches headline patterns
               const isHeadline = (
-                firstLine === firstLine.toUpperCase() && firstLine.length > 5 && firstLine.length < 100 ||
+                (firstLine === firstLine.toUpperCase() && firstLine.length > 5 && firstLine.length < 80) ||
                 firstLine.endsWith(':') ||
-                (firstLine.length < 50 && lines.length > 1 && lines[1].length > firstLine.length * 1.5)
+                (firstLine.length < 60 && lines.length > 1 && lines[1].length > firstLine.length * 1.5)
               );
               
               if (isHeadline) {
-                // Extract headline and remove from content
                 const remainingContent = lines.slice(1).join('\n\n');
                 return {
                   ...section,
@@ -237,72 +340,165 @@ Use your judgment to decide what's a headline, what's body text, and how to grou
       if (outputLen < Math.max(inputLen * 0.9, inputLen - 200)) {
         console.log("AI output detected as truncated; rebuilding with structure from input text.");
         
-        const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-        const rebuilt: any[] = [];
-        let currentSection: any = null;
-        
-        for (let i = 0; i < lines.length; i++) {
-          const line = lines[i];
-          const nextLine = lines[i + 1];
+        // Smart paragraph breaking for continuous text
+        const smartBreakContinuousText = (text: string): any[] => {
+          // If text has clear line breaks, use those
+          const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
           
-          // Detect headlines: all caps, short (<80 chars), or ends with ":"
-          const isHeadline = (
-            line === line.toUpperCase() && line.length < 80 ||
-            line.endsWith(':') ||
-            (line.length < 50 && nextLine && nextLine.length > line.length * 1.5)
-          );
-          
-          if (isHeadline) {
-            // Save previous section
+          if (lines.length > 3) {
+            // Text has structure, process line by line
+            const rebuilt: any[] = [];
+            let currentSection: any = null;
+            
+            for (let i = 0; i < lines.length; i++) {
+              const line = lines[i];
+              const nextLine = lines[i + 1];
+              
+              // Detect headlines: all caps, short (<80 chars), or ends with ":"
+              const isHeadline = (
+                (line === line.toUpperCase() && line.length < 80 && line.length > 5) ||
+                line.endsWith(':') ||
+                (line.length < 60 && nextLine && nextLine.length > line.length * 1.5)
+              );
+              
+              if (isHeadline) {
+                if (currentSection && currentSection.content.trim()) {
+                  rebuilt.push(currentSection);
+                }
+                currentSection = {
+                  type: "text",
+                  heading: line.replace(/:$/, ''),
+                  content: "",
+                  imagePosition: "none",
+                  style: "normal",
+                  imageUrl: ""
+                };
+              } else if (line.match(/^[•\-\*]\s/) || line.match(/^\d+\.\s/)) {
+                // Bullet point or numbered list
+                if (!currentSection || currentSection.type !== "benefits") {
+                  if (currentSection && currentSection.content.trim()) {
+                    rebuilt.push(currentSection);
+                  }
+                  currentSection = {
+                    type: "benefits",
+                    heading: undefined,
+                    content: "",
+                    imagePosition: "none",
+                    style: "callout",
+                    imageUrl: ""
+                  };
+                }
+                currentSection.content += (currentSection.content ? '\n\n' : '') + line;
+              } else {
+                // Regular paragraph
+                if (!currentSection) {
+                  currentSection = {
+                    type: "text",
+                    heading: undefined,
+                    content: "",
+                    imagePosition: "none",
+                    style: "normal",
+                    imageUrl: ""
+                  };
+                }
+                currentSection.content += (currentSection.content ? '\n\n' : '') + line;
+              }
+            }
+            
             if (currentSection && currentSection.content.trim()) {
               rebuilt.push(currentSection);
             }
-            // Start new section
-            currentSection = {
-              type: "text",
-              heading: line.replace(/:$/, ''),
-              content: "",
-              imagePosition: "none",
-              style: "normal",
-              imageUrl: ""
-            };
-          } else if (line.match(/^[•\-\*]\s/) || line.match(/^\d+\.\s/)) {
-            // Bullet point or numbered list
-            if (!currentSection) {
-              currentSection = {
-                type: "benefits",
-                heading: undefined,
-                content: "",
-                imagePosition: "none",
-                style: "callout",
-                imageUrl: ""
-              };
-            }
-            currentSection.content += (currentSection.content ? '\n\n' : '') + line;
+            
+            return rebuilt;
           } else {
-            // Regular paragraph
-            if (!currentSection) {
-              currentSection = {
+            // Continuous text without line breaks - use semantic analysis
+            const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+            
+            // Look for transition words that signal topic changes
+            const transitions = [
+              'however', 'additionally', 'meanwhile', 'in fact', 'furthermore',
+              'moreover', 'on the other hand', 'in contrast', 'similarly',
+              'first', 'second', 'third', 'finally', 'then', 'next',
+              'but', 'yet', 'therefore', 'thus', 'consequently'
+            ];
+            
+            const sections: any[] = [];
+            let currentGroup: string[] = [];
+            
+            sentences.forEach((sentence, i) => {
+              const trimmed = sentence.trim();
+              const startsWithTransition = transitions.some(t => 
+                trimmed.toLowerCase().startsWith(t + ' ') || 
+                trimmed.toLowerCase().startsWith(t + ',')
+              );
+              
+              // Start new section on transitions (but not the first sentence)
+              if (i > 0 && startsWithTransition && currentGroup.length >= 2) {
+                if (currentGroup.length > 0) {
+                  sections.push({
+                    type: "text",
+                    content: currentGroup.join(' '),
+                    heading: undefined,
+                    imagePosition: "none",
+                    style: "normal",
+                    imageUrl: ""
+                  });
+                  currentGroup = [];
+                }
+              }
+              
+              currentGroup.push(trimmed);
+              
+              // Also break after every 3-4 sentences to avoid overly long sections
+              if (currentGroup.length >= 4) {
+                sections.push({
+                  type: "text",
+                  content: currentGroup.join(' '),
+                  heading: undefined,
+                  imagePosition: "none",
+                  style: "normal",
+                  imageUrl: ""
+                });
+                currentGroup = [];
+              }
+            });
+            
+            // Add remaining sentences
+            if (currentGroup.length > 0) {
+              sections.push({
                 type: "text",
+                content: currentGroup.join(' '),
                 heading: undefined,
-                content: "",
                 imagePosition: "none",
                 style: "normal",
                 imageUrl: ""
-              };
+              });
             }
-            currentSection.content += (currentSection.content ? '\n\n' : '') + line;
+            
+            return sections.length > 0 ? sections : [{
+              type: "text",
+              content: text,
+              heading: undefined,
+              imagePosition: "none",
+              style: "normal",
+              imageUrl: ""
+            }];
           }
-        }
+        };
         
-        // Add final section
-        if (currentSection && currentSection.content.trim()) {
-          rebuilt.push(currentSection);
-        }
+        const rebuilt = smartBreakContinuousText(text);
+        
         
         result = { 
           layout: "story", 
-          sections: rebuilt.length > 0 ? rebuilt : [{ type: "text", content: text, heading: undefined, imagePosition: "none", style: "normal", imageUrl: "" }],
+          sections: rebuilt.length > 0 ? rebuilt : [{
+            type: "text",
+            content: text,
+            heading: undefined,
+            imagePosition: "none",
+            style: "normal",
+            imageUrl: ""
+          }],
           cta: result.cta || { primary: "Learn More" } 
         };
       }
