@@ -333,21 +333,43 @@ export default function Settings() {
                   No Country Setups yet. Create your first one above!
                 </p>
               ) : (
-                countrySetups.map(setup => (
-                  <Collapsible key={setup.id} open={editingSetup === setup.id}>
-                    <div className="border rounded-lg p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h4 className="font-medium">{setup.name}</h4>
-                          <p className="text-xs text-muted-foreground">
-                            Configured: {[
-                              setup.google_analytics_id && "Google Analytics",
-                              setup.facebook_pixel_id && "Facebook Pixel",
-                              setup.triplewhale_token && "Triple Whale",
-                              setup.microsoft_clarity_id && "Clarity"
-                            ].filter(Boolean).join(", ") || "None"}
-                          </p>
-                        </div>
+                countrySetups.map(setup => {
+                  const scriptCount = [
+                    setup.google_analytics_id,
+                    setup.facebook_pixel_id,
+                    setup.triplewhale_token,
+                    setup.microsoft_clarity_id
+                  ].filter(Boolean).length;
+                  
+                  return (
+                    <Collapsible key={setup.id} open={editingSetup === setup.id}>
+                      <div className={cn(
+                        "border rounded-lg p-4",
+                        scriptCount === 0 && "opacity-60"
+                      )}>
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h4 className="font-medium">{setup.name}</h4>
+                              {scriptCount === 0 ? (
+                                <Badge variant="outline" className="text-xs border-yellow-500/50 text-yellow-600 dark:text-yellow-500">
+                                  ⚠️ No scripts configured
+                                </Badge>
+                              ) : (
+                                <Badge variant="secondary" className="text-xs">
+                                  {scriptCount} script{scriptCount !== 1 ? 's' : ''}
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              {scriptCount === 0 ? "Add at least one tracking script" : `Configured: ${[
+                                setup.google_analytics_id && "Google Analytics",
+                                setup.facebook_pixel_id && "Facebook Pixel",
+                                setup.triplewhale_token && "Triple Whale",
+                                setup.microsoft_clarity_id && "Clarity"
+                              ].filter(Boolean).join(", ")}`}
+                            </p>
+                          </div>
                         <div className="flex gap-2">
                           <CollapsibleTrigger asChild>
                             <Button 
@@ -365,10 +387,10 @@ export default function Settings() {
                           >
                             Delete
                           </Button>
+                          </div>
                         </div>
-                      </div>
-                      
-                      <CollapsibleContent className="mt-4 space-y-3">
+                        
+                        <CollapsibleContent className="mt-4 space-y-3">
                         {editingSetupData && (
                           <>
                             <div className="space-y-2">
@@ -424,10 +446,11 @@ export default function Settings() {
                             </Button>
                           </>
                         )}
-                      </CollapsibleContent>
-                    </div>
-                  </Collapsible>
-                ))
+                        </CollapsibleContent>
+                      </div>
+                    </Collapsible>
+                  );
+                })
               )}
             </div>
           </CardContent>

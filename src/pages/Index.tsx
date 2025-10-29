@@ -97,6 +97,10 @@ const Index = () => {
   const [availableCountrySetups, setAvailableCountrySetups] = useState<Array<{
     id: string;
     name: string;
+    google_analytics_id?: string | null;
+    facebook_pixel_id?: string | null;
+    triplewhale_token?: string | null;
+    microsoft_clarity_id?: string | null;
   }>>([]);
   const [selectedSetupDetails, setSelectedSetupDetails] = useState<any>(null);
 
@@ -217,7 +221,7 @@ const Index = () => {
     
     const { data } = await supabase
       .from("tracking_script_sets")
-      .select("id, name")
+      .select("id, name, google_analytics_id, facebook_pixel_id, triplewhale_token, microsoft_clarity_id")
       .eq("user_id", effectiveUserId)
       .order("name");
     
@@ -457,6 +461,40 @@ const Index = () => {
         variant: "destructive" 
       });
       return;
+    }
+
+    // NEW: Check if Country Setup has actual tracking scripts configured
+    if (status === "published" && selectedCountrySetupId) {
+      const { data: setupData } = await supabase
+        .from("tracking_script_sets")
+        .select("*")
+        .eq("id", selectedCountrySetupId)
+        .single();
+      
+      const hasScripts = setupData && (
+        setupData.google_analytics_id ||
+        setupData.facebook_pixel_id ||
+        setupData.triplewhale_token ||
+        setupData.microsoft_clarity_id
+      );
+      
+      if (!hasScripts) {
+        toast({
+          title: "Country Setup is empty",
+          description: `The selected setup "${setupData?.name}" has no tracking scripts configured. Please add at least one tracking script in Settings or select a different setup.`,
+          variant: "destructive",
+          action: (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => navigate('/settings')}
+            >
+              Go to Settings
+            </Button>
+          )
+        });
+        return;
+      }
     }
 
     // Warn if no Country Setup selected for draft
@@ -1125,11 +1163,33 @@ const Index = () => {
                             </Button>
                           </div>
                         ) : (
-                          availableCountrySetups.map(setup => (
-                            <SelectItem key={setup.id} value={setup.id}>
-                              {setup.name}
-                            </SelectItem>
-                          ))
+                          availableCountrySetups.map(setup => {
+                            const scriptCount = [
+                              setup.google_analytics_id,
+                              setup.facebook_pixel_id,
+                              setup.triplewhale_token,
+                              setup.microsoft_clarity_id
+                            ].filter(Boolean).length;
+                            
+                            const hasScripts = scriptCount > 0;
+                            
+                            return (
+                              <SelectItem key={setup.id} value={setup.id}>
+                                <div className="flex items-center justify-between w-full gap-2">
+                                  <span>{setup.name}</span>
+                                  {!hasScripts ? (
+                                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-yellow-500/50 text-yellow-600 dark:text-yellow-500">
+                                      ⚠️ No scripts
+                                    </Badge>
+                                  ) : (
+                                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                                      {scriptCount} script{scriptCount !== 1 ? 's' : ''}
+                                    </Badge>
+                                  )}
+                                </div>
+                              </SelectItem>
+                            );
+                          })
                         )}
                       </SelectContent>
                     </Select>
