@@ -105,32 +105,32 @@ export const PresellSection = ({ section, ctaText, onCtaClick, elementId = "untr
         <div className="max-w-4xl mx-auto">
           <div className="relative">
             {/* UPDATE Badge */}
-            <div className="inline-block bg-[#F5A623] text-white font-bold text-sm px-4 py-2 rounded-t-lg">
+            <div className="inline-block bg-[#E89B2B] text-white font-bold text-sm md:text-base px-5 py-2.5 rounded-t-md shadow-md">
               UPDATE
             </div>
             
             {/* Main Content Box */}
             <div 
               className={cn(
-                "bg-[#FEF7E7] border-2 border-dashed border-[#F5A623] rounded-lg rounded-tl-none p-5 md:p-6 relative group",
-                isEditing && "cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all"
+                "bg-[#FFF9E6] border-[3px] border-dashed border-[#E89B2B] rounded-lg rounded-tl-none p-6 md:p-8 relative group shadow-sm",
+                isEditing && "cursor-pointer hover:ring-2 hover:ring-[#E89B2B]/50 transition-all"
               )}
               onClick={isEditing ? onEdit : undefined}
             >
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {section.updateDate && (
                   <p className="font-bold text-base md:text-lg text-gray-900">
-                    UPDATE {section.updateDate}
+                    UPDATE {section.updateDate} -
                   </p>
                 )}
                 <div 
-                  className="text-sm md:text-base leading-relaxed text-gray-800"
+                  className="text-base md:text-lg leading-relaxed text-gray-900 font-medium"
                   dangerouslySetInnerHTML={{ __html: formatMarkdownText(section.content) }}
                 />
               </div>
               
               {isEditing && (
-                <div className="absolute top-4 right-4 bg-primary text-primary-foreground rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="absolute top-4 right-4 bg-[#E89B2B] text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity">
                   <Edit2 className="w-4 h-4" />
                 </div>
               )}
@@ -148,7 +148,7 @@ export const PresellSection = ({ section, ctaText, onCtaClick, elementId = "untr
         <div className="max-w-5xl mx-auto">
           <div 
             className={cn(
-              "bg-[#FEF7E7] rounded-xl p-5 md:p-6 relative group",
+              "bg-[#FFF9E6] rounded-xl p-5 md:p-6 relative group shadow-sm border border-[#E8D5A8]",
               isEditing && "cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all"
             )}
             onClick={isEditing ? onEdit : undefined}
