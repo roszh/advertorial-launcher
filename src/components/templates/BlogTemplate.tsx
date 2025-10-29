@@ -287,8 +287,7 @@ export const BlogTemplate = ({
                     onUpdateSection?.(actualIndex + 1, {
                       type: "facebook-testimonial",
                       content: "Share your experience here...",
-author: "User Name",
-                      authorAvatar: "",
+                      author: "User Name",
                       authorAvatar: "",
                       timestamp: "2 days ago",
                       reactions: 0,
