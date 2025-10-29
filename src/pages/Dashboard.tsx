@@ -28,6 +28,9 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [availableTags, setAvailableTags] = useState<Array<{id: string, name: string, color: string}>>([]);
+  const [selectedPages, setSelectedPages] = useState<string[]>([]);
+  const [bulkSetupId, setBulkSetupId] = useState<string>("");
+  const [availableCountrySetups, setAvailableCountrySetups] = useState<Array<{id: string, name: string}>>([]);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -39,6 +42,7 @@ export default function Dashboard() {
       setUser(session.user);
       fetchPages();
       fetchTags();
+      fetchCountrySetups();
     };
 
     checkUser();
@@ -85,6 +89,14 @@ export default function Dashboard() {
       .select("*")
       .order("name");
     setAvailableTags(data || []);
+  };
+
+  const fetchCountrySetups = async () => {
+    const { data } = await supabase
+      .from("tracking_script_sets")
+      .select("id, name")
+      .order("name");
+    setAvailableCountrySetups(data || []);
   };
 
   const handleDelete = async (id: string) => {
@@ -148,6 +160,7 @@ export default function Dashboard() {
         template: pageData.template,
         cta_style: pageData.cta_style,
         sticky_cta_threshold: pageData.sticky_cta_threshold,
+        tracking_script_set_id: pageData.tracking_script_set_id,
         content: pageData.content,
         cta_text: pageData.cta_text,
         cta_url: pageData.cta_url,
@@ -183,6 +196,35 @@ export default function Dashboard() {
 
     toast({ title: "Page cloned successfully!", description: "The copy has been saved as a draft." });
     fetchPages();
+  };
+
+  const handleBulkAssignSetup = async () => {
+    if (selectedPages.length === 0) {
+      toast({ title: "No pages selected", variant: "destructive" });
+      return;
+    }
+    
+    if (!bulkSetupId) {
+      toast({ title: "Please select a Country Setup", variant: "destructive" });
+      return;
+    }
+    
+    const { error } = await supabase
+      .from("pages")
+      .update({ tracking_script_set_id: bulkSetupId })
+      .in("id", selectedPages);
+    
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ 
+        title: `Updated ${selectedPages.length} page${selectedPages.length > 1 ? 's' : ''}`,
+        description: "Country Setup has been reassigned"
+      });
+      setSelectedPages([]);
+      setBulkSetupId("");
+      fetchPages();
+    }
   };
 
   const filteredPages = pages.filter(p => {
@@ -234,6 +276,36 @@ export default function Dashboard() {
           )}
         </div>
 
+        {selectedPages.length > 0 && (
+          <div className="mb-4 p-4 border rounded-lg bg-muted/50">
+            <div className="flex items-center gap-3 flex-wrap">
+              <Badge variant="secondary">{selectedPages.length} selected</Badge>
+              <Select value={bulkSetupId} onValueChange={setBulkSetupId}>
+                <SelectTrigger className="w-[250px]">
+                  <SelectValue placeholder="Select Country Setup..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableCountrySetups.map(setup => (
+                    <SelectItem key={setup.id} value={setup.id}>
+                      {setup.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button onClick={handleBulkAssignSetup} size="sm">
+                Assign Setup
+              </Button>
+              <Button 
+                onClick={() => setSelectedPages([])} 
+                variant="ghost" 
+                size="sm"
+              >
+                Clear Selection
+              </Button>
+            </div>
+          </div>
+        )}
+
         {loading ? (
           <p className="text-muted-foreground">Loading...</p>
         ) : filteredPages.length === 0 ? (
@@ -248,7 +320,19 @@ export default function Dashboard() {
             {filteredPages.map((page) => (
               <Card key={page.id}>
                 <CardHeader>
-                  <div className="flex justify-between items-start">
+                  <div className="flex justify-between items-start gap-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedPages.includes(page.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedPages([...selectedPages, page.id]);
+                        } else {
+                          setSelectedPages(selectedPages.filter(id => id !== page.id));
+                        }
+                      }}
+                      className="mt-1 h-4 w-4 cursor-pointer"
+                    />
                     <div className="flex-1">
                       <CardTitle>{page.title}</CardTitle>
                       <CardDescription>

@@ -10,6 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { toast } from "@/hooks/use-toast";
 import { X } from "lucide-react";
+import { PagesUsingSetup } from "@/components/PagesUsingSetup";
+import { cn } from "@/lib/utils";
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -428,6 +430,82 @@ export default function Settings() {
                 ))
               )}
             </div>
+          </CardContent>
+        </Card>
+
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Tracking Verification</CardTitle>
+            <CardDescription>
+              Overview of your Country Setups and which pages are using them
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {countrySetups.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No Country Setups to verify. Create one above to get started.
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {countrySetups.map(setup => {
+                  const scripts = [
+                    { name: "GA", active: !!setup.google_analytics_id, icon: "📊" },
+                    { name: "FB", active: !!setup.facebook_pixel_id, icon: "📘" },
+                    { name: "TW", active: !!setup.triplewhale_token, icon: "🐋" },
+                    { name: "Clarity", active: !!setup.microsoft_clarity_id, icon: "🔍" }
+                  ];
+                  const activeCount = scripts.filter(s => s.active).length;
+                  
+                  return (
+                    <div key={setup.id} className="border rounded-lg p-4">
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <h4 className="font-medium flex items-center gap-2">
+                            {setup.name}
+                            <Badge variant={activeCount === 0 ? "destructive" : activeCount === 4 ? "default" : "secondary"}>
+                              {activeCount}/4 scripts
+                            </Badge>
+                          </h4>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            ID: {setup.id.substring(0, 8)}...
+                          </p>
+                        </div>
+                        <PagesUsingSetup setupId={setup.id} />
+                      </div>
+                      
+                      <div className="grid grid-cols-4 gap-2">
+                        {scripts.map(script => (
+                          <div
+                            key={script.name}
+                            className={cn(
+                              "text-center p-2 rounded border text-xs",
+                              script.active 
+                                ? "bg-green-50 border-green-200 text-green-700" 
+                                : "bg-gray-50 border-gray-200 text-gray-400"
+                            )}
+                          >
+                            <div className="text-lg mb-1">{script.icon}</div>
+                            <div className="font-medium">{script.name}</div>
+                            <div className="text-xs">{script.active ? "✓" : "✗"}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+                
+                <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-sm font-medium text-blue-900 mb-2">💡 How to Verify Tracking</p>
+                  <ol className="text-xs text-blue-800 space-y-1 list-decimal list-inside">
+                    <li>Publish a page with a Country Setup assigned</li>
+                    <li>Visit the public page (/p/your-slug)</li>
+                    <li>Open browser console (F12)</li>
+                    <li>Look for <code className="bg-blue-100 px-1 rounded">[Tracking]</code> logs</li>
+                    <li>Verify all configured scripts loaded successfully</li>
+                  </ol>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 

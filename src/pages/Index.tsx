@@ -98,6 +98,7 @@ const Index = () => {
     id: string;
     name: string;
   }>>([]);
+  const [selectedSetupDetails, setSelectedSetupDetails] = useState<any>(null);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -226,6 +227,20 @@ const Index = () => {
       setSelectedCountrySetupId(data[0].id);
     }
   };
+
+  // Fetch selected Country Setup details for preview
+  useEffect(() => {
+    if (selectedCountrySetupId) {
+      supabase
+        .from("tracking_script_sets")
+        .select("*")
+        .eq("id", selectedCountrySetupId)
+        .single()
+        .then(({ data }) => setSelectedSetupDetails(data));
+    } else {
+      setSelectedSetupDetails(null);
+    }
+  }, [selectedCountrySetupId]);
 
   const handleCreateTag = async () => {
     if (!newTagName.trim()) {
@@ -371,7 +386,8 @@ const Index = () => {
         cta_text: cleanedData.cta.primary || "Get Started",
         cta_url: ctaUrl || "",
         image_url: imageUrl,
-        published_at: null
+        published_at: null,
+        tracking_script_set_id: selectedCountrySetupId || null
       };
 
       if (editId) {
@@ -921,11 +937,24 @@ const Index = () => {
           <div className="container py-2">
             <Tabs defaultValue="content" className="w-full">
               <div className="flex items-center justify-between mb-2">
-                <TabsList className="h-9">
-                  <TabsTrigger value="content" className="text-xs">Content</TabsTrigger>
-                  <TabsTrigger value="design" className="text-xs">Design</TabsTrigger>
-                  <TabsTrigger value="settings" className="text-xs">Settings</TabsTrigger>
-                </TabsList>
+                <div className="flex items-center gap-2">
+                  <TabsList className="h-9">
+                    <TabsTrigger value="content" className="text-xs">Content</TabsTrigger>
+                    <TabsTrigger value="design" className="text-xs">Design</TabsTrigger>
+                    <TabsTrigger value="settings" className="text-xs">Settings</TabsTrigger>
+                  </TabsList>
+                  
+                  {selectedCountrySetupId && (
+                    <Badge variant="outline" className="text-xs flex items-center gap-1">
+                      📊 {availableCountrySetups.find(s => s.id === selectedCountrySetupId)?.name || 'Unknown'}
+                    </Badge>
+                  )}
+                  {!selectedCountrySetupId && (
+                    <Badge variant="destructive" className="text-xs">
+                      ⚠️ No Country Setup
+                    </Badge>
+                  )}
+                </div>
                 
                 <div className="flex gap-2 items-center">
                   <Button 
@@ -1106,6 +1135,78 @@ const Index = () => {
                     Choose which tracking scripts to load for this page. Configure Country Setups in Settings.
                   </p>
                 </div>
+
+                {selectedCountrySetupId && selectedSetupDetails && (
+                  <Collapsible className="mt-3">
+                    <CollapsibleTrigger asChild>
+                      <Button variant="outline" className="w-full justify-between h-9 text-xs">
+                        <span className="flex items-center gap-2">
+                          🔍 Preview Tracking Scripts
+                        </span>
+                        <ChevronDown className="h-4 w-4" />
+                      </Button>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="mt-2 p-3 border rounded-lg bg-muted/50">
+                      {(() => {
+                        const scripts = [
+                          { name: "Google Analytics", id: selectedSetupDetails.google_analytics_id, icon: "📊" },
+                          { name: "Facebook Pixel", id: selectedSetupDetails.facebook_pixel_id, icon: "📘" },
+                          { name: "Triple Whale", id: selectedSetupDetails.triplewhale_token, icon: "🐋" },
+                          { name: "Microsoft Clarity", id: selectedSetupDetails.microsoft_clarity_id, icon: "🔍" }
+                        ];
+                        
+                        const activeScripts = scripts.filter(s => s.id);
+                        const inactiveScripts = scripts.filter(s => !s.id);
+                        
+                        return (
+                          <div className="space-y-2">
+                            <p className="text-xs font-medium">When this page is published, the following scripts will load:</p>
+                            
+                            {activeScripts.length > 0 && (
+                              <div className="space-y-1">
+                                <p className="text-xs font-semibold text-green-600">✓ Active Scripts ({activeScripts.length})</p>
+                                {activeScripts.map(s => (
+                                  <div key={s.name} className="flex items-center gap-2 text-xs pl-4">
+                                    <span>{s.icon}</span>
+                                    <span>{s.name}</span>
+                                    <Badge variant="outline" className="text-xs font-mono">
+                                      {s.id?.substring(0, 12)}...
+                                    </Badge>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            
+                            {inactiveScripts.length > 0 && (
+                              <div className="space-y-1 mt-2">
+                                <p className="text-xs font-semibold text-muted-foreground">⚪ Not Configured ({inactiveScripts.length})</p>
+                                {inactiveScripts.map(s => (
+                                  <div key={s.name} className="flex items-center gap-2 text-xs pl-4 text-muted-foreground">
+                                    <span>{s.icon}</span>
+                                    <span>{s.name}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            
+                            {activeScripts.length === 0 && (
+                              <div className="p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-800">
+                                ⚠️ No tracking scripts configured in this Country Setup. 
+                                <Button 
+                                  variant="link" 
+                                  className="p-0 h-auto ml-1 text-xs"
+                                  onClick={() => navigate("/settings")}
+                                >
+                                  Configure in Settings
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
+                    </CollapsibleContent>
+                  </Collapsible>
+                )}
               </TabsContent>
 
               <TabsContent value="design" className="m-0 space-y-3">

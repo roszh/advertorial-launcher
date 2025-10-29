@@ -133,7 +133,7 @@ export type Database = {
           subtitle: string | null
           template: string | null
           title: string
-          tracking_script_set_id: string | null
+          tracking_script_set_id: string
           updated_at: string | null
           user_id: string
         }
@@ -153,7 +153,7 @@ export type Database = {
           subtitle?: string | null
           template?: string | null
           title: string
-          tracking_script_set_id?: string | null
+          tracking_script_set_id: string
           updated_at?: string | null
           user_id: string
         }
@@ -173,7 +173,7 @@ export type Database = {
           subtitle?: string | null
           template?: string | null
           title?: string
-          tracking_script_set_id?: string | null
+          tracking_script_set_id?: string
           updated_at?: string | null
           user_id?: string
         }
