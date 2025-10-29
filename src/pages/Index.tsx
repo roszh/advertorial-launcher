@@ -429,6 +429,143 @@ const Index = () => {
     }
   };
 
+  const handleStartFromTemplate = (templateType: "magazine" | "news" | "blog" | "listicle") => {
+    const templates = {
+      magazine: {
+        title: "Breaking Discovery Revealed",
+        headline: "This Discovery Is Changing Everything",
+        subtitle: "Featured Story",
+        sections: [
+          ensureSectionId({
+            type: "hero" as const,
+            heading: "This Discovery Is Changing Everything",
+            content: "Scientists are calling it the breakthrough of the decade. What started as a simple observation has turned into a revolutionary finding that could change the way we live.",
+            style: "normal" as const,
+            imagePosition: "none" as const,
+          }),
+          ensureSectionId({
+            type: "text" as const,
+            content: "For years, researchers struggled with this problem. Traditional approaches weren't working, and many had given up hope. But then everything changed when a team discovered something unexpected.",
+            style: "normal" as const,
+            imagePosition: "none" as const,
+          }),
+        ],
+        cta: { primary: "Learn More", secondary: "" },
+      },
+      news: {
+        title: "Breaking News Update",
+        headline: "Just Announced: Major Development",
+        subtitle: "Breaking News",
+        sections: [
+          ensureSectionId({
+            type: "hero" as const,
+            heading: "Just Announced: Major Development",
+            content: "In a surprising turn of events, experts have confirmed what many suspected. This changes everything we thought we knew.",
+            style: "normal" as const,
+            imagePosition: "none" as const,
+          }),
+        ],
+        cta: { primary: "Read Full Story", secondary: "" },
+      },
+      blog: {
+        title: "The Ultimate Guide",
+        headline: "Everything You Need To Know",
+        subtitle: "Expert Insights",
+        sections: [
+          ensureSectionId({
+            type: "hero" as const,
+            heading: "Everything You Need To Know",
+            content: "After years of research and testing, we've compiled the complete guide. Here's what actually works.",
+            style: "normal" as const,
+            imagePosition: "none" as const,
+          }),
+        ],
+        cta: { primary: "Get Started", secondary: "" },
+      },
+      listicle: {
+        title: "5 Amazing Reasons Why This Changes Everything",
+        headline: "5 Amazing Reasons Why This Changes Everything",
+        subtitle: "Top List",
+        sections: [
+          ensureSectionId({
+            type: "hero" as const,
+            heading: "5 Amazing Reasons Why This Changes Everything",
+            content: "Discover the top 5 reasons why everyone is talking about this revolutionary discovery. Here's what you need to know.",
+            style: "normal" as const,
+            imagePosition: "none" as const,
+          }),
+          ensureSectionId({
+            type: "list-item" as const,
+            heading: "1. It's Faster, Easier, & More Convenient",
+            content: "Unlike traditional methods that take hours or even days, this new approach delivers results in minutes. It's designed to fit seamlessly into your busy lifestyle.",
+            imageUrl: "https://images.unsplash.com/photo-1498049794561-7780e7231661?w=600&h=600&fit=crop",
+            style: "normal" as const,
+            imagePosition: "left" as const,
+          }),
+          ensureSectionId({
+            type: "list-item" as const,
+            heading: "2. Customize It However You Want",
+            content: "Every person is different, and this solution recognizes that. With multiple options and settings, you can personalize your experience to match your exact needs and preferences.",
+            imageUrl: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&h=600&fit=crop",
+            style: "normal" as const,
+            imagePosition: "left" as const,
+          }),
+          ensureSectionId({
+            type: "list-item" as const,
+            heading: "3. Save Money While Getting Better Results",
+            content: "Traditional solutions cost a fortune, and the results are often disappointing. This approach delivers superior outcomes at a fraction of the cost, helping you achieve more while spending less.",
+            imageUrl: "https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?w=600&h=600&fit=crop",
+            style: "normal" as const,
+            imagePosition: "left" as const,
+          }),
+          ensureSectionId({
+            type: "list-item" as const,
+            heading: "4. Backed By Science & Real Results",
+            content: "This isn't just marketing hype. Leading researchers have validated the approach through rigorous testing, and thousands of people are already experiencing the benefits firsthand.",
+            imageUrl: "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=600&h=600&fit=crop",
+            style: "normal" as const,
+            imagePosition: "left" as const,
+          }),
+          ensureSectionId({
+            type: "list-item" as const,
+            heading: "5. Join A Growing Community of Success Stories",
+            content: "You're not alone in this journey. Over 150,000 people have already made the switch, and they're sharing their incredible experiences. Join the community and see why everyone is talking about it.",
+            imageUrl: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600&h=600&fit=crop",
+            style: "normal" as const,
+            imagePosition: "left" as const,
+          }),
+          ensureSectionId({
+            type: "final-cta" as const,
+            heading: "Exclusive Limited-Time Offer",
+            content: "Act now and get access to this revolutionary solution before it's too late.",
+            imageUrl: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=600&h=600&fit=crop",
+            items: ["Free shipping with your order", "Free gift with your order", "Biggest sale of the year"],
+            buttonText: "SELL-OUT RISK: HIGH | FREE SHIPPING",
+            style: "normal" as const,
+            imagePosition: "left" as const,
+          }),
+        ],
+        cta: { primary: "Claim Your Offer Now", secondary: "" },
+      },
+    };
+
+    const template = templates[templateType];
+    setSelectedTemplate(templateType);
+    setPageTitle(template.title);
+    setHeadline(template.headline);
+    setSubtitle(template.subtitle);
+    setAnalysisResult({
+      layout: templateType,
+      sections: template.sections,
+      cta: template.cta,
+    });
+    setIsEditorMode(true);
+    toast({ 
+      title: `${templateType.charAt(0).toUpperCase() + templateType.slice(1)} template loaded!`, 
+      description: "Customize the content and images to match your needs." 
+    });
+  };
+
   const generateSlug = (title: string, addUniqueSuffix: boolean = false) => {
     const baseSlug = title
       .toLowerCase()
@@ -1586,6 +1723,58 @@ const Index = () => {
           </div>
 
           <div className="bg-card rounded-lg shadow-lg p-8 space-y-6">
+            {/* Quick Start Templates */}
+            <div className="mb-6">
+              <h3 className="font-semibold mb-3 text-center">Quick Start</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleStartFromTemplate("magazine")}
+                  className="h-auto py-3 flex flex-col gap-1"
+                >
+                  <span className="text-2xl">📰</span>
+                  <span className="text-xs">Magazine</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleStartFromTemplate("news")}
+                  className="h-auto py-3 flex flex-col gap-1"
+                >
+                  <span className="text-2xl">📱</span>
+                  <span className="text-xs">News</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleStartFromTemplate("blog")}
+                  className="h-auto py-3 flex flex-col gap-1"
+                >
+                  <span className="text-2xl">✍️</span>
+                  <span className="text-xs">Blog</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleStartFromTemplate("listicle")}
+                  className="h-auto py-3 flex flex-col gap-1"
+                >
+                  <span className="text-2xl">📋</span>
+                  <span className="text-xs">Listicle</span>
+                </Button>
+              </div>
+            </div>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card px-2 text-muted-foreground">Or paste your content</span>
+              </div>
+            </div>
+
             <div>
               <label htmlFor="content" className="block text-sm font-medium mb-2">
                 Your Content
