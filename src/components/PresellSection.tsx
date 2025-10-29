@@ -148,7 +148,7 @@ export const PresellSection = ({ section, ctaText, onCtaClick, elementId = "untr
         <div className="max-w-5xl mx-auto">
           <div 
             className={cn(
-              "bg-[#FFF9E6] rounded-xl p-5 md:p-6 relative group shadow-sm border border-[#E8D5A8]",
+              "bg-[#FFEFC7] rounded-xl p-5 md:p-6 relative group shadow-sm",
               isEditing && "cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all"
             )}
             onClick={isEditing ? onEdit : undefined}
