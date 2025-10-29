@@ -196,9 +196,7 @@ export const MagazineTemplate = ({
                         key={pIndex} 
                         className="text-lg md:text-base lg:text-lg leading-relaxed mb-3 md:mb-4 text-foreground/90 font-serif break-words"
                         dangerouslySetInnerHTML={{ 
-                          __html: paragraph
-                            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-                            .replace(/\*(.+?)\*/g, '<em>$1</em>') 
+                          __html: formatMarkdownText(paragraph)
                         }}
                       />
                     );
