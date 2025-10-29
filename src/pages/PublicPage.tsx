@@ -34,7 +34,6 @@ interface PageData {
 export default function PublicPage() {
   const { slug } = useParams();
   const [pageData, setPageData] = useState<PageData | null>(null);
-  const [loading, setLoading] = useState(true);
   const [trackingScripts, setTrackingScripts] = useState<{
     googleAnalyticsId?: string;
     facebookPixelId?: string;
@@ -44,6 +43,7 @@ export default function PublicPage() {
 
   useEffect(() => {
     const fetchPage = async () => {
+      // Fetch page content (fast - no JOIN)
       const { data, error } = await supabase
         .from("published_pages")
         .select("*")
@@ -52,8 +52,11 @@ export default function PublicPage() {
 
       if (error || !data) {
         console.error("Page not found");
+        setPageData(null);
       } else {
         const template = (data.template as "magazine" | "news" | "blog") || "magazine";
+        
+        // Set page data immediately for instant rendering
         setPageData({
           id: data.id || undefined,
           title: data.title,
@@ -71,25 +74,36 @@ export default function PublicPage() {
         // Set page title
         document.title = data.title;
 
-        // Set tracking scripts directly from the view
-        setTrackingScripts({
-          googleAnalyticsId: data.google_analytics_id || undefined,
-          facebookPixelId: data.facebook_pixel_id || undefined,
-          triplewhaleToken: data.triplewhale_token || undefined,
-          microsoftClarityId: data.microsoft_clarity_id || undefined,
-        });
+        // Fetch tracking scripts in parallel (non-blocking)
+        if (data.user_id) {
+          supabase
+            .from("profiles")
+            .select("google_analytics_id, facebook_pixel_id, triplewhale_token, microsoft_clarity_id")
+            .eq("id", data.user_id)
+            .single()
+            .then(({ data: profileData }) => {
+              if (profileData) {
+                setTrackingScripts({
+                  googleAnalyticsId: profileData.google_analytics_id || undefined,
+                  facebookPixelId: profileData.facebook_pixel_id || undefined,
+                  triplewhaleToken: profileData.triplewhale_token || undefined,
+                  microsoftClarityId: profileData.microsoft_clarity_id || undefined,
+                });
+              }
+            });
+        }
       }
-      setLoading(false);
     };
 
     fetchPage();
   }, [slug]);
 
-  // Track page view
+  // Track page view (non-blocking - happens in background after render)
   useEffect(() => {
-    const trackView = async () => {
-      if (!pageData?.id) return;
-      
+    if (!pageData?.id) return;
+    
+    // Fire and forget - track asynchronously without blocking
+    (async () => {
       try {
         await supabase.from("page_analytics").insert({
           page_id: pageData.id,
@@ -100,9 +114,7 @@ export default function PublicPage() {
       } catch (error) {
         console.error("Error tracking view:", error);
       }
-    };
-
-    trackView();
+    })();
   }, [pageData?.id]);
 
   // Inject tracking scripts
@@ -172,14 +184,6 @@ export default function PublicPage() {
       document.head.appendChild(clarityScript);
     }
   }, [trackingScripts]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
 
   if (!pageData) {
     return (

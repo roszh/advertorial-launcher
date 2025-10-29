@@ -281,12 +281,9 @@ export type Database = {
           cta_style: string | null
           cta_text: string | null
           cta_url: string | null
-          facebook_pixel_id: string | null
-          google_analytics_id: string | null
           headline: string | null
           id: string | null
           image_url: string | null
-          microsoft_clarity_id: string | null
           published_at: string | null
           slug: string | null
           status: string | null
@@ -294,9 +291,46 @@ export type Database = {
           subtitle: string | null
           template: string | null
           title: string | null
-          triplewhale_token: string | null
           updated_at: string | null
           user_id: string | null
+        }
+        Insert: {
+          content?: Json | null
+          created_at?: string | null
+          cta_style?: string | null
+          cta_text?: string | null
+          cta_url?: string | null
+          headline?: string | null
+          id?: string | null
+          image_url?: string | null
+          published_at?: string | null
+          slug?: string | null
+          status?: string | null
+          sticky_cta_threshold?: number | null
+          subtitle?: string | null
+          template?: string | null
+          title?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          content?: Json | null
+          created_at?: string | null
+          cta_style?: string | null
+          cta_text?: string | null
+          cta_url?: string | null
+          headline?: string | null
+          id?: string | null
+          image_url?: string | null
+          published_at?: string | null
+          slug?: string | null
+          status?: string | null
+          sticky_cta_threshold?: number | null
+          subtitle?: string | null
+          template?: string | null
+          title?: string | null
+          updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
