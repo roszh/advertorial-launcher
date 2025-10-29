@@ -171,7 +171,7 @@ export const SectionEditor = ({
           </div>
         )}
 
-        {section.authorAvatar !== undefined && (
+        {section.type === "facebook-testimonial" && (
           <div>
             <label className="text-sm font-medium mb-2 block">Profile Photo</label>
             <InlineImageUpload

@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 
 interface Section {
   id?: string;
-  type: "hero" | "text" | "image" | "cta" | "benefits" | "testimonial" | "quote" | "facebook-testimonial" | "bullet-box";
+  type: "hero" | "text" | "image" | "cta" | "benefits" | "testimonial" | "quote" | "facebook-testimonial" | "bullet-box" | "update";
   content: string;
   heading?: string;
   imagePosition?: "left" | "right" | "full" | "none";
@@ -24,6 +24,7 @@ interface Section {
   reactions?: number;
   items?: string[];
   boxColor?: "green" | "blue" | "purple" | "yellow";
+  updateDate?: string;
 }
 
 interface BlogTemplateProps {
@@ -286,7 +287,9 @@ export const BlogTemplate = ({
                     onUpdateSection?.(actualIndex + 1, {
                       type: "facebook-testimonial",
                       content: "Share your experience here...",
-                      author: "User Name",
+author: "User Name",
+                      authorAvatar: "",
+                      authorAvatar: "",
                       timestamp: "2 days ago",
                       reactions: 0,
                       style: "normal"
@@ -321,6 +324,16 @@ export const BlogTemplate = ({
                       type: "cta",
                       content: "",
                       ctaText: ctaText || "Click Here",
+                      style: "normal"
+                    });
+                  }, 0);
+                } else if (type === "update") {
+                  onAddSection(actualIndex, "text");
+                  setTimeout(() => {
+                    onUpdateSection?.(actualIndex + 1, {
+                      type: "update",
+                      content: "Ever since more people have learned about this, we've seen a massive spike in interest. Due to its popularity and positive reviews, we're now offering a special **limited-time discount** with **FREE U.S. SHIPPING**.",
+                      updateDate: "September 14, 2024",
                       style: "normal"
                     });
                   }, 0);

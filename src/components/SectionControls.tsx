@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "./ui/button";
-import { Trash2, AlertCircle, Copy, Plus, Type, Image as ImageIcon, MousePointerClick, Quote, MessageSquare, List } from "lucide-react";
+import { Trash2, AlertCircle, Copy, Plus, Type, Image as ImageIcon, MousePointerClick, Quote, MessageSquare, List, Bell } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuLabel } from "./ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
@@ -83,6 +83,10 @@ export const SectionControls = ({
             <DropdownMenuItem onClick={() => onAddSectionBelow("bullet-box")} className="cursor-pointer">
               <List className="h-4 w-4 mr-2" />
               Bullet Box
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onAddSectionBelow("update")} className="cursor-pointer">
+              <Bell className="h-4 w-4 mr-2 text-amber-500" />
+              Update
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
