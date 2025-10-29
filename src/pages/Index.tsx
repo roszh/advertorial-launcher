@@ -1048,6 +1048,7 @@ const Index = () => {
           type: "facebook-testimonial",
           content: "Share your experience here...",
           author: "User Name",
+          authorAvatar: "",
           timestamp: "2 days ago",
           reactions: 0,
           style: "normal",
