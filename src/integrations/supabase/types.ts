@@ -133,6 +133,7 @@ export type Database = {
           subtitle: string | null
           template: string | null
           title: string
+          tracking_script_set_id: string | null
           updated_at: string | null
           user_id: string
         }
@@ -152,6 +153,7 @@ export type Database = {
           subtitle?: string | null
           template?: string | null
           title: string
+          tracking_script_set_id?: string | null
           updated_at?: string | null
           user_id: string
         }
@@ -171,10 +173,19 @@ export type Database = {
           subtitle?: string | null
           template?: string | null
           title?: string
+          tracking_script_set_id?: string | null
           updated_at?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "pages_tracking_script_set_id_fkey"
+            columns: ["tracking_script_set_id"]
+            isOneToOne: false
+            referencedRelation: "tracking_script_sets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -239,6 +250,42 @@ export type Database = {
         }
         Relationships: []
       }
+      tracking_script_sets: {
+        Row: {
+          created_at: string | null
+          facebook_pixel_id: string | null
+          google_analytics_id: string | null
+          id: string
+          microsoft_clarity_id: string | null
+          name: string
+          triplewhale_token: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          facebook_pixel_id?: string | null
+          google_analytics_id?: string | null
+          id?: string
+          microsoft_clarity_id?: string | null
+          name: string
+          triplewhale_token?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          facebook_pixel_id?: string | null
+          google_analytics_id?: string | null
+          id?: string
+          microsoft_clarity_id?: string | null
+          name?: string
+          triplewhale_token?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null
@@ -281,9 +328,12 @@ export type Database = {
           cta_style: string | null
           cta_text: string | null
           cta_url: string | null
+          facebook_pixel_id: string | null
+          google_analytics_id: string | null
           headline: string | null
           id: string | null
           image_url: string | null
+          microsoft_clarity_id: string | null
           published_at: string | null
           slug: string | null
           status: string | null
@@ -291,46 +341,10 @@ export type Database = {
           subtitle: string | null
           template: string | null
           title: string | null
+          tracking_script_set_name: string | null
+          triplewhale_token: string | null
           updated_at: string | null
           user_id: string | null
-        }
-        Insert: {
-          content?: Json | null
-          created_at?: string | null
-          cta_style?: string | null
-          cta_text?: string | null
-          cta_url?: string | null
-          headline?: string | null
-          id?: string | null
-          image_url?: string | null
-          published_at?: string | null
-          slug?: string | null
-          status?: string | null
-          sticky_cta_threshold?: number | null
-          subtitle?: string | null
-          template?: string | null
-          title?: string | null
-          updated_at?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          content?: Json | null
-          created_at?: string | null
-          cta_style?: string | null
-          cta_text?: string | null
-          cta_url?: string | null
-          headline?: string | null
-          id?: string | null
-          image_url?: string | null
-          published_at?: string | null
-          slug?: string | null
-          status?: string | null
-          sticky_cta_threshold?: number | null
-          subtitle?: string | null
-          template?: string | null
-          title?: string | null
-          updated_at?: string | null
-          user_id?: string | null
         }
         Relationships: []
       }

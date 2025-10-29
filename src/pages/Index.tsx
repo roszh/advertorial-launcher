@@ -93,6 +93,11 @@ const Index = () => {
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const [isDesignOptionsExpanded, setIsDesignOptionsExpanded] = useState(false);
+  const [selectedCountrySetupId, setSelectedCountrySetupId] = useState<string>("");
+  const [availableCountrySetups, setAvailableCountrySetups] = useState<Array<{
+    id: string;
+    name: string;
+  }>>([]);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -103,6 +108,7 @@ const Index = () => {
       }
       setUser(session.user);
       fetchTags();
+      fetchCountrySetups();
 
       if (editId) {
         loadExistingPage(editId);
@@ -175,6 +181,7 @@ const Index = () => {
       setStickyCtaThreshold((data.sticky_cta_threshold as number) || 20);
       setSubtitle(data.subtitle || "Featured Story");
       setHeadline((data as any).headline || "");
+      setSelectedCountrySetupId((data as any).tracking_script_set_id || "");
       
       setAnalysisResult({
         layout: "default",
@@ -201,6 +208,23 @@ const Index = () => {
       .select("*")
       .order("name");
     setAvailableTags(data || []);
+  };
+
+  const fetchCountrySetups = async () => {
+    if (!user) return;
+    
+    const { data } = await supabase
+      .from("tracking_script_sets")
+      .select("id, name")
+      .eq("user_id", user.id)
+      .order("name");
+    
+    setAvailableCountrySetups(data || []);
+    
+    // Auto-select if only one setup exists and creating new page
+    if (!editId && data && data.length === 1) {
+      setSelectedCountrySetupId(data[0].id);
+    }
   };
 
   const handleCreateTag = async () => {
@@ -408,6 +432,24 @@ const Index = () => {
       return;
     }
 
+    // Check Country Setup is selected before publishing
+    if (status === "published" && !selectedCountrySetupId) {
+      toast({ 
+        title: "Country Setup required", 
+        description: "Please select a Country Setup before publishing.",
+        variant: "destructive" 
+      });
+      return;
+    }
+
+    // Warn if no Country Setup selected for draft
+    if (status === "draft" && !selectedCountrySetupId && availableCountrySetups.length > 0) {
+      toast({ 
+        title: "Note", 
+        description: "Remember to select a Country Setup before publishing." 
+      });
+    }
+
     setSaving(true);
     try {
       const slug = pageSlug || generateSlug(pageTitle);
@@ -425,7 +467,8 @@ const Index = () => {
         cta_text: analysisResult?.cta.primary || "Get Started",
         cta_url: ctaUrl,
         image_url: imageUrl,
-        published_at: status === "published" ? new Date().toISOString() : null
+        published_at: status === "published" ? new Date().toISOString() : null,
+        tracking_script_set_id: selectedCountrySetupId || null
       };
 
       let pageId = editId;
@@ -1021,6 +1064,47 @@ const Index = () => {
                       </SelectContent>
                     </Select>
                   </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-medium mb-1 block flex items-center gap-2">
+                    Country Setup
+                    <Badge variant="destructive" className="text-xs">Required</Badge>
+                  </label>
+                  <Select 
+                    value={selectedCountrySetupId} 
+                    onValueChange={setSelectedCountrySetupId}
+                  >
+                    <SelectTrigger className={cn(
+                      "h-9",
+                      !selectedCountrySetupId && "border-red-500"
+                    )}>
+                      <SelectValue placeholder="Select Country Setup..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableCountrySetups.length === 0 ? (
+                        <div className="p-2 text-sm text-muted-foreground">
+                          No Country Setups found. 
+                          <Button 
+                            variant="link" 
+                            className="p-0 h-auto ml-1"
+                            onClick={() => navigate("/settings")}
+                          >
+                            Create one in Settings
+                          </Button>
+                        </div>
+                      ) : (
+                        availableCountrySetups.map(setup => (
+                          <SelectItem key={setup.id} value={setup.id}>
+                            {setup.name}
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Choose which tracking scripts to load for this page. Configure Country Setups in Settings.
+                  </p>
                 </div>
               </TabsContent>
 

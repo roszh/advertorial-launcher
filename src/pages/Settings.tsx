@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { toast } from "@/hooks/use-toast";
 import { X } from "lucide-react";
 
@@ -14,14 +15,29 @@ export default function Settings() {
   const navigate = useNavigate();
   const [user, setUser] = useState<any>(null);
   const [fullName, setFullName] = useState("");
-  const [googleAnalyticsId, setGoogleAnalyticsId] = useState("");
-  const [facebookPixelId, setFacebookPixelId] = useState("");
-  const [triplewhaleToken, setTriplewhaleToken] = useState("");
-  const [microsoftClarityId, setMicrosoftClarityId] = useState("");
   const [loading, setLoading] = useState(false);
   const [tags, setTags] = useState<Array<{id: string, name: string, color: string}>>([]);
   const [newTagName, setNewTagName] = useState("");
   const [newTagColor, setNewTagColor] = useState("#3b82f6");
+  
+  // Country Setup state
+  const [countrySetups, setCountrySetups] = useState<Array<{
+    id: string;
+    name: string;
+    google_analytics_id: string | null;
+    facebook_pixel_id: string | null;
+    triplewhale_token: string | null;
+    microsoft_clarity_id: string | null;
+  }>>([]);
+  const [editingSetup, setEditingSetup] = useState<string | null>(null);
+  const [editingSetupData, setEditingSetupData] = useState<{
+    name: string;
+    google_analytics_id: string;
+    facebook_pixel_id: string;
+    triplewhale_token: string;
+    microsoft_clarity_id: string;
+  } | null>(null);
+  const [newSetupName, setNewSetupName] = useState("");
 
   useEffect(() => {
     const checkUser = async () => {
@@ -32,6 +48,8 @@ export default function Settings() {
       }
       setUser(session.user);
       loadProfile(session.user.id);
+      loadCountrySetups(session.user.id);
+      loadTags(session.user.id);
     };
 
     checkUser();
@@ -47,19 +65,25 @@ export default function Settings() {
   const loadProfile = async (userId: string) => {
     const { data } = await supabase
       .from("profiles")
-      .select("full_name, google_analytics_id, facebook_pixel_id, triplewhale_token, microsoft_clarity_id")
+      .select("full_name")
       .eq("id", userId)
       .single();
     
     if (data) {
       setFullName(data.full_name || "");
-      setGoogleAnalyticsId(data.google_analytics_id || "");
-      setFacebookPixelId(data.facebook_pixel_id || "");
-      setTriplewhaleToken(data.triplewhale_token || "");
-      setMicrosoftClarityId(data.microsoft_clarity_id || "");
     }
+  };
 
-    loadTags(userId);
+  const loadCountrySetups = async (userId: string) => {
+    const { data } = await supabase
+      .from("tracking_script_sets")
+      .select("*")
+      .eq("user_id", userId)
+      .order("name");
+    
+    if (data) {
+      setCountrySetups(data);
+    }
   };
 
   const loadTags = async (userId: string) => {
@@ -81,20 +105,112 @@ export default function Settings() {
     const { error } = await supabase
       .from("profiles")
       .update({ 
-        full_name: fullName,
-        google_analytics_id: googleAnalyticsId || null,
-        facebook_pixel_id: facebookPixelId || null,
-        triplewhale_token: triplewhaleToken || null,
-        microsoft_clarity_id: microsoftClarityId || null
+        full_name: fullName
       })
       .eq("id", user?.id);
 
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Settings updated successfully" });
+      toast({ title: "Profile updated successfully" });
     }
     setLoading(false);
+  };
+
+  const handleCreateCountrySetup = async () => {
+    if (!newSetupName.trim() || !user) {
+      toast({ title: "Please enter a country setup name", variant: "destructive" });
+      return;
+    }
+
+    const { error } = await supabase
+      .from("tracking_script_sets")
+      .insert({
+        user_id: user.id,
+        name: newSetupName.trim(),
+        google_analytics_id: null,
+        facebook_pixel_id: null,
+        triplewhale_token: null,
+        microsoft_clarity_id: null
+      });
+
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Country Setup created!" });
+      setNewSetupName("");
+      loadCountrySetups(user.id);
+    }
+  };
+
+  const handleUpdateCountrySetup = async (setupId: string) => {
+    if (!editingSetupData || !user) return;
+
+    const { error } = await supabase
+      .from("tracking_script_sets")
+      .update({
+        name: editingSetupData.name,
+        google_analytics_id: editingSetupData.google_analytics_id || null,
+        facebook_pixel_id: editingSetupData.facebook_pixel_id || null,
+        triplewhale_token: editingSetupData.triplewhale_token || null,
+        microsoft_clarity_id: editingSetupData.microsoft_clarity_id || null,
+      })
+      .eq("id", setupId);
+
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Country Setup updated!" });
+      setEditingSetup(null);
+      setEditingSetupData(null);
+      loadCountrySetups(user.id);
+    }
+  };
+
+  const handleDeleteCountrySetup = async (setupId: string) => {
+    if (!user) return;
+
+    // Check if any pages are using this setup
+    const { data: pagesUsingSetup } = await supabase
+      .from("pages")
+      .select("id, title")
+      .eq("tracking_script_set_id", setupId)
+      .limit(5);
+
+    if (pagesUsingSetup && pagesUsingSetup.length > 0) {
+      const pageNames = pagesUsingSetup.map(p => p.title).join(", ");
+      toast({ 
+        title: "Cannot delete Country Setup", 
+        description: `This setup is being used by: ${pageNames}. Please reassign those pages first.`,
+        variant: "destructive" 
+      });
+      return;
+    }
+
+    if (!confirm("Delete this Country Setup? This cannot be undone.")) return;
+
+    const { error } = await supabase
+      .from("tracking_script_sets")
+      .delete()
+      .eq("id", setupId);
+
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Country Setup deleted" });
+      loadCountrySetups(user.id);
+    }
+  };
+
+  const startEditingSetup = (setup: typeof countrySetups[0]) => {
+    setEditingSetup(setup.id);
+    setEditingSetupData({
+      name: setup.name,
+      google_analytics_id: setup.google_analytics_id || "",
+      facebook_pixel_id: setup.facebook_pixel_id || "",
+      triplewhale_token: setup.triplewhale_token || "",
+      microsoft_clarity_id: setup.microsoft_clarity_id || "",
+    });
   };
 
   const handleCreateTag = async () => {
@@ -183,70 +299,135 @@ export default function Settings() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="mb-6">
           <CardHeader>
-            <CardTitle>Tracking Scripts</CardTitle>
-            <CardDescription>Add tracking scripts to all your published pages</CardDescription>
+            <CardTitle>Country Setups</CardTitle>
+            <CardDescription>
+              Create multiple tracking script configurations for different countries or traffic sources. 
+              Each page must be assigned to one Country Setup.
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleUpdateProfile} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="googleAnalytics">Google Analytics ID</Label>
+            {/* Create New Country Setup */}
+            <div className="mb-6 p-4 border rounded-lg bg-muted/50">
+              <h3 className="font-semibold mb-3">Create New Country Setup</h3>
+              <div className="flex gap-2">
                 <Input
-                  id="googleAnalytics"
-                  placeholder="G-XXXXXXXXXX"
-                  value={googleAnalyticsId}
-                  onChange={(e) => setGoogleAnalyticsId(e.target.value)}
+                  placeholder="Country Setup Name (e.g., Bulgarian Traffic)"
+                  value={newSetupName}
+                  onChange={(e) => setNewSetupName(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleCreateCountrySetup()}
                 />
-                <p className="text-xs text-muted-foreground">
-                  Enter your Google Analytics 4 measurement ID (starts with G-)
-                </p>
+                <Button onClick={handleCreateCountrySetup}>Create</Button>
               </div>
+            </div>
+
+            {/* Existing Country Setups */}
+            <div className="space-y-3">
+              <h3 className="font-semibold">Your Country Setups ({countrySetups.length})</h3>
               
-              <div className="space-y-2">
-                <Label htmlFor="facebookPixel">Facebook Pixel ID</Label>
-                <Input
-                  id="facebookPixel"
-                  placeholder="123456789012345"
-                  value={facebookPixelId}
-                  onChange={(e) => setFacebookPixelId(e.target.value)}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Enter your Facebook Pixel ID (15-16 digit number)
+              {countrySetups.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  No Country Setups yet. Create your first one above!
                 </p>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="triplewhale">Triple Whale Snippet</Label>
-                <textarea
-                  id="triplewhale"
-                  placeholder="Paste your complete Triple Whale HTML snippet here (including <script> and <link> tags)"
-                  value={triplewhaleToken}
-                  onChange={(e) => setTriplewhaleToken(e.target.value)}
-                  className="w-full min-h-[120px] px-3 py-2 text-sm rounded-md border border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 font-mono"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Paste your complete Triple Whale "headless" HTML snippet (starts with &lt;link&gt; and &lt;script&gt; tags)
-                </p>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="microsoftClarity">Microsoft Clarity ID</Label>
-                <Input
-                  id="microsoftClarity"
-                  placeholder="abc123def456"
-                  value={microsoftClarityId}
-                  onChange={(e) => setMicrosoftClarityId(e.target.value)}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Enter your Microsoft Clarity project ID
-                </p>
-              </div>
-              
-              <Button type="submit" disabled={loading}>
-                {loading ? "Saving..." : "Save Tracking Settings"}
-              </Button>
-            </form>
+              ) : (
+                countrySetups.map(setup => (
+                  <Collapsible key={setup.id} open={editingSetup === setup.id}>
+                    <div className="border rounded-lg p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="font-medium">{setup.name}</h4>
+                          <p className="text-xs text-muted-foreground">
+                            Configured: {[
+                              setup.google_analytics_id && "Google Analytics",
+                              setup.facebook_pixel_id && "Facebook Pixel",
+                              setup.triplewhale_token && "Triple Whale",
+                              setup.microsoft_clarity_id && "Clarity"
+                            ].filter(Boolean).join(", ") || "None"}
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
+                          <CollapsibleTrigger asChild>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => editingSetup === setup.id ? setEditingSetup(null) : startEditingSetup(setup)}
+                            >
+                              {editingSetup === setup.id ? "Close" : "Edit"}
+                            </Button>
+                          </CollapsibleTrigger>
+                          <Button 
+                            variant="destructive" 
+                            size="sm"
+                            onClick={() => handleDeleteCountrySetup(setup.id)}
+                          >
+                            Delete
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      <CollapsibleContent className="mt-4 space-y-3">
+                        {editingSetupData && (
+                          <>
+                            <div className="space-y-2">
+                              <Label>Country Setup Name</Label>
+                              <Input
+                                value={editingSetupData.name}
+                                onChange={(e) => setEditingSetupData({ ...editingSetupData, name: e.target.value })}
+                              />
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label>Google Analytics ID</Label>
+                              <Input
+                                placeholder="G-XXXXXXXXXX"
+                                value={editingSetupData.google_analytics_id}
+                                onChange={(e) => setEditingSetupData({ ...editingSetupData, google_analytics_id: e.target.value })}
+                              />
+                            </div>
+                            
+                            <div className="space-y-2">
+                              <Label>Facebook Pixel ID</Label>
+                              <Input
+                                placeholder="XXXXXXXXXXXXXXX"
+                                value={editingSetupData.facebook_pixel_id}
+                                onChange={(e) => setEditingSetupData({ ...editingSetupData, facebook_pixel_id: e.target.value })}
+                              />
+                            </div>
+                            
+                            <div className="space-y-2">
+                              <Label>Triple Whale Snippet</Label>
+                              <textarea
+                                placeholder="Paste your complete Triple Whale HTML snippet here"
+                                value={editingSetupData.triplewhale_token}
+                                onChange={(e) => setEditingSetupData({ ...editingSetupData, triplewhale_token: e.target.value })}
+                                className="w-full min-h-[120px] px-3 py-2 text-sm rounded-md border border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 font-mono"
+                              />
+                            </div>
+                            
+                            <div className="space-y-2">
+                              <Label>Microsoft Clarity ID</Label>
+                              <Input
+                                placeholder="xxxxxxxxxx"
+                                value={editingSetupData.microsoft_clarity_id}
+                                onChange={(e) => setEditingSetupData({ ...editingSetupData, microsoft_clarity_id: e.target.value })}
+                              />
+                            </div>
+
+                            <Button 
+                              onClick={() => handleUpdateCountrySetup(setup.id)}
+                              className="w-full"
+                            >
+                              Save Changes
+                            </Button>
+                          </>
+                        )}
+                      </CollapsibleContent>
+                    </div>
+                  </Collapsible>
+                ))
+              )}
+            </div>
           </CardContent>
         </Card>
 

@@ -17,6 +17,7 @@ interface Page {
   created_at: string;
   published_at: string | null;
   tags?: Array<{id: string, name: string, color: string}>;
+  countrySetupName?: string | null;
 }
 
 export default function Dashboard() {
@@ -58,6 +59,9 @@ export default function Dashboard() {
         *,
         page_tags (
           tags (id, name, color)
+        ),
+        tracking_script_sets (
+          name
         )
       `)
       .order("created_at", { ascending: false });
@@ -67,7 +71,8 @@ export default function Dashboard() {
     } else {
       const pagesWithTags = pagesData?.map(page => ({
         ...page,
-        tags: page.page_tags?.map((pt: any) => pt.tags).filter(Boolean) || []
+        tags: page.page_tags?.map((pt: any) => pt.tags).filter(Boolean) || [],
+        countrySetupName: page.tracking_script_sets?.name || null
       })) || [];
       setPages(pagesWithTags);
     }
@@ -255,6 +260,11 @@ export default function Dashboard() {
                           hour: '2-digit',
                           minute: '2-digit'
                         })}`}
+                        {page.countrySetupName && (
+                          <Badge variant="outline" className="ml-2">
+                            📊 {page.countrySetupName}
+                          </Badge>
+                        )}
                       </CardDescription>
                       {page.tags && page.tags.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-2">
