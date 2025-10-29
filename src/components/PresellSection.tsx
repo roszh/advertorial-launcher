@@ -7,7 +7,7 @@ import trustBg from "@/assets/trust-bg.jpg";
 
 interface PresellSectionProps {
   section: {
-    type: "hero" | "text" | "image" | "cta" | "benefits" | "testimonial" | "quote" | "facebook-testimonial" | "bullet-box";
+    type: "hero" | "text" | "image" | "cta" | "benefits" | "testimonial" | "quote" | "facebook-testimonial" | "bullet-box" | "update";
     content: string;
     heading?: string;
     imagePosition?: "left" | "right" | "full" | "none";
@@ -19,6 +19,7 @@ interface PresellSectionProps {
     reactions?: number;
     items?: string[];
     boxColor?: "green" | "blue" | "purple" | "yellow";
+    updateDate?: string;
   };
   ctaText: string;
   onCtaClick: (elementId: string) => void;
@@ -46,6 +47,7 @@ export const PresellSection = ({ section, ctaText, onCtaClick, elementId = "untr
   const isQuote = section.type === "quote";
   const isFacebookTestimonial = section.type === "facebook-testimonial";
   const isBulletBox = section.type === "bullet-box";
+  const isUpdate = section.type === "update";
   const hasImage = section.imagePosition && section.imagePosition !== "none";
   const imageSrc = getImageForSection(section.type);
 
@@ -90,6 +92,49 @@ export const PresellSection = ({ section, ctaText, onCtaClick, elementId = "untr
                 <Edit2 className="w-4 h-4" />
               </div>
             )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Update Section
+  if (isUpdate) {
+    return (
+      <div className="py-8 md:py-12 px-4">
+        <div className="max-w-4xl mx-auto">
+          <div className="relative">
+            {/* UPDATE Badge */}
+            <div className="inline-block bg-[#F5A623] text-white font-bold text-sm px-4 py-2 rounded-t-lg">
+              UPDATE
+            </div>
+            
+            {/* Main Content Box */}
+            <div 
+              className={cn(
+                "bg-[#FEF7E7] border-2 border-dashed border-[#F5A623] rounded-lg rounded-tl-none p-5 md:p-6 relative group",
+                isEditing && "cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all"
+              )}
+              onClick={isEditing ? onEdit : undefined}
+            >
+              <div className="space-y-3">
+                {section.updateDate && (
+                  <p className="font-bold text-base md:text-lg text-gray-900">
+                    UPDATE {section.updateDate}
+                  </p>
+                )}
+                <div 
+                  className="text-sm md:text-base leading-relaxed text-gray-800"
+                  dangerouslySetInnerHTML={{ __html: formatMarkdownText(section.content) }}
+                />
+              </div>
+              
+              {isEditing && (
+                <div className="absolute top-4 right-4 bg-primary text-primary-foreground rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Edit2 className="w-4 h-4" />
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

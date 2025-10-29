@@ -29,7 +29,7 @@ import { Loader2, Save, Globe, Edit2, Plus, Sparkles, Code, X, Undo2, ChevronDow
 
 interface Section {
   id?: string;
-  type: "hero" | "text" | "image" | "cta" | "benefits" | "testimonial" | "quote" | "facebook-testimonial" | "bullet-box" | "list-item" | "final-cta";
+  type: "hero" | "text" | "image" | "cta" | "benefits" | "testimonial" | "quote" | "facebook-testimonial" | "bullet-box" | "list-item" | "final-cta" | "update";
   content: string;
   heading?: string;
   imagePosition?: "left" | "right" | "full" | "none";
@@ -45,6 +45,7 @@ interface Section {
   boxColor?: "green" | "blue" | "purple" | "yellow";
   buttonText?: string;
   buttonUrl?: string;
+  updateDate?: string;
 }
 
 interface AnalysisResult {
@@ -1059,6 +1060,14 @@ const Index = () => {
           heading: "Key Points",
           items: ["Point 1", "Point 2", "Point 3"],
           boxColor: "blue",
+          style: "normal",
+        };
+        break;
+      case "update":
+        newSection = {
+          type: "update",
+          content: "Ever since more people have learned about this, we've seen a massive spike in interest. Due to its popularity and positive reviews, we're now offering a special **limited-time discount** with **FREE SHIPPING**. To see if it's still available, click the button below.",
+          updateDate: "September 14, 2024",
           style: "normal",
         };
         break;

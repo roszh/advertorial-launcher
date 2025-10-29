@@ -7,7 +7,7 @@ import { InlineImageUpload } from "./InlineImageUpload";
 import { cn } from "@/lib/utils";
 
 interface Section {
-  type: "hero" | "text" | "image" | "cta" | "benefits" | "testimonial" | "quote" | "facebook-testimonial" | "bullet-box";
+  type: "hero" | "text" | "image" | "cta" | "benefits" | "testimonial" | "quote" | "facebook-testimonial" | "bullet-box" | "list-item" | "final-cta" | "update";
   content: string;
   heading?: string;
   imagePosition?: "left" | "right" | "full" | "none";
@@ -21,6 +21,9 @@ interface Section {
   reactions?: number;
   items?: string[];
   boxColor?: "green" | "blue" | "purple" | "yellow";
+  buttonText?: string;
+  buttonUrl?: string;
+  updateDate?: string;
 }
 
 interface SectionEditorProps {
@@ -217,6 +220,19 @@ export const SectionEditor = ({
                 setEditedSection({ ...editedSection, reactions: parseInt(e.target.value) || 0 })
               }
               placeholder="Number of reactions"
+            />
+          </div>
+        )}
+
+        {section.updateDate !== undefined && (
+          <div>
+            <label className="text-sm font-medium mb-2 block">Update Date</label>
+            <Input
+              value={editedSection.updateDate || ""}
+              onChange={(e) =>
+                setEditedSection({ ...editedSection, updateDate: e.target.value })
+              }
+              placeholder="e.g. September 14, 2021"
             />
           </div>
         )}

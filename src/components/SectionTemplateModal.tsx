@@ -1,5 +1,5 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
-import { Quote, MessageSquare, List, Plus, Type, Image, MousePointerClick } from "lucide-react";
+import { Quote, MessageSquare, List, Plus, Type, Image, MousePointerClick, Bell } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface SectionTemplateModalProps {
@@ -66,6 +66,13 @@ export const SectionTemplateModal = ({ open, onOpenChange, onSelectTemplate }: S
           description: "Colored box with checkmark list",
           icon: List,
           color: "text-emerald-600 dark:text-emerald-400"
+        },
+        {
+          type: "update",
+          name: "Update",
+          description: "Time-sensitive update notice",
+          icon: Bell,
+          color: "text-amber-600 dark:text-amber-400"
         }
       ]
     }

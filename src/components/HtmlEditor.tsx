@@ -5,7 +5,7 @@ import { toast } from "@/hooks/use-toast";
 import { Code, Eye } from "lucide-react";
 
 export interface Section {
-  type: "hero" | "text" | "image" | "cta" | "benefits" | "testimonial" | "quote" | "facebook-testimonial" | "bullet-box" | "list-item" | "final-cta";
+  type: "hero" | "text" | "image" | "cta" | "benefits" | "testimonial" | "quote" | "facebook-testimonial" | "bullet-box" | "list-item" | "final-cta" | "update";
   content: string;
   heading?: string;
   imagePosition?: "left" | "right" | "full" | "none";
@@ -20,6 +20,7 @@ export interface Section {
   boxColor?: "green" | "blue" | "purple" | "yellow";
   buttonText?: string;
   buttonUrl?: string;
+  updateDate?: string;
 }
 
 interface HtmlEditorProps {
