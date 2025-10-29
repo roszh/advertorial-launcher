@@ -1008,10 +1008,10 @@ const Index = () => {
                 </div>
               </div>
 
-              <TabsContent value="content" className="m-0 space-y-3">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <div>
-                    <label className="text-xs font-medium mb-1 block">Page Title</label>
+              <TabsContent value="content" className="m-0 space-y-6 p-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground/90">Page Title</label>
                     <Input
                       placeholder="Enter page title..."
                       value={pageTitle}
@@ -1021,43 +1021,44 @@ const Index = () => {
                           setPageSlug(generateSlug(e.target.value));
                         }
                       }}
-                      className="h-9"
+                      className="h-10 bg-background border-border/50 focus:border-primary transition-colors"
                     />
                   </div>
-                  <div>
-                    <label className="text-xs font-medium mb-1 block">URL Slug</label>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground/90">URL Slug</label>
                     <Input
                       placeholder="your-page-url"
                       value={pageSlug}
                       onChange={(e) => setPageSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/^-|-$/g, ''))}
-                      className="h-9"
+                      className="h-10 bg-background border-border/50 focus:border-primary transition-colors font-mono text-sm"
                     />
                   </div>
-                  <div>
-                    <label className="text-xs font-medium mb-1 block">CTA URL</label>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground/90">CTA URL</label>
                     <Input
                       placeholder="https://your-offer.com"
                       value={ctaUrl}
                       onChange={(e) => setCTAUrl(e.target.value)}
-                      className="h-9"
+                      className="h-10 bg-background border-border/50 focus:border-primary transition-colors"
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs font-medium mb-1 block">Tags</label>
-                    <div className="flex items-center gap-2 flex-wrap">
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground/90">Tags</label>
+                    <div className="flex items-center gap-2 flex-wrap min-h-[40px] p-3 rounded-lg border border-border/50 bg-background/50">
                       {selectedTags.map(tagId => {
                         const tag = availableTags.find(t => t.id === tagId);
                         return tag ? (
                           <Badge 
                             key={tagId}
                             style={{backgroundColor: tag.color, color: 'white'}}
-                            className="cursor-pointer text-xs"
+                            className="cursor-pointer text-xs px-2.5 py-1 rounded-md hover:opacity-80 transition-opacity"
                             onClick={() => setSelectedTags(prev => prev.filter(id => id !== tagId))}
                           >
                             {tag.name}
-                            <X className="ml-1 h-3 w-3" />
+                            <X className="ml-1.5 h-3 w-3" />
                           </Badge>
                         ) : null;
                       })}
@@ -1071,12 +1072,12 @@ const Index = () => {
                           }
                         }}
                       >
-                        <SelectTrigger className="h-7 w-[120px] text-xs">
+                        <SelectTrigger className="h-8 w-[130px] text-xs border-dashed">
                           <SelectValue placeholder="Add tag..." />
                         </SelectTrigger>
                         <SelectContent className="bg-background z-50">
                           <SelectItem value="create-new" className="text-xs font-semibold text-primary">
-                            <Plus className="inline h-3 w-3 mr-1" />
+                            <Plus className="inline h-3.5 w-3.5 mr-1.5" />
                             Create new tag
                           </SelectItem>
                           {availableTags.length > 0 && <div className="h-px bg-border my-1" />}
@@ -1085,7 +1086,7 @@ const Index = () => {
                             .map(tag => (
                               <SelectItem key={tag.id} value={tag.id} className="text-xs">
                                 <div className="flex items-center gap-2">
-                                  <div className="w-2 h-2 rounded-full" style={{backgroundColor: tag.color}} />
+                                  <div className="w-2.5 h-2.5 rounded-full" style={{backgroundColor: tag.color}} />
                                   {tag.name}
                                 </div>
                               </SelectItem>
@@ -1095,58 +1096,58 @@ const Index = () => {
                     </div>
                   </div>
 
-                  <div>
-                  <label className="text-xs font-medium mb-1 block flex items-center gap-2">
-                    Country Setup
-                    <Badge variant="destructive" className="text-xs">Required</Badge>
-                  </label>
-                  <Select 
-                    value={selectedCountrySetupId} 
-                    onValueChange={setSelectedCountrySetupId}
-                  >
-                    <SelectTrigger className={cn(
-                      "h-9",
-                      !selectedCountrySetupId && "border-red-500"
-                    )}>
-                      <SelectValue placeholder="Select Country Setup..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableCountrySetups.length === 0 ? (
-                        <div className="p-2 text-sm text-muted-foreground">
-                          No Country Setups found. 
-                          <Button 
-                            variant="link" 
-                            className="p-0 h-auto ml-1"
-                            onClick={() => navigate("/settings")}
-                          >
-                            Create one in Settings
-                          </Button>
-                        </div>
-                      ) : (
-                        availableCountrySetups.map(setup => (
-                          <SelectItem key={setup.id} value={setup.id}>
-                            {setup.name}
-                          </SelectItem>
-                        ))
-                      )}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Choose which tracking scripts to load for this page. Configure Country Setups in Settings.
-                  </p>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground/90 flex items-center gap-2">
+                      Country Setup
+                      <Badge variant="destructive" className="text-xs px-2 py-0.5 font-medium">Required</Badge>
+                    </label>
+                    <Select 
+                      value={selectedCountrySetupId} 
+                      onValueChange={setSelectedCountrySetupId}
+                    >
+                      <SelectTrigger className={cn(
+                        "h-10 bg-background border-border/50 focus:border-primary transition-colors",
+                        !selectedCountrySetupId && "border-red-500/50 bg-red-50/5"
+                      )}>
+                        <SelectValue placeholder="Select Country Setup..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableCountrySetups.length === 0 ? (
+                          <div className="p-3 text-sm text-muted-foreground">
+                            No Country Setups found. 
+                            <Button 
+                              variant="link" 
+                              className="p-0 h-auto ml-1 text-sm"
+                              onClick={() => navigate("/settings")}
+                            >
+                              Create one in Settings
+                            </Button>
+                          </div>
+                        ) : (
+                          availableCountrySetups.map(setup => (
+                            <SelectItem key={setup.id} value={setup.id}>
+                              {setup.name}
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground/70 mt-1.5 leading-relaxed">
+                      Choose which tracking scripts to load for this page. Configure Country Setups in Settings.
+                    </p>
+                  </div>
                 </div>
-              </div>
               </TabsContent>
 
-              <TabsContent value="design" className="m-0 space-y-3">
-                <div>
-                  <label className="text-xs font-medium mb-2 block">Page Template</label>
-                  <div className="flex gap-2">
+              <TabsContent value="design" className="m-0 space-y-6 p-6">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground/90">Page Template</label>
+                  <div className="flex gap-3">
                     <Button
                       variant={selectedTemplate === "magazine" ? "default" : "outline"}
                       size="sm"
                       onClick={() => setSelectedTemplate("magazine")}
-                      className="h-9 flex-1"
+                      className="h-10 flex-1 transition-all"
                     >
                       Magazine
                     </Button>
@@ -1154,7 +1155,7 @@ const Index = () => {
                       variant={selectedTemplate === "news" ? "default" : "outline"}
                       size="sm"
                       onClick={() => setSelectedTemplate("news")}
-                      className="h-9 flex-1"
+                      className="h-10 flex-1 transition-all"
                     >
                       News
                     </Button>
@@ -1162,7 +1163,7 @@ const Index = () => {
                       variant={selectedTemplate === "blog" ? "default" : "outline"}
                       size="sm"
                       onClick={() => setSelectedTemplate("blog")}
-                      className="h-9 flex-1"
+                      className="h-10 flex-1 transition-all"
                     >
                       Blog
                     </Button>
@@ -1174,10 +1175,10 @@ const Index = () => {
                     <Button 
                       variant="outline" 
                       size="sm" 
-                      className="w-full h-9 flex items-center justify-between"
+                      className="w-full h-10 flex items-center justify-between border-dashed hover:border-solid transition-all"
                     >
-                      <span className="text-xs font-medium">
-                        {isDesignOptionsExpanded ? "Hide" : "Show"} Design Options
+                      <span className="text-sm font-medium">
+                        {isDesignOptionsExpanded ? "Hide" : "Show"} Advanced Options
                       </span>
                       <ChevronDown className={cn(
                         "h-4 w-4 transition-transform",
@@ -1186,55 +1187,55 @@ const Index = () => {
                     </Button>
                   </CollapsibleTrigger>
                   
-                  <CollapsibleContent className="space-y-3 mt-3">
-                    <div>
-                      <label className="text-xs font-medium mb-2 block">CTA Button Style (updates live preview)</label>
-                      <div className="grid grid-cols-4 gap-2">
+                  <CollapsibleContent className="space-y-6 mt-6">
+                    <div className="space-y-3">
+                      <label className="text-sm font-medium text-foreground/90">CTA Button Style</label>
+                      <div className="grid grid-cols-4 gap-3">
                         <Button
                           variant={ctaStyle === "ctaAmazon" ? "ctaAmazon" : "outline"}
                           size="sm"
                           onClick={() => setCtaStyle("ctaAmazon")}
-                          className="h-16 flex flex-col gap-1"
+                          className="h-20 flex flex-col gap-2 transition-all hover:scale-[1.02]"
                         >
                           <span className="text-2xl">🛒</span>
-                          <span className="text-xs">Amazon</span>
+                          <span className="text-xs font-medium">Amazon</span>
                         </Button>
                         <Button
                           variant={ctaStyle === "ctaUrgent" ? "ctaUrgent" : "outline"}
                           size="sm"
                           onClick={() => setCtaStyle("ctaUrgent")}
-                          className="h-16 flex flex-col gap-1"
+                          className="h-20 flex flex-col gap-2 transition-all hover:scale-[1.02]"
                         >
                           <span className="text-2xl">⚡</span>
-                          <span className="text-xs">Urgent</span>
+                          <span className="text-xs font-medium">Urgent</span>
                         </Button>
                         <Button
                           variant={ctaStyle === "ctaPremium" ? "ctaPremium" : "outline"}
                           size="sm"
                           onClick={() => setCtaStyle("ctaPremium")}
-                          className="h-16 flex flex-col gap-1"
+                          className="h-20 flex flex-col gap-2 transition-all hover:scale-[1.02]"
                         >
                           <span className="text-2xl">✨</span>
-                          <span className="text-xs">Premium</span>
+                          <span className="text-xs font-medium">Premium</span>
                         </Button>
                         <Button
                           variant={ctaStyle === "ctaTrust" ? "ctaTrust" : "outline"}
                           size="sm"
                           onClick={() => setCtaStyle("ctaTrust")}
-                          className="h-16 flex flex-col gap-1"
+                          className="h-20 flex flex-col gap-2 transition-all hover:scale-[1.02]"
                         >
                           <span className="text-2xl">🛡️</span>
-                          <span className="text-xs">Trust</span>
+                          <span className="text-xs font-medium">Trust</span>
                         </Button>
                       </div>
                     </div>
 
-                    <div>
-                      <label className="text-xs font-medium mb-2 block">
-                        Sticky CTA Appears at {stickyCtaThreshold}% scroll
+                    <div className="space-y-3">
+                      <label className="text-sm font-medium text-foreground/90">
+                        Sticky CTA Threshold: {stickyCtaThreshold}%
                       </label>
-                      <div className="flex items-center gap-3">
-                        <span className="text-xs text-muted-foreground">0%</span>
+                      <div className="flex items-center gap-4 px-1">
+                        <span className="text-xs text-muted-foreground/70 font-medium">0%</span>
                         <input
                           type="range"
                           min="0"
@@ -1242,11 +1243,11 @@ const Index = () => {
                           step="5"
                           value={stickyCtaThreshold}
                           onChange={(e) => setStickyCtaThreshold(Number(e.target.value))}
-                          className="flex-1 h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
+                          className="flex-1 h-2 bg-muted rounded-full appearance-none cursor-pointer accent-primary"
                         />
-                        <span className="text-xs text-muted-foreground">100%</span>
+                        <span className="text-xs text-muted-foreground/70 font-medium">100%</span>
                       </div>
-                      <p className="text-xs text-muted-foreground mt-1">
+                      <p className="text-xs text-muted-foreground/70 leading-relaxed">
                         The sticky button will appear when users scroll down this percentage of the page
                       </p>
                     </div>
