@@ -244,7 +244,7 @@ export default function PublicPage() {
     }
     
     const normalizedUrl = normalizeUrl(pageData.cta_url);
-    window.open(normalizedUrl, "_blank");
+    window.location.href = normalizedUrl;
   };
 
   const templateProps = {
