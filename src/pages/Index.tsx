@@ -109,7 +109,7 @@ const Index = () => {
       }
       setUser(session.user);
       fetchTags();
-      fetchCountrySetups();
+      fetchCountrySetups(session.user.id);
 
       if (editId) {
         loadExistingPage(editId);
@@ -211,13 +211,14 @@ const Index = () => {
     setAvailableTags(data || []);
   };
 
-  const fetchCountrySetups = async () => {
-    if (!user) return;
+  const fetchCountrySetups = async (userId?: string) => {
+    const effectiveUserId = userId || user?.id;
+    if (!effectiveUserId) return;
     
     const { data } = await supabase
       .from("tracking_script_sets")
       .select("id, name")
-      .eq("user_id", user.id)
+      .eq("user_id", effectiveUserId)
       .order("name");
     
     setAvailableCountrySetups(data || []);
