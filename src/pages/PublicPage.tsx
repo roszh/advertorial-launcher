@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { MagazineTemplate } from "@/components/templates/MagazineTemplate";
 import { NewsTemplate } from "@/components/templates/NewsTemplate";
 import { BlogTemplate } from "@/components/templates/BlogTemplate";
+import { ListicleTemplate } from "@/components/templates/ListicleTemplate";
 import { StickyCtaButton } from "@/components/StickyCtaButton";
 import { PublicPageSkeleton } from "@/components/PublicPageSkeleton";
 
@@ -29,7 +30,7 @@ interface PageData {
   cta_style?: string;
   sticky_cta_threshold?: number;
   image_url?: string;
-  template: "magazine" | "news" | "blog";
+  template: "magazine" | "news" | "blog" | "listicle";
 }
 
 export default function PublicPage() {
@@ -49,7 +50,7 @@ export default function PublicPage() {
         throw new Error("Page not found");
       }
 
-      const template = (data.template as "magazine" | "news" | "blog") || "magazine";
+      const template = (data.template as "magazine" | "news" | "blog" | "listicle") || "magazine";
       
       return {
         id: data.id || undefined,
@@ -303,6 +304,19 @@ export default function PublicPage() {
         return <NewsTemplate {...templateProps} />;
       case "blog":
         return <BlogTemplate {...templateProps} />;
+      case "listicle":
+        return (
+          <ListicleTemplate
+            sections={pageData.content.sections}
+            onSectionUpdate={() => {}}
+            onSectionDelete={() => {}}
+            onSectionAdd={() => {}}
+            onSectionsReorder={() => {}}
+            isEditing={false}
+            ctaText={pageData.cta_text || "Learn More"}
+            ctaUrl={pageData.cta_url || ""}
+          />
+        );
       case "magazine":
       default:
         return <MagazineTemplate {...templateProps} />;

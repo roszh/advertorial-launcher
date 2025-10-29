@@ -16,6 +16,7 @@ import { ImageUpload } from "@/components/ImageUpload";
 import { MagazineTemplate } from "@/components/templates/MagazineTemplate";
 import { NewsTemplate } from "@/components/templates/NewsTemplate";
 import { BlogTemplate } from "@/components/templates/BlogTemplate";
+import { ListicleTemplate } from "@/components/templates/ListicleTemplate";
 import { SectionEditor } from "@/components/SectionEditor";
 import { StickyCtaButton } from "@/components/StickyCtaButton";
 import { HtmlEditor } from "@/components/HtmlEditor";
@@ -26,7 +27,7 @@ import { Loader2, Save, Globe, Edit2, Plus, Sparkles, Code, X, Undo2, ChevronDow
 
 interface Section {
   id?: string;
-  type: "hero" | "text" | "image" | "cta" | "benefits" | "testimonial" | "quote" | "facebook-testimonial" | "bullet-box";
+  type: "hero" | "text" | "image" | "cta" | "benefits" | "testimonial" | "quote" | "facebook-testimonial" | "bullet-box" | "list-item" | "final-cta";
   content: string;
   heading?: string;
   imagePosition?: "left" | "right" | "full" | "none";
@@ -40,6 +41,8 @@ interface Section {
   reactions?: number;
   items?: string[];
   boxColor?: "green" | "blue" | "purple" | "yellow";
+  buttonText?: string;
+  buttonUrl?: string;
 }
 
 interface AnalysisResult {
@@ -73,7 +76,7 @@ const Index = () => {
   const [ctaUrl, setCTAUrl] = useState("");
   const [saving, setSaving] = useState(false);
   const [editingSectionIndex, setEditingSectionIndex] = useState<number | null>(null);
-  const [selectedTemplate, setSelectedTemplate] = useState<"magazine" | "news" | "blog">("magazine");
+  const [selectedTemplate, setSelectedTemplate] = useState<"magazine" | "news" | "blog" | "listicle">("magazine");
   const [imageUrl, setImageUrl] = useState<string>("");
   const [ctaStyle, setCtaStyle] = useState<"ctaAmazon" | "ctaUrgent" | "ctaPremium" | "ctaTrust">("ctaAmazon");
   const [stickyCtaThreshold, setStickyCtaThreshold] = useState<number>(20);
@@ -772,16 +775,69 @@ const Index = () => {
       onReorderSections: handleReorderSections,
       onEditSection: setEditingSectionIndex,
       onEditSectionById: handleEditSectionById,
-    } as const;
+    };
+
+    // For Listicle template, we need different prop mapping
+    if (selectedTemplate === "listicle") {
+      const sectionsWithIds = (analysisResult?.sections || []).map(ensureSectionId);
+      return (
+        <ListicleTemplate
+          sections={sectionsWithIds}
+          onSectionUpdate={(id, updates) => {
+            if (!analysisResult) return;
+            const index = analysisResult.sections.findIndex((s) => s.id === id);
+            if (index !== -1) {
+              handleUpdateSection(index, { ...analysisResult.sections[index], ...updates } as any);
+            }
+          }}
+          onSectionDelete={(id) => {
+            if (!analysisResult) return;
+            const index = analysisResult.sections.findIndex((s) => s.id === id);
+            if (index !== -1) handleDeleteSection(index);
+          }}
+          onSectionAdd={(afterId) => {
+            if (!analysisResult) return;
+            const index = analysisResult.sections.findIndex((s) => s.id === afterId);
+            if (index !== -1) handleAddSectionAt(index, "text");
+          }}
+          onSectionsReorder={(newSections) => {
+            if (!analysisResult) return;
+            setAnalysisResult({
+              ...analysisResult,
+              sections: newSections as any,
+            });
+          }}
+          onSectionClone={(id) => {
+            if (!analysisResult) return;
+            const index = analysisResult.sections.findIndex((s) => s.id === id);
+            if (index !== -1) {
+              const sectionToClone = analysisResult.sections[index];
+              const clonedSection = ensureSectionId({ ...sectionToClone });
+              const newSections = [...analysisResult.sections];
+              newSections.splice(index + 1, 0, clonedSection);
+              setAnalysisResult({
+                ...analysisResult,
+                sections: newSections,
+              });
+              toast({ title: "Section cloned successfully!" });
+            }
+          }}
+          isEditing={true}
+          ctaText={analysisResult?.cta.primary || "Get Started"}
+          ctaUrl={ctaUrl}
+          userId={user?.id}
+        />
+      );
+    }
 
     switch (selectedTemplate) {
       case "news":
-        return <NewsTemplate {...templateProps} />;
+        return <NewsTemplate {...templateProps as any} />;
       case "blog":
-        return <BlogTemplate {...templateProps} />;
+        return <BlogTemplate {...templateProps as any} />;
       case "magazine":
       default:
-        return <MagazineTemplate {...templateProps} />;
+        return <MagazineTemplate {...templateProps as any} />;
     }
   };
   const handleAddSectionAt = (afterIndex: number, type: "text" | "image") => {
@@ -1203,7 +1259,7 @@ const Index = () => {
               <TabsContent value="design" className="m-0 space-y-6 p-6">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-foreground/90">Page Template</label>
-                  <div className="flex gap-3">
+                  <div className="grid grid-cols-2 gap-3">
                     <Button
                       variant={selectedTemplate === "magazine" ? "default" : "outline"}
                       size="sm"
@@ -1227,6 +1283,14 @@ const Index = () => {
                       className="h-10 flex-1 transition-all"
                     >
                       Blog
+                    </Button>
+                    <Button
+                      variant={selectedTemplate === "listicle" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setSelectedTemplate("listicle")}
+                      className="h-10 flex-1 transition-all"
+                    >
+                      Listicle
                     </Button>
                   </div>
                 </div>
@@ -1325,7 +1389,7 @@ const Index = () => {
             onSave={(newSections) => {
               setAnalysisResult({
                 ...analysisResult,
-                sections: newSections,
+                sections: newSections as any,
               });
             }}
             onClose={() => setShowHtmlEditor(false)}
@@ -1340,10 +1404,10 @@ const Index = () => {
             {editingSectionIndex !== null && (
               <div className="mt-4">
                 <SectionEditor
-                  section={analysisResult.sections[editingSectionIndex]}
+                  section={analysisResult.sections[editingSectionIndex] as any}
                   index={editingSectionIndex}
                   totalSections={analysisResult.sections.length}
-                  onSave={(updatedSection) => handleSaveSection(editingSectionIndex, updatedSection)}
+                  onSave={(updatedSection) => handleSaveSection(editingSectionIndex, updatedSection as any)}
                   onDelete={() => handleDeleteSection(editingSectionIndex)}
                   onMoveUp={() => handleMoveSection(editingSectionIndex, "up")}
                   onMoveDown={() => handleMoveSection(editingSectionIndex, "down")}
