@@ -4,6 +4,7 @@ import { SectionControls } from "@/components/SectionControls";
 import { DraggableSections } from "@/components/DraggableSections";
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
+import { formatMarkdownText } from "@/lib/utils";
 
 interface Section {
   id: string;
@@ -99,11 +100,11 @@ export const ListicleTemplate = ({
                 <>
                   <h2 
                     className="text-2xl font-bold mb-4 text-foreground"
-                    dangerouslySetInnerHTML={{ __html: section.heading || "" }}
+                    dangerouslySetInnerHTML={{ __html: formatMarkdownText(section.heading || "") }}
                   />
                   <div 
                     className="text-base text-muted-foreground"
-                    dangerouslySetInnerHTML={{ __html: section.content || "" }}
+                    dangerouslySetInnerHTML={{ __html: formatMarkdownText(section.content || "") }}
                   />
                 </>
               )}
@@ -135,7 +136,7 @@ export const ListicleTemplate = ({
           ) : (
             <div 
               className="prose prose-lg max-w-none text-foreground"
-              dangerouslySetInnerHTML={{ __html: section.content || "" }}
+              dangerouslySetInnerHTML={{ __html: formatMarkdownText(section.content || "") }}
             />
           )}
           
@@ -190,11 +191,11 @@ export const ListicleTemplate = ({
               <>
                 <h1 
                   className="text-4xl font-bold mb-6 text-foreground"
-                  dangerouslySetInnerHTML={{ __html: heroSection.heading || "" }}
+                  dangerouslySetInnerHTML={{ __html: formatMarkdownText(heroSection.heading || "") }}
                 />
                 <div 
                   className="text-lg text-muted-foreground max-w-3xl mx-auto"
-                  dangerouslySetInnerHTML={{ __html: heroSection.content || "" }}
+                  dangerouslySetInnerHTML={{ __html: formatMarkdownText(heroSection.content || "") }}
                 />
               </>
             )}
@@ -247,11 +248,11 @@ export const ListicleTemplate = ({
                 <>
                   <h2 
                     className="text-3xl font-bold mb-2 text-foreground"
-                    dangerouslySetInnerHTML={{ __html: finalCtaSection.heading || "" }}
+                    dangerouslySetInnerHTML={{ __html: formatMarkdownText(finalCtaSection.heading || "") }}
                   />
                   <div 
                     className="text-base text-muted-foreground"
-                    dangerouslySetInnerHTML={{ __html: finalCtaSection.content || "" }}
+                    dangerouslySetInnerHTML={{ __html: formatMarkdownText(finalCtaSection.content || "") }}
                   />
                 </>
               )}
@@ -315,7 +316,7 @@ export const ListicleTemplate = ({
                 </Button>
                 <div 
                   className="text-sm text-muted-foreground"
-                  dangerouslySetInnerHTML={{ __html: finalCtaSection.buttonText || "" }}
+                  dangerouslySetInnerHTML={{ __html: formatMarkdownText(finalCtaSection.buttonText || "") }}
                 />
               </div>
             )}
