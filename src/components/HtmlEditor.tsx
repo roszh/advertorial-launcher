@@ -4,7 +4,7 @@ import { Textarea } from "./ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { Code, Eye } from "lucide-react";
 
-interface Section {
+export interface Section {
   type: "hero" | "text" | "image" | "cta" | "benefits" | "testimonial" | "quote" | "facebook-testimonial" | "bullet-box" | "list-item" | "final-cta";
   content: string;
   heading?: string;

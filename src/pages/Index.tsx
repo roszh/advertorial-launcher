@@ -17,6 +17,7 @@ import { MagazineTemplate } from "@/components/templates/MagazineTemplate";
 import { NewsTemplate } from "@/components/templates/NewsTemplate";
 import { BlogTemplate } from "@/components/templates/BlogTemplate";
 import { ListicleTemplate } from "@/components/templates/ListicleTemplate";
+import { getStoryAdvertorialTemplate } from "@/components/templates/StoryAdvertorialTemplate";
 import { SectionEditor } from "@/components/SectionEditor";
 import { StickyCtaButton } from "@/components/StickyCtaButton";
 import { HtmlEditor } from "@/components/HtmlEditor";
@@ -76,7 +77,7 @@ const Index = () => {
   const [ctaUrl, setCTAUrl] = useState("");
   const [saving, setSaving] = useState(false);
   const [editingSectionIndex, setEditingSectionIndex] = useState<number | null>(null);
-  const [selectedTemplate, setSelectedTemplate] = useState<"magazine" | "news" | "blog" | "listicle">("magazine");
+  const [selectedTemplate, setSelectedTemplate] = useState<"magazine" | "news" | "blog" | "listicle" | "story-advertorial">("magazine");
   const [imageUrl, setImageUrl] = useState<string>("");
   const [ctaStyle, setCtaStyle] = useState<"ctaAmazon" | "ctaUrgent" | "ctaPremium" | "ctaTrust">("ctaAmazon");
   const [stickyCtaThreshold, setStickyCtaThreshold] = useState<number>(20);
@@ -429,7 +430,7 @@ const Index = () => {
     }
   };
 
-  const handleStartFromTemplate = (templateType: "magazine" | "news" | "blog" | "listicle") => {
+  const handleStartFromTemplate = (templateType: "magazine" | "news" | "blog" | "listicle" | "story-advertorial") => {
     const templates = {
       magazine: {
         title: "Breaking Discovery Revealed",
@@ -547,6 +548,16 @@ const Index = () => {
         ],
         cta: { primary: "Claim Your Offer Now", secondary: "" },
       },
+      "story-advertorial": (() => {
+        const storyTemplate = getStoryAdvertorialTemplate();
+        return {
+          title: storyTemplate.headline,
+          headline: storyTemplate.headline,
+          subtitle: "Advertorial",
+          sections: storyTemplate.sections.map(ensureSectionId),
+          cta: { primary: "Claim Your Exclusive Discount Now", secondary: "" },
+        };
+      })(),
     };
 
     const template = templates[templateType];
@@ -1762,6 +1773,15 @@ const Index = () => {
                 >
                   <span className="text-2xl">📋</span>
                   <span className="text-xs">Listicle</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleStartFromTemplate("story-advertorial")}
+                  className="h-auto py-3 flex flex-col gap-1"
+                >
+                  <span className="text-2xl">📖</span>
+                  <span className="text-xs">Story Ad</span>
                 </Button>
               </div>
             </div>
