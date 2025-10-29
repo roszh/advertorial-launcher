@@ -37,13 +37,9 @@ interface NewsTemplateProps {
   headline?: string;
   onUpdateSubtitle?: (subtitle: string) => void;
   onUpdateHeadline?: (headline: string) => void;
-  ctaVariant?: "ctaAmazon" | "ctaUrgent" | "ctaPremium" | "ctaTrust";
-  onUpdateSection?: (index: number, section: Section) => void;
-  onUpdateCta?: (text: string) => void;
-  onAddSection?: (index: number, type: "text" | "image") => void;
-  onDeleteSection?: (index: number) => void;
   onReorderSections?: (newOrder: string[]) => void;
   onEditSection?: (index: number) => void;
+  onEditSectionById?: (id: string) => void;
 }
 
 export const NewsTemplate = ({ 
@@ -99,7 +95,7 @@ export const NewsTemplate = ({
               onCtaClick={onCtaClick}
               elementId={`section${actualIndex}`}
               isEditing={isEditing}
-              onEdit={() => onEditSection?.(actualIndex)}
+              onEdit={() => (onEditSectionById ? onEditSectionById(section.id!) : onEditSection?.(actualIndex))}
             />
           ) : (
           <section className="mb-5 md:mb-6">
@@ -318,7 +314,7 @@ export const NewsTemplate = ({
               }}
               onDeleteSection={() => onDeleteSection(actualIndex)}
               onCloneSection={() => {
-                const clonedSection = { ...section };
+                const clonedSection = { ...section, id: crypto.randomUUID() };
                 onAddSection(actualIndex, section.type as "text" | "image");
                 setTimeout(() => {
                   const newIndex = actualIndex + 1;

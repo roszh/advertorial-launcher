@@ -44,6 +44,8 @@ interface BlogTemplateProps {
   onDeleteSection?: (index: number) => void;
   onReorderSections?: (newOrder: string[]) => void;
   onEditSection?: (index: number) => void;
+  onEditSectionById?: (id: string) => void;
+  onEditSectionById?: (id: string) => void;
 }
 
 export const BlogTemplate = ({ 
@@ -98,7 +100,7 @@ export const BlogTemplate = ({
               onCtaClick={onCtaClick}
               elementId={`section${actualIndex}`}
               isEditing={isEditing}
-              onEdit={() => onEditSection?.(actualIndex)}
+              onEdit={() => (onEditSectionById ? onEditSectionById(section.id!) : onEditSection?.(actualIndex))}
             />
           ) : (
           <section className="mb-6 md:mb-8 lg:mb-10">
@@ -324,7 +326,7 @@ export const BlogTemplate = ({
               }}
               onDeleteSection={() => onDeleteSection(actualIndex)}
               onCloneSection={() => {
-                const clonedSection = { ...section };
+                const clonedSection = { ...section, id: crypto.randomUUID() };
                 onAddSection(actualIndex, section.type as "text" | "image");
                 setTimeout(() => {
                   const newIndex = actualIndex + 1;

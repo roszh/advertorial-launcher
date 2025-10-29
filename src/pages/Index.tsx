@@ -577,11 +577,14 @@ const Index = () => {
   const handleReorderSections = (newOrder: string[]) => {
     if (!analysisResult) return;
     
-    // Create a map of section ID to section
-    const sectionMap = new Map(analysisResult.sections.map(section => [section.id!, section]));
+    const hero = analysisResult.sections[0];
+    const body = analysisResult.sections.slice(1);
     
-    // Reorder sections based on the new order of IDs
-    const reorderedSections = newOrder.map(id => {
+    // Create a map of body section ID to section
+    const sectionMap = new Map(body.map(section => [section.id!, section]));
+    
+    // Reorder body sections based on the new order of IDs
+    const reorderedBody = newOrder.map(id => {
       const section = sectionMap.get(id);
       if (!section) throw new Error(`Section with id ${id} not found`);
       return section;
@@ -589,7 +592,7 @@ const Index = () => {
     
     setAnalysisResult({
       ...analysisResult,
-      sections: reorderedSections,
+      sections: [hero, ...reorderedBody],
     });
     toast({ title: "Sections reordered!" });
   };
@@ -645,6 +648,12 @@ const Index = () => {
     window.open(normalizedUrl, "_blank");
   };
 
+  const handleEditSectionById = (id: string) => {
+    if (!analysisResult) return;
+    const index = analysisResult.sections.findIndex((s) => s.id === id);
+    if (index !== -1) setEditingSectionIndex(index);
+  };
+
   const renderTemplate = () => {
     const templateProps = {
       sections: analysisResult?.sections || [],
@@ -664,7 +673,8 @@ const Index = () => {
       onDeleteSection: handleDeleteSection,
       onReorderSections: handleReorderSections,
       onEditSection: setEditingSectionIndex,
-    };
+      onEditSectionById: handleEditSectionById,
+    } as const;
 
     switch (selectedTemplate) {
       case "news":
@@ -676,7 +686,6 @@ const Index = () => {
         return <MagazineTemplate {...templateProps} />;
     }
   };
-
   const handleAddSectionAt = (afterIndex: number, type: "text" | "image") => {
     if (!analysisResult) return;
     
@@ -751,7 +760,7 @@ const Index = () => {
     
     setAnalysisResult({
       ...analysisResult,
-      sections: [...analysisResult.sections, newSection],
+      sections: [...analysisResult.sections, ensureSectionId(newSection)],
     });
     
     setShowTemplateModal(false);
@@ -783,7 +792,7 @@ const Index = () => {
         // Append new sections to existing ones
         setAnalysisResult({
           ...analysisResult,
-          sections: [...analysisResult.sections, ...newSections]
+          sections: [...analysisResult.sections, ...newSections.map((s: Section) => ensureSectionId(s))]
         });
         
         toast({ 
@@ -836,7 +845,7 @@ const Index = () => {
       
       const cleanedData = {
         ...data,
-        sections: data.sections.map((section: Section) => ({
+        sections: data.sections.map((section: Section) => ensureSectionId({
           ...section,
           heading: section.heading ? stripHtmlTags(section.heading) : section.heading,
           content: stripHtmlTags(section.content),
