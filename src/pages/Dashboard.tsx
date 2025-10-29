@@ -336,7 +336,13 @@ export default function Dashboard() {
                     <div className="flex-1">
                       <CardTitle>{page.title}</CardTitle>
                       <CardDescription>
-                        Created {new Date(page.created_at).toLocaleDateString()}
+                        Created {new Date(page.created_at).toLocaleString('en-GB', { 
+                          day: '2-digit', 
+                          month: '2-digit', 
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
                         {page.published_at && ` • Published ${new Date(page.published_at).toLocaleString('en-GB', { 
                           day: '2-digit', 
                           month: '2-digit', 
@@ -371,14 +377,16 @@ export default function Dashboard() {
                 </CardHeader>
                 <CardContent>
                   <div className="flex gap-2 flex-wrap">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => window.open(`/p/${page.slug}`, "_blank")}
-                    >
-                      <Eye className="mr-2 h-4 w-4" />
-                      Preview
-                    </Button>
+                    {page.status === "published" && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => window.open(`/p/${page.slug}`, "_blank")}
+                      >
+                        <Eye className="mr-2 h-4 w-4" />
+                        Preview
+                      </Button>
+                    )}
                     <Button
                       variant="outline"
                       size="sm"
