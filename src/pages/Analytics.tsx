@@ -5,7 +5,8 @@ import { Navigation } from "@/components/Navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
-import { ArrowLeft, TrendingUp, Eye, MousePointer } from "lucide-react";
+import { ArrowLeft, TrendingUp, Eye, MousePointer, Globe, Smartphone, Monitor, Tablet } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface AnalyticsSummary {
   total_views: number;
@@ -24,6 +25,24 @@ interface ElementStats {
   click_count: number;
 }
 
+interface TrafficSource {
+  source: string;
+  views: number;
+  percentage: number;
+}
+
+interface DeviceStats {
+  device_type: string;
+  count: number;
+  percentage: number;
+}
+
+interface BrowserStats {
+  browser: string;
+  count: number;
+  percentage: number;
+}
+
 export default function Analytics() {
   const navigate = useNavigate();
   const { pageId } = useParams();
@@ -37,6 +56,9 @@ export default function Analytics() {
   });
   const [dailyStats, setDailyStats] = useState<DailyStats[]>([]);
   const [elementStats, setElementStats] = useState<ElementStats[]>([]);
+  const [trafficSources, setTrafficSources] = useState<TrafficSource[]>([]);
+  const [deviceStats, setDeviceStats] = useState<DeviceStats[]>([]);
+  const [browserStats, setBrowserStats] = useState<BrowserStats[]>([]);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -58,6 +80,61 @@ export default function Analytics() {
 
     return () => subscription.unsubscribe();
   }, [navigate, pageId]);
+
+  const parseReferrer = (referrer: string | null): string => {
+    if (!referrer) return "Direct";
+    
+    try {
+      const url = new URL(referrer);
+      const hostname = url.hostname.toLowerCase();
+      
+      // Social media
+      if (hostname.includes('facebook')) return "Facebook";
+      if (hostname.includes('instagram')) return "Instagram";
+      if (hostname.includes('twitter') || hostname.includes('x.com')) return "X/Twitter";
+      if (hostname.includes('linkedin')) return "LinkedIn";
+      if (hostname.includes('tiktok')) return "TikTok";
+      if (hostname.includes('pinterest')) return "Pinterest";
+      
+      // Search engines
+      if (hostname.includes('google')) return "Google";
+      if (hostname.includes('bing')) return "Bing";
+      if (hostname.includes('yahoo')) return "Yahoo";
+      if (hostname.includes('duckduckgo')) return "DuckDuckGo";
+      
+      // Check if same domain (internal)
+      if (hostname.includes(window.location.hostname)) return "Internal";
+      
+      // Other referrers - show domain
+      return hostname.replace('www.', '');
+    } catch {
+      return "Direct";
+    }
+  };
+
+  const parseUserAgent = (ua: string | null): { device: string, browser: string } => {
+    if (!ua) return { device: "Unknown", browser: "Unknown" };
+    
+    const uaLower = ua.toLowerCase();
+    
+    // Device detection
+    let device = "Desktop";
+    if (/(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(uaLower)) {
+      device = "Tablet";
+    } else if (/mobile|iphone|ipod|android|blackberry|mini|windows\sce|palm/i.test(uaLower)) {
+      device = "Mobile";
+    }
+    
+    // Browser detection
+    let browser = "Unknown";
+    if (uaLower.includes('edg/')) browser = "Edge";
+    else if (uaLower.includes('chrome/')) browser = "Chrome";
+    else if (uaLower.includes('safari/') && !uaLower.includes('chrome')) browser = "Safari";
+    else if (uaLower.includes('firefox/')) browser = "Firefox";
+    else if (uaLower.includes('opera/') || uaLower.includes('opr/')) browser = "Opera";
+    
+    return { device, browser };
+  };
 
   const fetchAnalytics = async () => {
     if (!pageId) return;
@@ -155,6 +232,71 @@ export default function Analytics() {
       setElementStats(elementStatsArray);
     }
 
+    // Fetch traffic sources
+    const { data: analyticsWithReferrer } = await supabase
+      .from("page_analytics")
+      .select("referrer")
+      .eq("page_id", pageId)
+      .eq("event_type", "view");
+
+    if (analyticsWithReferrer) {
+      const sourceCounts: { [key: string]: number } = {};
+      const totalViews = analyticsWithReferrer.length;
+      
+      analyticsWithReferrer.forEach(event => {
+        const source = parseReferrer(event.referrer);
+        sourceCounts[source] = (sourceCounts[source] || 0) + 1;
+      });
+      
+      const sources = Object.entries(sourceCounts)
+        .map(([source, views]) => ({
+          source,
+          views,
+          percentage: (views / totalViews) * 100
+        }))
+        .sort((a, b) => b.views - a.views);
+      
+      setTrafficSources(sources);
+    }
+
+    // Fetch device and browser stats
+    const { data: analyticsWithUA } = await supabase
+      .from("page_analytics")
+      .select("user_agent")
+      .eq("page_id", pageId)
+      .eq("event_type", "view");
+
+    if (analyticsWithUA) {
+      const deviceCounts: { [key: string]: number } = {};
+      const browserCounts: { [key: string]: number } = {};
+      const total = analyticsWithUA.length;
+      
+      analyticsWithUA.forEach(event => {
+        const { device, browser } = parseUserAgent(event.user_agent);
+        deviceCounts[device] = (deviceCounts[device] || 0) + 1;
+        browserCounts[browser] = (browserCounts[browser] || 0) + 1;
+      });
+      
+      const devices = Object.entries(deviceCounts)
+        .map(([device_type, count]) => ({
+          device_type,
+          count,
+          percentage: (count / total) * 100
+        }))
+        .sort((a, b) => b.count - a.count);
+      
+      const browsers = Object.entries(browserCounts)
+        .map(([browser, count]) => ({
+          browser,
+          count,
+          percentage: (count / total) * 100
+        }))
+        .sort((a, b) => b.count - a.count);
+      
+      setDeviceStats(devices);
+      setBrowserStats(browsers);
+    }
+
     setLoading(false);
   };
 
@@ -219,6 +361,92 @@ export default function Analytics() {
                 <CardContent>
                   <div className="text-2xl font-bold">{summary.ctr_percentage.toFixed(2)}%</div>
                   <p className="text-xs text-muted-foreground">Clicks / Views</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Traffic Sources */}
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle>Traffic Sources</CardTitle>
+                <CardDescription>Where your visitors are coming from</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {trafficSources.length === 0 ? (
+                  <p className="text-muted-foreground">No traffic data available yet</p>
+                ) : (
+                  <div className="space-y-3">
+                    {trafficSources.map((source, idx) => (
+                      <div key={idx} className="flex items-center justify-between border-b pb-3">
+                        <div className="flex items-center gap-2">
+                          <Globe className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm font-medium">{source.source}</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm text-muted-foreground">{source.views} views</span>
+                          <span className="text-sm font-semibold">{source.percentage.toFixed(1)}%</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Device & Browser Stats */}
+            <div className="grid gap-4 md:grid-cols-2 mb-6">
+              {/* Device Stats */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Device Breakdown</CardTitle>
+                  <CardDescription>Mobile vs Desktop vs Tablet</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {deviceStats.length === 0 ? (
+                    <p className="text-muted-foreground">No device data available</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {deviceStats.map((stat, idx) => (
+                        <div key={idx} className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            {stat.device_type === "Mobile" && <Smartphone className="h-4 w-4" />}
+                            {stat.device_type === "Desktop" && <Monitor className="h-4 w-4" />}
+                            {stat.device_type === "Tablet" && <Tablet className="h-4 w-4" />}
+                            <span className="text-sm font-medium">{stat.device_type}</span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <span className="text-sm text-muted-foreground">{stat.count}</span>
+                            <Badge variant="secondary">{stat.percentage.toFixed(1)}%</Badge>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Browser Stats */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Browser Breakdown</CardTitle>
+                  <CardDescription>Which browsers visitors use</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {browserStats.length === 0 ? (
+                    <p className="text-muted-foreground">No browser data available</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {browserStats.map((stat, idx) => (
+                        <div key={idx} className="flex items-center justify-between">
+                          <span className="text-sm font-medium">{stat.browser}</span>
+                          <div className="flex items-center gap-3">
+                            <span className="text-sm text-muted-foreground">{stat.count}</span>
+                            <Badge variant="secondary">{stat.percentage.toFixed(1)}%</Badge>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>

@@ -7,7 +7,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { Eye, Edit, Trash2, Globe, Copy, BarChart3 } from "lucide-react";
+import { Eye, Edit, Trash2, Globe, Copy, BarChart3, Search, Calendar, ArrowUp, ArrowDown } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Input } from "@/components/ui/input";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { format } from "date-fns";
 
 interface Page {
   id: string;
@@ -15,7 +19,9 @@ interface Page {
   slug: string;
   status: string;
   created_at: string;
+  updated_at: string;
   published_at: string | null;
+  content: any;
   tags?: Array<{id: string, name: string, color: string}>;
   countrySetupName?: string | null;
 }
@@ -26,11 +32,15 @@ export default function Dashboard() {
   const [pages, setPages] = useState<Page[]>([]);
   const [filter, setFilter] = useState<"all" | "draft" | "published">("all");
   const [loading, setLoading] = useState(true);
-  const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [availableTags, setAvailableTags] = useState<Array<{id: string, name: string, color: string}>>([]);
   const [selectedPages, setSelectedPages] = useState<string[]>([]);
   const [bulkSetupId, setBulkSetupId] = useState<string>("");
   const [availableCountrySetups, setAvailableCountrySetups] = useState<Array<{id: string, name: string}>>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [dateRange, setDateRange] = useState<{from: Date | undefined, to: Date | undefined}>({ from: undefined, to: undefined });
+  const [sortBy, setSortBy] = useState<"created" | "updated" | "title" | "status">("created");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
   useEffect(() => {
     const checkUser = async () => {
@@ -229,8 +239,42 @@ export default function Dashboard() {
 
   const filteredPages = pages.filter(p => {
     const statusMatch = filter === "all" || p.status === filter;
-    const tagMatch = !selectedTag || p.tags?.some(t => t.id === selectedTag);
-    return statusMatch && tagMatch;
+    const tagMatch = selectedTags.length === 0 || p.tags?.some(t => selectedTags.includes(t.id));
+    
+    // Search across title, slug, and content
+    const searchMatch = !searchQuery || 
+      p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.slug.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      JSON.stringify(p.content).toLowerCase().includes(searchQuery.toLowerCase());
+    
+    // Date range filter
+    const dateMatch = !dateRange.from || 
+      (new Date(p.created_at) >= dateRange.from && 
+       (!dateRange.to || new Date(p.created_at) <= dateRange.to));
+    
+    return statusMatch && tagMatch && searchMatch && dateMatch;
+  });
+
+  // Sort filtered pages
+  const sortedPages = [...filteredPages].sort((a, b) => {
+    let comparison = 0;
+    
+    switch (sortBy) {
+      case "created":
+        comparison = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        break;
+      case "updated":
+        comparison = new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime();
+        break;
+      case "title":
+        comparison = a.title.localeCompare(b.title);
+        break;
+      case "status":
+        comparison = a.status.localeCompare(b.status);
+        break;
+    }
+    
+    return sortOrder === "asc" ? comparison : -comparison;
   });
 
   return (
@@ -253,25 +297,111 @@ export default function Dashboard() {
             </div>
           </div>
           
-          {availableTags.length > 0 && (
+          {/* Search Bar */}
+          <div className="relative mb-4">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Search pages by title, slug, or content..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+
+          {/* Filters and Sorting Row */}
+          <div className="flex flex-wrap items-center gap-3 mb-3">
+            {/* Sorting */}
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Filter by tag:</span>
-              <Select value={selectedTag || "all"} onValueChange={(val) => setSelectedTag(val === "all" ? null : val)}>
-                <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="All Tags" />
+              <span className="text-sm text-muted-foreground">Sort by:</span>
+              <Select value={sortBy} onValueChange={(val) => setSortBy(val as any)}>
+                <SelectTrigger className="w-[160px]">
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Tags</SelectItem>
-                  {availableTags.map(tag => (
-                    <SelectItem key={tag.id} value={tag.id}>
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full" style={{backgroundColor: tag.color}} />
-                        {tag.name}
-                      </div>
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="created">Created Date</SelectItem>
+                  <SelectItem value="updated">Updated Date</SelectItem>
+                  <SelectItem value="title">Title (A-Z)</SelectItem>
+                  <SelectItem value="status">Status</SelectItem>
                 </SelectContent>
               </Select>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
+              >
+                {sortOrder === "asc" ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
+              </Button>
+            </div>
+
+            {/* Date Range Filter */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Created:</span>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <Calendar className="mr-2 h-4 w-4" />
+                    {dateRange.from ? (
+                      dateRange.to ? (
+                        <>
+                          {format(dateRange.from, "MMM dd")} - {format(dateRange.to, "MMM dd, yyyy")}
+                        </>
+                      ) : (
+                        format(dateRange.from, "MMM dd, yyyy")
+                      )
+                    ) : (
+                      "Pick a date range"
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <CalendarComponent
+                    mode="range"
+                    selected={{ from: dateRange.from, to: dateRange.to }}
+                    onSelect={(range) => setDateRange({ from: range?.from, to: range?.to })}
+                    numberOfMonths={2}
+                  />
+                </PopoverContent>
+              </Popover>
+              {dateRange.from && (
+                <Button variant="ghost" size="sm" onClick={() => setDateRange({ from: undefined, to: undefined })}>
+                  Clear
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {/* Multi-Tag Filter */}
+          {availableTags.length > 0 && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-sm text-muted-foreground">Filter by tags:</span>
+              {availableTags.map(tag => (
+                <Badge
+                  key={tag.id}
+                  style={{
+                    backgroundColor: selectedTags.includes(tag.id) ? tag.color : 'transparent',
+                    color: selectedTags.includes(tag.id) ? 'white' : tag.color,
+                    borderColor: tag.color,
+                    cursor: 'pointer'
+                  }}
+                  className="border-2"
+                  onClick={() => {
+                    if (selectedTags.includes(tag.id)) {
+                      setSelectedTags(selectedTags.filter(id => id !== tag.id));
+                    } else {
+                      setSelectedTags([...selectedTags, tag.id]);
+                    }
+                  }}
+                >
+                  {tag.name}
+                  {selectedTags.includes(tag.id) && " ✓"}
+                </Badge>
+              ))}
+              {selectedTags.length > 0 && (
+                <Button variant="ghost" size="sm" onClick={() => setSelectedTags([])}>
+                  Clear tags
+                </Button>
+              )}
             </div>
           )}
         </div>
@@ -308,7 +438,7 @@ export default function Dashboard() {
 
         {loading ? (
           <p className="text-muted-foreground">Loading...</p>
-        ) : filteredPages.length === 0 ? (
+        ) : sortedPages.length === 0 ? (
           <Card>
             <CardContent className="py-10 text-center">
               <p className="text-muted-foreground">No pages found. Create your first one!</p>
@@ -317,7 +447,7 @@ export default function Dashboard() {
           </Card>
         ) : (
           <div className="grid gap-4">
-            {filteredPages.map((page) => (
+            {sortedPages.map((page) => (
               <Card key={page.id}>
                 <CardHeader>
                   <div className="flex justify-between items-start gap-3">

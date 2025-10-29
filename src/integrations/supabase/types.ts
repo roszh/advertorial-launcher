@@ -66,6 +66,67 @@ export type Database = {
           },
         ]
       }
+      page_sessions: {
+        Row: {
+          city: string | null
+          country: string | null
+          created_at: string | null
+          first_seen: string | null
+          id: string
+          last_seen: string | null
+          page_id: string
+          referrer: string | null
+          session_id: string
+          user_agent: string | null
+        }
+        Insert: {
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          first_seen?: string | null
+          id?: string
+          last_seen?: string | null
+          page_id: string
+          referrer?: string | null
+          session_id: string
+          user_agent?: string | null
+        }
+        Update: {
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          first_seen?: string | null
+          id?: string
+          last_seen?: string | null
+          page_id?: string
+          referrer?: string | null
+          session_id?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "page_sessions_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "page_analytics_summary"
+            referencedColumns: ["page_id"]
+          },
+          {
+            foreignKeyName: "page_sessions_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "pages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "page_sessions_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "published_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       page_tags: {
         Row: {
           created_at: string | null
