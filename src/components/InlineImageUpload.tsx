@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Upload } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { cn } from "@/lib/utils";
+import { cn, compressImage } from "@/lib/utils";
 
 interface InlineImageUploadProps {
   currentImageUrl?: string;
@@ -39,22 +39,24 @@ export const InlineImageUpload = ({
       return;
     }
 
-    // Validate file size (5MB max)
-    if (file.size > 5 * 1024 * 1024) {
-      toast({ title: "Image must be less than 5MB", variant: "destructive" });
+    // Validate file size (1MB max)
+    if (file.size > 1 * 1024 * 1024) {
+      toast({ title: "Image must be less than 1MB", variant: "destructive" });
       return;
     }
 
     setUploading(true);
     try {
+      // Compress image client-side
+      const compressedBlob = await compressImage(file);
+      
       // Create a unique file name
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${userId}/${Date.now()}.${fileExt}`;
+      const fileName = `${userId}/${Date.now()}.webp`;
 
-      // Upload to Supabase storage
+      // Upload compressed image to Supabase storage
       const { error: uploadError } = await supabase.storage
         .from('page-images')
-        .upload(fileName, file);
+        .upload(fileName, compressedBlob);
 
       if (uploadError) throw uploadError;
 
@@ -165,7 +167,7 @@ export const InlineImageUpload = ({
               <div className="text-center text-muted-foreground">
                 <Upload className="h-12 w-12 mx-auto mb-2" />
                 <p className="text-sm font-medium">Click to upload image</p>
-                <p className="text-xs mt-1">Max 5MB • JPG, PNG, WebP</p>
+                <p className="text-xs mt-1">Max 1MB • JPG, PNG, WebP</p>
               </div>
             )}
           </div>

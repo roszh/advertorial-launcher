@@ -134,6 +134,8 @@ export const MagazineTemplate = ({
                   <img
                     src={section.imageUrl}
                     alt={section.heading || "Section image"}
+                    loading="lazy"
+                    decoding="async"
                     className="w-full max-w-full rounded-lg"
                   />
                 ) : null}
@@ -376,6 +378,8 @@ export const MagazineTemplate = ({
             <img
               src={imageUrl || placeholderImage}
               alt="Article hero image"
+              loading="eager"
+              fetchPriority="high"
               className="w-full h-full object-cover"
             />
           </figure>

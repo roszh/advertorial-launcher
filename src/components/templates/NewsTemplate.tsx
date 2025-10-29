@@ -139,6 +139,8 @@ export const NewsTemplate = ({
                   <img
                     src={section.imageUrl}
                     alt={section.heading || "Section image"}
+                    loading="lazy"
+                    decoding="async"
                     className="w-full max-w-full rounded"
                   />
                 ) : null}
@@ -408,6 +410,8 @@ export const NewsTemplate = ({
             <img
               src={imageUrl || placeholderImage}
               alt="News article image"
+              loading="eager"
+              fetchPriority="high"
               className="w-full max-w-full rounded object-cover"
               style={{ maxHeight: '300px' }}
             />

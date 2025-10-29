@@ -21,6 +21,8 @@ serve(async (req) => {
       );
     }
 
+    console.log("Starting image optimization for:", imageUrl);
+
     // Fetch the image
     const imageResponse = await fetch(imageUrl);
     if (!imageResponse.ok) {
@@ -28,6 +30,19 @@ serve(async (req) => {
     }
 
     const imageBlob = await imageResponse.blob();
+    
+    // Check file size - if already small, skip AI optimization
+    const fileSizeKB = imageBlob.size / 1024;
+    console.log(`Image size: ${fileSizeKB.toFixed(2)} KB`);
+    
+    if (fileSizeKB < 300) {
+      console.log("Image already optimized, returning original");
+      return new Response(
+        JSON.stringify({ optimizedUrl: imageUrl }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const imageBuffer = await imageBlob.arrayBuffer();
 
     // Convert to base64 for the AI to process
@@ -56,7 +71,7 @@ serve(async (req) => {
             content: [
               {
                 type: "text",
-                text: "Optimize this image for web use: resize to maximum 1200px width while maintaining aspect ratio, enhance quality, and ensure it looks professional for a news article.",
+                text: "Optimize this image for web: resize to max 1200px width maintaining aspect ratio, convert to WebP format, compress to under 300KB while maintaining visual quality, enhance sharpness and colors for professional appearance.",
               },
               {
                 type: "image_url",
@@ -72,7 +87,8 @@ serve(async (req) => {
     });
 
     if (!aiResponse.ok) {
-      console.error("AI response error:", await aiResponse.text());
+      const errorText = await aiResponse.text();
+      console.error("AI response error:", errorText);
       // If AI optimization fails, return the original image
       return new Response(
         JSON.stringify({ optimizedUrl: imageUrl }),
@@ -84,13 +100,14 @@ serve(async (req) => {
     const optimizedImageUrl = aiData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
 
     if (!optimizedImageUrl) {
-      // If no optimized image returned, use original
+      console.log("No optimized image returned from AI, using original");
       return new Response(
         JSON.stringify({ optimizedUrl: imageUrl }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
+    console.log("Image optimization successful");
     return new Response(
       JSON.stringify({ optimizedUrl: optimizedImageUrl }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }

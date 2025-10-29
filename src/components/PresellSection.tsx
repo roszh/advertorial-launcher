@@ -73,6 +73,8 @@ export const PresellSection = ({ section, ctaText, onCtaClick, elementId = "untr
                 <img 
                   src={section.authorAvatar} 
                   alt={section.author}
+                  loading="lazy"
+                  decoding="async"
                   className="w-12 h-12 md:w-16 md:h-16 rounded-full object-cover"
                 />
               )}
@@ -109,7 +111,13 @@ export const PresellSection = ({ section, ctaText, onCtaClick, elementId = "untr
             <div className="flex items-start gap-3 mb-4">
               <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-secondary flex items-center justify-center flex-shrink-0 overflow-hidden">
                 {section.authorAvatar ? (
-                  <img src={section.authorAvatar} alt={section.author} className="w-full h-full object-cover" />
+                  <img 
+                    src={section.authorAvatar} 
+                    alt={section.author} 
+                    loading="lazy"
+                    decoding="async"
+                    className="w-full h-full object-cover" 
+                  />
                 ) : (
                   <span className="text-lg font-bold">{section.author?.charAt(0)}</span>
                 )}
@@ -232,6 +240,8 @@ export const PresellSection = ({ section, ctaText, onCtaClick, elementId = "untr
             <img
               src={imageSrc}
               alt="Hero background"
+              loading="eager"
+              fetchPriority="high"
               className="w-full h-full object-cover opacity-20"
             />
           </div>
@@ -287,6 +297,8 @@ export const PresellSection = ({ section, ctaText, onCtaClick, elementId = "untr
             <img
               src={imageSrc}
               alt={section.heading || "Section image"}
+              loading="lazy"
+              decoding="async"
               className="w-full h-auto rounded-lg shadow-[var(--shadow-soft)]"
             />
           </div>
