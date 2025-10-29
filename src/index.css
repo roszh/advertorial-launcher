@@ -148,7 +148,15 @@ All colors MUST be HSL.
     font-weight: 700;
   }
   
+  b {
+    font-weight: 700;
+  }
+  
   em {
+    font-style: italic;
+  }
+  
+  i {
     font-style: italic;
   }
 }
