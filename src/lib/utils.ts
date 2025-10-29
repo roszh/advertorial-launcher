@@ -13,8 +13,17 @@ export function stripHtmlTags(text: string): string {
 }
 
 export function formatMarkdownText(markdownValue: string): string {
-  // Convert markdown to styled text for display
-  let formatted = markdownValue;
+  if (!markdownValue) return "";
+  
+  // Decode HTML entities first (in case content was double-encoded)
+  const div = document.createElement("div");
+  div.innerHTML = markdownValue;
+  let formatted = div.textContent || div.innerText || markdownValue;
+  
+  // If content is already HTML, return it as-is
+  if (formatted.includes("<h2") || formatted.includes("<strong>") || formatted.includes("<a ")) {
+    return markdownValue;
+  }
   
   // Subheadline: ## text (convert to h2 tag for semantic HTML)
   formatted = formatted.replace(/^##\s+(.+)$/gm, '<h2 class="text-xl md:text-2xl font-bold mb-4 mt-6 first:mt-0">$1</h2>');
