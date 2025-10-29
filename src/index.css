@@ -142,4 +142,13 @@ All colors MUST be HSL.
   .font-serif {
     font-family: var(--font-serif);
   }
+  
+  /* Ensure bold and italic formatting works in published pages */
+  strong {
+    font-weight: 700;
+  }
+  
+  em {
+    font-style: italic;
+  }
 }
