@@ -45,7 +45,6 @@ interface BlogTemplateProps {
   onReorderSections?: (newOrder: string[]) => void;
   onEditSection?: (index: number) => void;
   onEditSectionById?: (id: string) => void;
-  onEditSectionById?: (id: string) => void;
 }
 
 export const BlogTemplate = ({ 
@@ -65,7 +64,8 @@ export const BlogTemplate = ({
   onAddSection,
   onDeleteSection,
   onReorderSections,
-  onEditSection
+  onEditSection,
+  onEditSectionById
 }: BlogTemplateProps) => {
   const heroSection = sections[0];
   const bodySections = sections.slice(1);

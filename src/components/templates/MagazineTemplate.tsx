@@ -37,6 +37,11 @@ interface MagazineTemplateProps {
   headline?: string;
   onUpdateSubtitle?: (subtitle: string) => void;
   onUpdateHeadline?: (headline: string) => void;
+  ctaVariant?: "ctaAmazon" | "ctaUrgent" | "ctaPremium" | "ctaTrust";
+  onUpdateSection?: (index: number, section: Section) => void;
+  onUpdateCta?: (text: string) => void;
+  onAddSection?: (index: number, type: "text" | "image") => void;
+  onDeleteSection?: (index: number) => void;
   onReorderSections?: (newOrder: string[]) => void;
   onEditSection?: (index: number) => void;
   onEditSectionById?: (id: string) => void;
@@ -59,7 +64,8 @@ export const MagazineTemplate = ({
   onAddSection,
   onDeleteSection,
   onReorderSections,
-  onEditSection
+  onEditSection,
+  onEditSectionById
 }: MagazineTemplateProps) => {
   const heroSection = sections[0];
   const bodySections = sections.slice(1);
