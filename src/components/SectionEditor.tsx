@@ -3,6 +3,7 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
 import { Save, X, Trash2, ArrowUp, ArrowDown } from "lucide-react";
+import { InlineImageUpload } from "./InlineImageUpload";
 import { cn } from "@/lib/utils";
 
 interface Section {
@@ -31,6 +32,7 @@ interface SectionEditorProps {
   onMoveUp: () => void;
   onMoveDown: () => void;
   onCancel: () => void;
+  userId: string;
 }
 
 export const SectionEditor = ({
@@ -42,6 +44,7 @@ export const SectionEditor = ({
   onMoveUp,
   onMoveDown,
   onCancel,
+  userId,
 }: SectionEditorProps) => {
   const [editedSection, setEditedSection] = useState<Section>(section);
 
@@ -162,6 +165,32 @@ export const SectionEditor = ({
               }
               placeholder="Author role..."
             />
+          </div>
+        )}
+
+        {section.authorAvatar !== undefined && (
+          <div>
+            <label className="text-sm font-medium mb-2 block">Profile Photo</label>
+            <InlineImageUpload
+              currentImageUrl={editedSection.authorAvatar || ""}
+              onImageUploaded={(url) =>
+                setEditedSection({ ...editedSection, authorAvatar: url })
+              }
+              userId={userId}
+              aspectRatio="square"
+              className="max-w-[200px]"
+            />
+            {editedSection.authorAvatar && (
+              <div className="mt-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setEditedSection({ ...editedSection, authorAvatar: "" })}
+                >
+                  Remove Photo
+                </Button>
+              </div>
+            )}
           </div>
         )}
 

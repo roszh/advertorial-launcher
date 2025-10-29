@@ -1571,6 +1571,7 @@ const Index = () => {
                   onMoveUp={() => handleMoveSection(editingSectionIndex, "up")}
                   onMoveDown={() => handleMoveSection(editingSectionIndex, "down")}
                   onCancel={() => setEditingSectionIndex(null)}
+                  userId={user?.id || ""}
                 />
               </div>
             )}

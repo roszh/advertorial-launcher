@@ -96,20 +96,21 @@ export const PresellSection = ({ section, ctaText, onCtaClick, elementId = "untr
     );
   }
 
-  // Facebook Testimonial Section
+  // Instagram Style Testimonial Section
   if (isFacebookTestimonial) {
     return (
       <div className="py-8 md:py-12 px-4">
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-5xl mx-auto">
           <div 
             className={cn(
-              "bg-background dark:bg-gray-900 rounded-lg shadow-lg p-4 md:p-6 border border-border relative group",
+              "bg-[#FEF7E7] rounded-xl p-5 md:p-6 relative group",
               isEditing && "cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all"
             )}
             onClick={isEditing ? onEdit : undefined}
           >
-            <div className="flex items-start gap-3 mb-4">
-              <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-secondary flex items-center justify-center flex-shrink-0 overflow-hidden">
+            <div className="flex items-start gap-4">
+              {/* Profile Photo */}
+              <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-gray-300 flex items-center justify-center flex-shrink-0 overflow-hidden">
                 {section.authorAvatar ? (
                   <img 
                     src={section.authorAvatar} 
@@ -119,30 +120,40 @@ export const PresellSection = ({ section, ctaText, onCtaClick, elementId = "untr
                     className="w-full h-full object-cover" 
                   />
                 ) : (
-                  <span className="text-lg font-bold">{section.author?.charAt(0)}</span>
+                  <span className="text-xl font-bold text-gray-600">{section.author?.charAt(0)}</span>
                 )}
               </div>
+              
+              {/* Content */}
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <p className="font-semibold text-sm md:text-base truncate">{section.author}</p>
-                  <svg className="w-4 h-4 text-blue-500 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
-                  </svg>
+                {/* Username and Stars */}
+                <div className="flex items-center gap-2 mb-2">
+                  <p className="font-bold text-base md:text-lg text-gray-900">{section.author}</p>
+                  <div className="flex items-center gap-0.5">
+                    {[...Array(5)].map((_, i) => (
+                      <svg key={i} className="w-4 h-4 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                    ))}
+                  </div>
                 </div>
-                <p className="text-xs text-muted-foreground">{section.timestamp || "2 days ago"}</p>
+                
+                {/* Review Text */}
+                <div 
+                  className="text-sm md:text-base leading-relaxed mb-3 text-gray-800"
+                  dangerouslySetInnerHTML={{ __html: formatMarkdownText(section.content) }}
+                />
+                
+                {/* Verified Purchase Badge */}
+                <div className="flex items-center gap-1.5 text-green-700">
+                  <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  <span className="text-sm font-medium">Verified Purchase</span>
+                </div>
               </div>
             </div>
-            <div 
-              className="text-sm md:text-base leading-relaxed mb-4"
-              dangerouslySetInnerHTML={{ __html: formatMarkdownText(section.content) }}
-            />
-            <div className="flex items-center gap-4 pt-3 border-t border-border">
-              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                <span className="text-blue-500">👍</span>
-                <span className="text-red-500">❤️</span>
-                <span>{section.reactions || 0}</span>
-              </div>
-            </div>
+            
             {isEditing && (
               <div className="absolute top-4 right-4 bg-primary text-primary-foreground rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity">
                 <Edit2 className="w-4 h-4" />
