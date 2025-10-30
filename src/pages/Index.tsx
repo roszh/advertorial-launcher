@@ -67,7 +67,8 @@ const ensureSectionId = (section: Section): Section & { id: string } => {
 const Index = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const editId = searchParams.get("edit");
+  const initialEditId = searchParams.get("edit");
+  const [editId, setEditId] = useState<string | null>(initialEditId);
 
   const [user, setUser] = useState<any>(null);
   const [inputText, setInputText] = useState("");
@@ -121,8 +122,10 @@ const Index = () => {
       fetchTags();
       fetchCountrySetups(session.user.id);
 
-      if (editId) {
-        loadExistingPage(editId);
+      const currentEditId = searchParams.get("edit");
+      setEditId(currentEditId);
+      if (currentEditId) {
+        loadExistingPage(currentEditId);
       }
     };
 
@@ -134,7 +137,7 @@ const Index = () => {
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate, editId]);
+  }, [navigate, searchParams]);
 
   // Auto-hide header on scroll down, show on scroll up
   useEffect(() => {
@@ -425,7 +428,9 @@ const Index = () => {
         
         // Update the URL without causing a redirect/reload
         if (insertData?.[0]?.id) {
-          const newUrl = `/dashboard?edit=${insertData[0].id}`;
+          const newPageId = insertData[0].id;
+          setEditId(newPageId);
+          const newUrl = `/?edit=${newPageId}`;
           window.history.replaceState({}, '', newUrl);
         }
       }
