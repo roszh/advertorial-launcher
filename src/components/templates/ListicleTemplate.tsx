@@ -173,8 +173,9 @@ export const ListicleTemplate = ({
                   type="number"
                   value={section.number !== undefined ? section.number : index + 1}
                   onChange={(e) => onSectionUpdate(section.id, { number: parseInt(e.target.value) || 1 })}
-                  className="flex-shrink-0 w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center text-xl font-bold text-center border-2 border-primary focus:border-white outline-none"
+                  className="flex-shrink-0 w-12 h-12 bg-primary text-white rounded-full text-xl font-bold text-center border-2 border-primary focus:border-white outline-none appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                   min="1"
+                  style={{ lineHeight: '3rem' }}
                 />
               ) : (
                 <div className="flex-shrink-0 w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center text-xl font-bold">
