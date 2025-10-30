@@ -46,6 +46,7 @@ interface NewsTemplateProps {
   onReorderSections?: (newOrder: string[]) => void;
   onEditSection?: (index: number) => void;
   onEditSectionById?: (id: string) => void;
+  onImageUpload?: (url: string) => void;
 }
 
 export const NewsTemplate = ({ 
@@ -66,7 +67,8 @@ export const NewsTemplate = ({
   onDeleteSection,
   onReorderSections,
   onEditSection,
-  onEditSectionById
+  onEditSectionById,
+  onImageUpload
 }: NewsTemplateProps) => {
   const heroSection = sections[0];
   const bodySections = sections.slice(1);
@@ -383,7 +385,7 @@ export const NewsTemplate = ({
           {isEditing && userId ? (
             <InlineImageUpload
               currentImageUrl={imageUrl || placeholderImage}
-              onImageUploaded={(url) => handleSectionUpdate(0, "imageUrl", url)}
+              onImageUploaded={(url) => onImageUpload?.(url)}
               userId={userId}
               aspectRatio="wide"
               className="max-h-[300px] md:max-h-[500px]"

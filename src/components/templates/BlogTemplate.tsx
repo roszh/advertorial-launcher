@@ -46,6 +46,7 @@ interface BlogTemplateProps {
   onReorderSections?: (newOrder: string[]) => void;
   onEditSection?: (index: number) => void;
   onEditSectionById?: (id: string) => void;
+  onImageUpload?: (url: string) => void;
 }
 
 export const BlogTemplate = ({ 
@@ -66,7 +67,8 @@ export const BlogTemplate = ({
   onDeleteSection,
   onReorderSections,
   onEditSection,
-  onEditSectionById
+  onEditSectionById,
+  onImageUpload
 }: BlogTemplateProps) => {
   const heroSection = sections[0];
   const bodySections = sections.slice(1);
@@ -335,7 +337,7 @@ export const BlogTemplate = ({
             <div className="w-full h-full">
               <InlineImageUpload
                 currentImageUrl={imageUrl || placeholderImage}
-                onImageUploaded={(url) => handleSectionUpdate(0, "imageUrl", url)}
+                onImageUploaded={(url) => onImageUpload?.(url)}
                 userId={userId}
                 aspectRatio="wide"
                 className="h-full"

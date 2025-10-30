@@ -1164,6 +1164,7 @@ const Index = () => {
       onReorderSections: handleReorderSections,
       onEditSection: setEditingSectionIndex,
       onEditSectionById: handleEditSectionById,
+      onImageUpload: setImageUrl,
     };
 
     // For Listicle template, we need different prop mapping

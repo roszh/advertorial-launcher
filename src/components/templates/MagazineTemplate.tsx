@@ -46,6 +46,7 @@ interface MagazineTemplateProps {
   onReorderSections?: (newOrder: string[]) => void;
   onEditSection?: (index: number) => void;
   onEditSectionById?: (id: string) => void;
+  onImageUpload?: (url: string) => void;
 }
 
 export const MagazineTemplate = ({ 
@@ -66,7 +67,8 @@ export const MagazineTemplate = ({
   onDeleteSection,
   onReorderSections,
   onEditSection,
-  onEditSectionById
+  onEditSectionById,
+  onImageUpload
 }: MagazineTemplateProps) => {
   const heroSection = sections[0];
   const bodySections = sections.slice(1);
@@ -357,7 +359,7 @@ export const MagazineTemplate = ({
         {isEditing && userId ? (
           <InlineImageUpload
             currentImageUrl={imageUrl || placeholderImage}
-            onImageUploaded={(url) => handleSectionUpdate(0, "imageUrl", url)}
+            onImageUploaded={(url) => onImageUpload?.(url)}
             userId={userId}
             aspectRatio="video"
           />
