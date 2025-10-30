@@ -41,7 +41,7 @@ interface BlogTemplateProps {
   ctaVariant?: "ctaAmazon" | "ctaUrgent" | "ctaPremium" | "ctaTrust";
   onUpdateSection?: (index: number, section: Section) => void;
   onUpdateCta?: (text: string) => void;
-  onAddSection?: (index: number, type: "text" | "image") => void;
+  onAddSection?: (index: number, type: "text" | "image", sectionConfig?: Partial<Section>) => void;
   onDeleteSection?: (index: number) => void;
   onReorderSections?: (newOrder: string[]) => void;
   onEditSection?: (index: number) => void;
@@ -260,72 +260,54 @@ export const BlogTemplate = ({
               onAddSectionBelow={(type) => {
                 if (type === "text" || type === "image") {
                   onAddSection(actualIndex, type);
-                } else if (type === "quote") {
-                  onAddSection(actualIndex, "text");
-                  setTimeout(() => {
-                    onUpdateSection?.(actualIndex + 1, {
-                      type: "quote",
-                      content: "Enter your quote here...",
-                      author: "Author Name",
-                      authorRole: "Role or Title",
-                      style: "normal"
-                    });
-                  }, 0);
-                } else if (type === "facebook-testimonial") {
-                  onAddSection(actualIndex, "text");
-                  setTimeout(() => {
-                    onUpdateSection?.(actualIndex + 1, {
-                      type: "facebook-testimonial",
-                      content: "Share your experience here...",
-                      author: "User Name",
-                      authorAvatar: "",
-                      timestamp: "2 days ago",
-                      reactions: 0,
-                      style: "normal"
-                    });
-                  }, 0);
-                } else if (type === "bullet-box") {
-                  onAddSection(actualIndex, "text");
-                  setTimeout(() => {
-                    onUpdateSection?.(actualIndex + 1, {
-                      type: "bullet-box",
-                      content: "",
-                      heading: "Key Points",
-                      items: ["Point 1", "Point 2", "Point 3"],
-                      boxColor: "blue",
-                      style: "normal"
-                    });
-                  }, 0);
                 } else if (type === "headline") {
-                  onAddSection(actualIndex, "text");
-                  setTimeout(() => {
-                    onUpdateSection?.(actualIndex + 1, {
-                      type: "text",
-                      content: "",
-                      heading: "New Section Heading",
-                      style: "normal"
-                    });
-                  }, 0);
+                  onAddSection(actualIndex, "text", {
+                    type: "text",
+                    content: "",
+                    heading: "New Section Heading",
+                    style: "normal"
+                  });
+                } else if (type === "quote") {
+                  onAddSection(actualIndex, "text", {
+                    type: "quote",
+                    content: "Enter your quote here...",
+                    author: "Author Name",
+                    authorRole: "Role or Title",
+                    style: "normal"
+                  });
+                } else if (type === "facebook-testimonial") {
+                  onAddSection(actualIndex, "text", {
+                    type: "facebook-testimonial",
+                    content: "Share your experience here...",
+                    author: "User Name",
+                    authorAvatar: "",
+                    timestamp: "2 days ago",
+                    reactions: 0,
+                    style: "normal"
+                  });
+                } else if (type === "bullet-box") {
+                  onAddSection(actualIndex, "text", {
+                    type: "bullet-box",
+                    content: "",
+                    heading: "Key Points",
+                    items: ["Point 1", "Point 2", "Point 3"],
+                    boxColor: "blue",
+                    style: "normal"
+                  });
                 } else if (type === "cta") {
-                  onAddSection(actualIndex, "text");
-                  setTimeout(() => {
-                    onUpdateSection?.(actualIndex + 1, {
-                      type: "cta",
-                      content: "",
-                      ctaText: ctaText || "Click Here",
-                      style: "normal"
-                    });
-                  }, 0);
+                  onAddSection(actualIndex, "text", {
+                    type: "cta",
+                    content: "",
+                    ctaText: ctaText || "Click Here",
+                    style: "normal"
+                  });
                 } else if (type === "update") {
-                  onAddSection(actualIndex, "text");
-                  setTimeout(() => {
-                    onUpdateSection?.(actualIndex + 1, {
-                      type: "update",
-                      content: "Ever since more people have learned about this, we've seen a massive spike in interest. Due to its popularity and positive reviews, we're now offering a special **limited-time discount** with **FREE U.S. SHIPPING**.",
-                      updateDate: "September 14, 2024",
-                      style: "normal"
-                    });
-                  }, 0);
+                  onAddSection(actualIndex, "text", {
+                    type: "update",
+                    content: "Ever since more people have learned about this, we've seen a massive spike in interest. Due to its popularity and positive reviews, we're now offering a special **limited-time discount** with **FREE U.S. SHIPPING**.",
+                    updateDate: "September 14, 2024",
+                    style: "normal"
+                  });
                 }
               }}
               onDeleteSection={() => onDeleteSection(actualIndex)}

@@ -1084,23 +1084,37 @@ const Index = () => {
         return <MagazineTemplate {...templateProps as any} />;
     }
   };
-  const handleAddSectionAt = (afterIndex: number, type: "text" | "image") => {
+  const handleAddSectionAt = (
+    afterIndex: number, 
+    type: "text" | "image",
+    sectionConfig?: Partial<Section>
+  ) => {
     if (!analysisResult) return;
     
-    const newSection: Section = ensureSectionId(type === "image" 
-      ? {
-          type: "image",
-          content: "",
-          imageUrl: "",
-          imagePosition: "full",
-          style: "normal",
-        }
-      : {
-          type: "text",
-          content: "Enter your paragraph here...",
-          imagePosition: "none",
-          style: "normal",
-        });
+    let baseSection: Section;
+    
+    if (type === "image") {
+      baseSection = {
+        type: "image",
+        content: "",
+        imageUrl: "",
+        imagePosition: "full",
+        style: "normal",
+      };
+    } else {
+      baseSection = {
+        type: "text",
+        content: "Enter your paragraph here...",
+        imagePosition: "none",
+        style: "normal",
+      };
+    }
+    
+    // Merge with custom configuration if provided
+    const newSection: Section = ensureSectionId({
+      ...baseSection,
+      ...sectionConfig
+    });
     
     const newSections = [...analysisResult.sections];
     newSections.splice(afterIndex + 1, 0, newSection);
