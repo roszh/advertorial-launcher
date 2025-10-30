@@ -377,12 +377,9 @@ export type Database = {
           cta_style: string | null
           cta_text: string | null
           cta_url: string | null
-          facebook_pixel_id: string | null
-          google_analytics_id: string | null
           headline: string | null
           id: string | null
           image_url: string | null
-          microsoft_clarity_id: string | null
           published_at: string | null
           slug: string | null
           status: string | null
@@ -391,7 +388,6 @@ export type Database = {
           template: string | null
           title: string | null
           tracking_script_set_name: string | null
-          triplewhale_token: string | null
           updated_at: string | null
           user_id: string | null
         }

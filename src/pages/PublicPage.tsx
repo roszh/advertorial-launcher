@@ -40,39 +40,58 @@ export default function PublicPage() {
   const { data: pageData, isLoading, error } = useQuery({
     queryKey: ['published-page', slug],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Fetch page data from the published_pages view
+      const { data: pageData, error: pageError } = await supabase
         .from("published_pages")
         .select("*")
         .eq("slug", slug)
         .maybeSingle();
 
-      if (error || !data) {
+      if (pageError || !pageData) {
         throw new Error("Page not found");
       }
 
-      const template = (data.template as "magazine" | "news" | "blog" | "listicle") || "magazine";
+      // Fetch tracking scripts separately from the pages table
+      // (tracking scripts are stored in tracking_script_sets which is joined to pages)
+      const { data: fullPageData } = await supabase
+        .from("pages")
+        .select(`
+          *,
+          tracking_script_sets (
+            google_analytics_id,
+            facebook_pixel_id,
+            triplewhale_token,
+            microsoft_clarity_id
+          )
+        `)
+        .eq("id", pageData.id)
+        .eq("status", "published")
+        .maybeSingle();
+
+      const template = (pageData.template as "magazine" | "news" | "blog" | "listicle") || "magazine";
+      const trackingScripts = fullPageData?.tracking_script_sets;
       
       return {
-        id: data.id || undefined,
-        title: data.title,
-        headline: data.headline,
-        subtitle: data.subtitle || (template === "news" ? "Breaking News" : template === "blog" ? "Expert Insights" : "Featured Story"),
-        content: data.content as any,
-        cta_text: data.cta_text || "",
-        cta_url: data.cta_url || "",
-        cta_style: data.cta_style || "ctaAmazon",
-        sticky_cta_threshold: data.sticky_cta_threshold || 20,
-        image_url: data.image_url || "",
+        id: pageData.id || undefined,
+        title: pageData.title,
+        headline: pageData.headline,
+        subtitle: pageData.subtitle || (template === "news" ? "Breaking News" : template === "blog" ? "Expert Insights" : "Featured Story"),
+        content: pageData.content as any,
+        cta_text: pageData.cta_text || "",
+        cta_url: pageData.cta_url || "",
+        cta_style: pageData.cta_style || "ctaAmazon",
+        sticky_cta_threshold: pageData.sticky_cta_threshold || 20,
+        image_url: pageData.image_url || "",
         template,
-        user_id: data.user_id,
-        // Tracking scripts from Country Setup
+        user_id: pageData.user_id,
+        // Tracking scripts from Country Setup (fetched separately for security)
         trackingScripts: {
-          googleAnalyticsId: data.google_analytics_id || undefined,
-          facebookPixelId: data.facebook_pixel_id || undefined,
-          triplewhaleToken: data.triplewhale_token || undefined,
-          microsoftClarityId: data.microsoft_clarity_id || undefined,
+          googleAnalyticsId: trackingScripts?.google_analytics_id || undefined,
+          facebookPixelId: trackingScripts?.facebook_pixel_id || undefined,
+          triplewhaleToken: trackingScripts?.triplewhale_token || undefined,
+          microsoftClarityId: trackingScripts?.microsoft_clarity_id || undefined,
         },
-        countrySetupName: data.tracking_script_set_name || undefined,
+        countrySetupName: pageData.tracking_script_set_name || undefined,
       };
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
