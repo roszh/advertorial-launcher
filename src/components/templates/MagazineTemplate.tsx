@@ -374,9 +374,11 @@ export const MagazineTemplate = ({
             />
           </figure>
         )}
-        <figcaption className="text-xs md:text-sm text-muted-foreground text-center mt-3 md:mt-4">
-          {isEditing ? "Click image to replace" : "Photo illustration"}
-        </figcaption>
+        {isEditing && (
+          <figcaption className="text-xs md:text-sm text-muted-foreground text-center mt-3 md:mt-4">
+            Click image to replace
+          </figcaption>
+        )}
       </header>
 
       {/* Body Content */}
