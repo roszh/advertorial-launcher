@@ -47,6 +47,7 @@ interface Section {
   buttonUrl?: string;
   updateDate?: string;
   order?: number;
+  number?: number;
 }
 
 interface AnalysisResult {
@@ -572,6 +573,7 @@ const Index = () => {
             imageUrl: "https://images.unsplash.com/photo-1498049794561-7780e7231661?w=600&h=600&fit=crop",
             style: "normal" as const,
             imagePosition: "left" as const,
+            number: 1,
           }, 1),
           ensureSectionMetadata({
             type: "list-item" as const,
@@ -580,6 +582,7 @@ const Index = () => {
             imageUrl: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&h=600&fit=crop",
             style: "normal" as const,
             imagePosition: "left" as const,
+            number: 2,
           }, 2),
           ensureSectionMetadata({
             type: "list-item" as const,
@@ -588,6 +591,7 @@ const Index = () => {
             imageUrl: "https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?w=600&h=600&fit=crop",
             style: "normal" as const,
             imagePosition: "left" as const,
+            number: 3,
           }, 3),
           ensureSectionMetadata({
             type: "list-item" as const,
@@ -596,6 +600,7 @@ const Index = () => {
             imageUrl: "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=600&h=600&fit=crop",
             style: "normal" as const,
             imagePosition: "left" as const,
+            number: 4,
           }, 4),
           ensureSectionMetadata({
             type: "list-item" as const,
@@ -604,6 +609,7 @@ const Index = () => {
             imageUrl: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600&h=600&fit=crop",
             style: "normal" as const,
             imagePosition: "left" as const,
+            number: 5,
           }, 5),
           ensureSectionMetadata({
             type: "final-cta" as const,
@@ -1256,12 +1262,18 @@ const Index = () => {
                   }, index + 1);
                   break;
                 case "list-item":
+                  // Calculate the next number based on existing list-items
+                  const existingListItems = analysisResult.sections.filter(s => s.type === "list-item");
+                  const nextNumber = existingListItems.length > 0 
+                    ? Math.max(...existingListItems.map(s => s.number || 0)) + 1 
+                    : 1;
                   newSection = ensureSectionMetadata({
                     type: "list-item",
                     content: "Enter list item content...",
                     heading: "List Item Title",
                     imagePosition: "none",
                     style: "normal",
+                    number: nextNumber,
                   }, index + 1);
                   break;
                 case "image":

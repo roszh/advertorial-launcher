@@ -17,6 +17,7 @@ interface Section {
   buttonUrl?: string;
   items?: string[];
   order?: number;
+  number?: number;
   [key: string]: any;
 }
 
@@ -167,9 +168,19 @@ export const ListicleTemplate = ({
           )}
           <div className="mb-12 bg-white/50 backdrop-blur-sm rounded-lg p-6 shadow-sm">
             <div className="flex items-start gap-4">
-              <div className="flex-shrink-0 w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center text-xl font-bold">
-                {index + 1}
-              </div>
+              {isEditing ? (
+                <input
+                  type="number"
+                  value={section.number !== undefined ? section.number : index + 1}
+                  onChange={(e) => onSectionUpdate(section.id, { number: parseInt(e.target.value) || 1 })}
+                  className="flex-shrink-0 w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center text-xl font-bold text-center border-2 border-primary focus:border-white outline-none"
+                  min="1"
+                />
+              ) : (
+                <div className="flex-shrink-0 w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center text-xl font-bold">
+                  {section.number !== undefined ? section.number : index + 1}
+                </div>
+              )}
               <div className="flex-1">
                 {isEditing ? (
                   <div className="space-y-4">
