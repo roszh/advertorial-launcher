@@ -608,19 +608,30 @@ const Index = () => {
   };
 
   const generateSlug = (title: string, addUniqueSuffix: boolean = false) => {
-    const baseSlug = title
+    // Remove leading/trailing punctuation and quotes first
+    let cleanTitle = title.replace(/^[„"'«»\s]+|[„"'«»\s]+$/g, '');
+    
+    const baseSlug = cleanTitle
       .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "");
+      // Replace Cyrillic and other special chars but keep alphanumerics
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
+      .replace(/[^a-z0-9\u0400-\u04FF]+/gi, "-") // Keep Latin, numbers, and Cyrillic
+      .replace(/[^a-z0-9-]/gi, "-") // Convert remaining to dashes
+      .replace(/-+/g, "-") // Collapse multiple dashes
+      .replace(/^-|-$/g, ""); // Remove leading/trailing dashes
+    
+    // Ensure slug is not empty and has meaningful content
+    const finalSlug = baseSlug || 'page';
     
     if (addUniqueSuffix) {
       // Add timestamp + short random string for uniqueness
-      const timestamp = Date.now().toString(36); // Convert to base36 for shorter string
-      const random = Math.random().toString(36).substring(2, 6); // 4 random chars
-      return `${baseSlug}-${timestamp}${random}`;
+      const timestamp = Date.now().toString(36);
+      const random = Math.random().toString(36).substring(2, 6);
+      return `${finalSlug}-${timestamp}${random}`;
     }
     
-    return baseSlug;
+    return finalSlug;
   };
 
   const ensureUniqueSlug = async (proposedSlug: string, currentPageId?: string): Promise<string> => {
@@ -759,16 +770,25 @@ const Index = () => {
           .delete()
           .eq("page_id", pageId);
 
-        // Insert new page_tags
+        // Insert new page_tags with proper error handling
         if (selectedTags.length > 0) {
           const pageTagsToInsert = selectedTags.map(tagId => ({
             page_id: pageId,
             tag_id: tagId
           }));
 
-          await supabase
+          const { error: tagsError } = await supabase
             .from("page_tags")
             .insert(pageTagsToInsert);
+          
+          if (tagsError) {
+            console.error("Error saving tags:", tagsError);
+            toast({ 
+              title: "Warning", 
+              description: "Page saved but tags couldn't be added. Please try editing the page to add tags.",
+              variant: "default"
+            });
+          }
         }
       }
 
