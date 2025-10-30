@@ -212,8 +212,8 @@ export const ListicleTemplate = ({
       );
     }
 
-    // Handle text sections
-    if (section.type === "text") {
+    // Handle image sections
+    if (section.type === "image") {
       return (
         <div key={section.id} className="relative group mb-8">
           {isEditing && (
@@ -222,6 +222,53 @@ export const ListicleTemplate = ({
               onAddSectionBelow={(type) => onSectionAdd(section.id, type)}
               onDeleteSection={() => onSectionDelete(section.id)}
               onCloneSection={onSectionClone ? () => onSectionClone(section.id) : undefined}
+            />
+          )}
+          {isEditing ? (
+            <InlineImageUpload
+              currentImageUrl={section.imageUrl}
+              onImageUploaded={(url) => onSectionUpdate(section.id, { imageUrl: url })}
+              userId={userId}
+            />
+          ) : (
+            section.imageUrl && (
+              <img
+                src={section.imageUrl}
+                alt={section.heading || "Section image"}
+                className="w-full rounded-lg shadow-md"
+              />
+            )
+          )}
+        </div>
+      );
+    }
+
+    // Handle text sections (including headlines)
+    if (section.type === "text") {
+      const isHeadline = section.heading || section.style === "emphasized";
+      
+      return (
+        <div key={section.id} className="relative group mb-8">
+          {isEditing && (
+            <SectionControls
+              index={index + 1}
+              onAddSectionBelow={(type) => onSectionAdd(section.id, type)}
+              onDeleteSection={() => onSectionDelete(section.id)}
+              onCloneSection={onSectionClone ? () => onSectionClone(section.id) : undefined}
+            />
+          )}
+          {isHeadline && section.heading && !isEditing && (
+            <h2 className="text-3xl font-bold mb-4 text-foreground">
+              {section.heading}
+            </h2>
+          )}
+          {isEditing && isHeadline && (
+            <input
+              type="text"
+              value={section.heading || ""}
+              onChange={(e) => onSectionUpdate(section.id, { heading: e.target.value })}
+              className="w-full text-3xl font-bold bg-transparent border-b-2 border-primary/20 focus:border-primary outline-none pb-2 mb-4"
+              placeholder="Headline text..."
             />
           )}
           {isEditing ? (
