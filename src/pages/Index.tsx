@@ -773,6 +773,10 @@ const Index = () => {
     try {
       const baseSlug = pageSlug || generateSlug(pageTitle, !editId);
       const slug = await ensureUniqueSlug(baseSlug, editId || undefined);
+      
+      // Use the latest imageUrl from state
+      const currentImageUrl = imageUrl;
+      
       const pageData = {
         user_id: user.id,
         title: pageTitle,
@@ -786,7 +790,7 @@ const Index = () => {
         content: { sections: analysisResult?.sections || [] } as any,
         cta_text: analysisResult?.cta.primary || "Get Started",
         cta_url: ctaUrl,
-        image_url: imageUrl,
+        image_url: currentImageUrl,
         published_at: status === "published" ? new Date().toISOString() : null,
         tracking_script_set_id: selectedCountrySetupId || null
       };
@@ -887,6 +891,10 @@ const Index = () => {
     try {
       const baseSlug = pageSlug || generateSlug(pageTitle, !editId);
       const slug = await ensureUniqueSlug(baseSlug, editId || undefined);
+      
+      // Use the latest imageUrl from state
+      const currentImageUrl = imageUrl;
+      
       const pageData = {
         user_id: user.id,
         title: pageTitle,
@@ -900,7 +908,7 @@ const Index = () => {
         content: { sections: analysisResult?.sections || [] } as any,
         cta_text: analysisResult?.cta.primary || "Get Started",
         cta_url: ctaUrl,
-        image_url: imageUrl,
+        image_url: currentImageUrl,
         published_at: null,
         tracking_script_set_id: selectedCountrySetupId || null
       };
@@ -1145,6 +1153,11 @@ const Index = () => {
   };
 
   const renderTemplate = () => {
+    const handleImageUpload = (url: string) => {
+      setImageUrl(url);
+      setHasUnsavedChanges(true);
+    };
+
     const templateProps = {
       sections: analysisResult?.sections || [],
       ctaText: analysisResult?.cta.primary || "Get Started",
@@ -1164,7 +1177,7 @@ const Index = () => {
       onReorderSections: handleReorderSections,
       onEditSection: setEditingSectionIndex,
       onEditSectionById: handleEditSectionById,
-      onImageUpload: setImageUrl,
+      onImageUpload: handleImageUpload,
     };
 
     // For Listicle template, we need different prop mapping
