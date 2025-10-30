@@ -15,10 +15,14 @@ export const StickyCtaButton = ({ text, onClick, variant = "ctaAmazon", scrollTh
   useEffect(() => {
     const handleScroll = () => {
       const scrollTop = window.scrollY || window.pageYOffset;
+      const documentHeight = document.documentElement.scrollHeight;
       const windowHeight = window.innerHeight;
       
-      // Show button after scrolling past the threshold percentage of viewport height
-      const triggerPoint = windowHeight * (scrollThreshold / 100);
+      // Calculate the total scrollable distance
+      const scrollableDistance = documentHeight - windowHeight;
+      
+      // Show button after scrolling past the threshold percentage of total page length
+      const triggerPoint = scrollableDistance * (scrollThreshold / 100);
       setIsVisible(scrollTop >= triggerPoint);
     };
 
