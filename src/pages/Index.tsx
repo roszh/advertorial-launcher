@@ -1198,11 +1198,105 @@ const Index = () => {
             const index = analysisResult.sections.findIndex((s) => s.id === id);
             if (index !== -1) handleDeleteSection(index);
           }}
-          onSectionAdd={(afterId) => {
-            if (!analysisResult) return;
-            const index = analysisResult.sections.findIndex((s) => s.id === afterId);
-            if (index !== -1) handleAddSectionAt(index, "text");
-          }}
+            onSectionAdd={(afterId, type) => {
+              if (!analysisResult) return;
+              const index = analysisResult.sections.findIndex((s) => s.id === afterId);
+              if (index === -1) return;
+              
+              // Create section based on type
+              let newSection: Section;
+              
+              switch (type) {
+                case "cta":
+                  newSection = ensureSectionId({
+                    type: "cta",
+                    content: "",
+                    buttonText: "Click Here",
+                    buttonUrl: "",
+                  });
+                  break;
+                case "quote":
+                  newSection = ensureSectionId({
+                    type: "quote",
+                    content: "Enter your quote here...",
+                    author: "Author Name",
+                    authorRole: "Role or Title",
+                    style: "normal",
+                  });
+                  break;
+                case "facebook-testimonial":
+                  newSection = ensureSectionId({
+                    type: "facebook-testimonial",
+                    content: "Share your experience here...",
+                    author: "User Name",
+                    authorAvatar: "",
+                    timestamp: "2 days ago",
+                    reactions: 0,
+                    style: "normal",
+                  });
+                  break;
+                case "bullet-box":
+                  newSection = ensureSectionId({
+                    type: "bullet-box",
+                    content: "",
+                    heading: "Key Points",
+                    items: ["Point 1", "Point 2", "Point 3"],
+                    boxColor: "blue",
+                    style: "normal",
+                  });
+                  break;
+                case "update":
+                  newSection = ensureSectionId({
+                    type: "update",
+                    content: "Update content here...",
+                    updateDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+                    style: "normal",
+                  });
+                  break;
+                case "list-item":
+                  newSection = ensureSectionId({
+                    type: "list-item",
+                    content: "Enter list item content...",
+                    heading: "List Item Title",
+                    imagePosition: "none",
+                    style: "normal",
+                  });
+                  break;
+                case "image":
+                  newSection = ensureSectionId({
+                    type: "image",
+                    content: "",
+                    imageUrl: "",
+                    imagePosition: "full",
+                    style: "normal",
+                  });
+                  break;
+                case "headline":
+                  newSection = ensureSectionId({
+                    type: "text",
+                    content: "Enter your headline here...",
+                    heading: "New Headline",
+                    style: "emphasized",
+                  });
+                  break;
+                default: // "text"
+                  newSection = ensureSectionId({
+                    type: "text",
+                    content: "Enter your paragraph here...",
+                    imagePosition: "none",
+                    style: "normal",
+                  });
+              }
+              
+              const newSections = [...analysisResult.sections];
+              newSections.splice(index + 1, 0, newSection);
+              
+              setAnalysisResult({
+                ...analysisResult,
+                sections: newSections,
+              });
+              toast({ title: "Section added!" });
+            }}
           onSectionsReorder={(newSections) => {
             if (!analysisResult) return;
             setAnalysisResult({

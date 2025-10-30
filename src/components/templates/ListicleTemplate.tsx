@@ -5,6 +5,7 @@ import { DraggableSections } from "@/components/DraggableSections";
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
 import { formatMarkdownText } from "@/lib/utils";
+import { PresellSection } from "@/components/PresellSection";
 
 interface Section {
   id: string;
@@ -22,7 +23,7 @@ interface ListicleTemplateProps {
   sections: Section[];
   onSectionUpdate: (id: string, updates: Partial<Section>) => void;
   onSectionDelete: (id: string) => void;
-  onSectionAdd: (afterId: string) => void;
+  onSectionAdd: (afterId: string, type: string) => void;
   onSectionsReorder: (sections: Section[]) => void;
   isEditing: boolean;
   ctaText: string;
@@ -55,97 +56,184 @@ export const ListicleTemplate = ({
   };
 
   const renderBodySection = (section: Section, index: number) => {
-    if (section.type === "list-item") {
+    // Handle CTA/Button sections
+    if (section.type === "cta") {
       return (
-        <div key={section.id} className="mb-16 group relative">
-          <div className="flex flex-col md:flex-row gap-6 items-start">
-            {/* Image */}
-            <div className="w-full md:w-1/3 flex-shrink-0">
-              {isEditing ? (
-                <InlineImageUpload
-                  currentImageUrl={section.imageUrl}
-                  onImageUploaded={(url) => onSectionUpdate(section.id, { imageUrl: url })}
-                  userId={userId}
-                  aspectRatio="square"
-                />
-              ) : (
-                section.imageUrl && (
-                  <img
-                    src={section.imageUrl}
-                    alt=""
-                    className="w-full aspect-square object-cover rounded-lg"
-                  />
-                )
-              )}
-            </div>
-
-            {/* Content */}
-            <div className="flex-1">
-              {isEditing ? (
-                <>
-                  <RichTextEditor
-                    value={section.heading || ""}
-                    onSave={(value) => onSectionUpdate(section.id, { heading: value })}
-                    as="h2"
-                    className="text-2xl font-bold mb-4"
-                  />
-                  <RichTextEditor
-                    value={section.content || ""}
-                    onSave={(value) => onSectionUpdate(section.id, { content: value })}
-                    multiline
-                    className="text-base text-muted-foreground"
-                  />
-                </>
-              ) : (
-                <>
-                  <h2 
-                    className="text-2xl font-bold mb-4 text-foreground"
-                    dangerouslySetInnerHTML={{ __html: formatMarkdownText(section.heading || "") }}
-                  />
-                  <div 
-                    className="text-base text-muted-foreground"
-                    dangerouslySetInnerHTML={{ __html: formatMarkdownText(section.content || "") }}
-                  />
-                </>
-              )}
-            </div>
-          </div>
-          
+        <div key={section.id} className="relative group">
           {isEditing && (
             <SectionControls
-              index={index}
-              onAddSectionBelow={(type) => onSectionAdd(section.id)}
+              index={index + 1}
+              onAddSectionBelow={(type) => onSectionAdd(section.id, type)}
               onDeleteSection={() => onSectionDelete(section.id)}
               onCloneSection={onSectionClone ? () => onSectionClone(section.id) : undefined}
             />
           )}
+          <div className="flex justify-center my-8">
+            {isEditing ? (
+              <div className="space-y-2 w-full max-w-md">
+                <input
+                  type="text"
+                  value={section.buttonText || ""}
+                  onChange={(e) => onSectionUpdate(section.id, { buttonText: e.target.value })}
+                  className="w-full px-4 py-2 border rounded-lg"
+                  placeholder="Button text..."
+                />
+                <input
+                  type="text"
+                  value={section.buttonUrl || ""}
+                  onChange={(e) => onSectionUpdate(section.id, { buttonUrl: e.target.value })}
+                  className="w-full px-4 py-2 border rounded-lg"
+                  placeholder="Button URL..."
+                />
+                <select
+                  value={section.style || "ctaAmazon"}
+                  onChange={(e) => onSectionUpdate(section.id, { style: e.target.value })}
+                  className="w-full px-4 py-2 border rounded-lg"
+                >
+                  <option value="ctaAmazon">Amazon Style</option>
+                  <option value="ctaAction">Action Style</option>
+                  <option value="ctaSubtle">Subtle Style</option>
+                </select>
+                <Button
+                  variant={section.style as any || "ctaAmazon"}
+                  size="lg"
+                  className="w-full"
+                  disabled
+                >
+                  {section.buttonText || "Click Here"}
+                </Button>
+              </div>
+            ) : (
+              <Button
+                variant={section.style as any || "ctaAmazon"}
+                size="lg"
+                onClick={() => {
+                  if (section.buttonUrl) {
+                    window.open(section.buttonUrl.startsWith('http') ? section.buttonUrl : `https://${section.buttonUrl}`, '_blank');
+                  }
+                }}
+                className="min-w-[200px]"
+              >
+                {section.buttonText || "Click Here"}
+              </Button>
+            )}
+          </div>
         </div>
       );
     }
 
-    if (section.type === "text") {
+    // Handle special section types (quote, testimonial, bullet-box, update)
+    if (["quote", "facebook-testimonial", "bullet-box", "update"].includes(section.type)) {
       return (
-        <div key={section.id} className="mb-12 group relative">
-          {isEditing ? (
-            <RichTextEditor
-              value={section.content || ""}
-              onSave={(value) => onSectionUpdate(section.id, { content: value })}
-              multiline
-              className="prose prose-lg max-w-none"
-            />
-          ) : (
-            <div 
-              className="prose prose-lg max-w-none text-foreground"
-              dangerouslySetInnerHTML={{ __html: formatMarkdownText(section.content || "") }}
-            />
-          )}
-          
+        <div key={section.id} className="relative group">
           {isEditing && (
             <SectionControls
-              index={index}
-              onAddSectionBelow={(type) => onSectionAdd(section.id)}
+              index={index + 1}
+              onAddSectionBelow={(type) => onSectionAdd(section.id, type)}
               onDeleteSection={() => onSectionDelete(section.id)}
               onCloneSection={onSectionClone ? () => onSectionClone(section.id) : undefined}
+            />
+          )}
+          <PresellSection
+            section={section as any}
+            ctaText={ctaText}
+            onCtaClick={() => {}}
+            isEditing={false}
+          />
+        </div>
+      );
+    }
+
+    // Handle list-item sections
+    if (section.type === "list-item") {
+      return (
+        <div key={section.id} className="relative group">
+          {isEditing && (
+            <SectionControls
+              index={index + 1}
+              onAddSectionBelow={(type) => onSectionAdd(section.id, type)}
+              onDeleteSection={() => onSectionDelete(section.id)}
+              onCloneSection={onSectionClone ? () => onSectionClone(section.id) : undefined}
+            />
+          )}
+          <div className="mb-12 bg-white/50 backdrop-blur-sm rounded-lg p-6 shadow-sm">
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0 w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center text-xl font-bold">
+                {index + 1}
+              </div>
+              <div className="flex-1">
+                {isEditing ? (
+                  <div className="space-y-4">
+                    <input
+                      type="text"
+                      value={section.heading || ""}
+                      onChange={(e) => onSectionUpdate(section.id, { heading: e.target.value })}
+                      className="w-full text-2xl font-bold bg-transparent border-b-2 border-primary/20 focus:border-primary outline-none pb-2"
+                      placeholder="List item heading..."
+                    />
+                    <RichTextEditor
+                      value={section.content}
+                      onSave={(content) => onSectionUpdate(section.id, { content })}
+                      multiline
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <h3 className="text-2xl font-bold mb-3 text-foreground">
+                      {section.heading}
+                    </h3>
+                    <div
+                      className="prose prose-lg max-w-none text-foreground/90"
+                      dangerouslySetInnerHTML={{ __html: section.content }}
+                    />
+                  </>
+                )}
+                {section.imageUrl && (
+                  <div className="mt-4">
+                    {isEditing ? (
+                      <InlineImageUpload
+                        currentImageUrl={section.imageUrl}
+                        onImageUploaded={(url) => onSectionUpdate(section.id, { imageUrl: url })}
+                        userId={userId}
+                      />
+                    ) : (
+                      <img
+                        src={section.imageUrl}
+                        alt={section.heading || ""}
+                        className="w-full rounded-lg shadow-md"
+                      />
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Handle text sections
+    if (section.type === "text") {
+      return (
+        <div key={section.id} className="relative group mb-8">
+          {isEditing && (
+            <SectionControls
+              index={index + 1}
+              onAddSectionBelow={(type) => onSectionAdd(section.id, type)}
+              onDeleteSection={() => onSectionDelete(section.id)}
+              onCloneSection={onSectionClone ? () => onSectionClone(section.id) : undefined}
+            />
+          )}
+          {isEditing ? (
+            <RichTextEditor
+              value={section.content}
+              onSave={(content) => onSectionUpdate(section.id, { content })}
+              multiline
+            />
+          ) : (
+            <div
+              className="prose prose-lg max-w-none text-foreground/90"
+              dangerouslySetInnerHTML={{ __html: section.content }}
             />
           )}
         </div>
@@ -182,7 +270,7 @@ export const ListicleTemplate = ({
                 />
                 <SectionControls
                   index={0}
-                  onAddSectionBelow={(type) => onSectionAdd(heroSection.id)}
+                  onAddSectionBelow={(type) => onSectionAdd(heroSection.id, type)}
                   onDeleteSection={() => onSectionDelete(heroSection.id)}
                   onCloneSection={onSectionClone ? () => onSectionClone(heroSection.id) : undefined}
                 />
@@ -324,7 +412,7 @@ export const ListicleTemplate = ({
             {isEditing && (
               <SectionControls
                 index={sections.indexOf(finalCtaSection)}
-                onAddSectionBelow={(type) => onSectionAdd(finalCtaSection.id)}
+                onAddSectionBelow={(type) => onSectionAdd(finalCtaSection.id, type)}
                 onDeleteSection={() => onSectionDelete(finalCtaSection.id)}
                 onCloneSection={onSectionClone ? () => onSectionClone(finalCtaSection.id) : undefined}
               />
