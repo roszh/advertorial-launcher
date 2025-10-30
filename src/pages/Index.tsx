@@ -959,7 +959,11 @@ const Index = () => {
   const handleUpdateSection = (index: number, updatedSection: Section) => {
     if (!analysisResult) return;
     const newSections = [...analysisResult.sections];
-    newSections[index] = updatedSection;
+    // Preserve existing ID and other fields, then apply updates
+    newSections[index] = ensureSectionId({
+      ...newSections[index],
+      ...updatedSection
+    });
     setAnalysisResult({
       ...analysisResult,
       sections: newSections,
