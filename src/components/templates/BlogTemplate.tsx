@@ -334,7 +334,7 @@ export const BlogTemplate = ({
       <header className="relative">
         <div className="relative w-full" style={{ height: '50vh', minHeight: '300px' }}>
           {isEditing && userId ? (
-            <div className="w-full h-full">
+            <div className="w-full h-full relative group">
               <InlineImageUpload
                 currentImageUrl={imageUrl || placeholderImage}
                 onImageUploaded={(url) => onImageUpload?.(url)}
@@ -342,6 +342,9 @@ export const BlogTemplate = ({
                 aspectRatio="wide"
                 className="h-full"
               />
+              <div className="absolute top-4 right-4 bg-primary text-primary-foreground px-3 py-1.5 rounded-md text-xs font-medium shadow-lg pointer-events-none z-10 opacity-90">
+                Click to change hero image
+              </div>
             </div>
           ) : (
             <img
@@ -352,7 +355,7 @@ export const BlogTemplate = ({
               className="w-full h-full object-cover"
             />
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent pointer-events-none" />
         </div>
         
         <div className="relative max-w-4xl mx-auto px-4 -mt-20 md:-mt-32 lg:-mt-48">
