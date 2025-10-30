@@ -54,7 +54,7 @@ export const RichTextEditor = ({
       textareaRef.current.setSelectionRange(editValue.length, editValue.length);
       adjustTextareaHeight();
     }
-  }, [isEditing, editValue]);
+  }, [isEditing]);
 
   const handleSave = () => {
     if (editValue.trim()) {
