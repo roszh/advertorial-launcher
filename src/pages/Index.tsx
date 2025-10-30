@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Navigation } from "@/components/Navigation";
@@ -98,6 +98,10 @@ const Index = () => {
   const [addMoreText, setAddMoreText] = useState("");
   const [isAddingMore, setIsAddingMore] = useState(false);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [autosaveEnabled, setAutosaveEnabled] = useState(true);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [lastSavedTime, setLastSavedTime] = useState<Date | null>(null);
+  const isInitialLoadRef = useRef(true);
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const [isDesignOptionsExpanded, setIsDesignOptionsExpanded] = useState(false);
   const [selectedCountrySetupId, setSelectedCountrySetupId] = useState<string>("");
@@ -261,6 +265,45 @@ const Index = () => {
       setSelectedSetupDetails(null);
     }
   }, [selectedCountrySetupId]);
+
+  // Autosave functionality
+  useEffect(() => {
+    if (!autosaveEnabled || !hasUnsavedChanges || !pageTitle.trim() || !analysisResult) {
+      return;
+    }
+
+    const autosaveInterval = setInterval(() => {
+      handleAutosave();
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(autosaveInterval);
+  }, [autosaveEnabled, hasUnsavedChanges, pageTitle, analysisResult]);
+
+  // Track changes to set hasUnsavedChanges
+  useEffect(() => {
+    // Skip the initial load
+    if (isInitialLoadRef.current) {
+      isInitialLoadRef.current = false;
+      return;
+    }
+    
+    if (analysisResult) {
+      setHasUnsavedChanges(true);
+    }
+  }, [
+    analysisResult,
+    pageTitle,
+    pageSlug,
+    ctaUrl,
+    imageUrl,
+    selectedTemplate,
+    ctaStyle,
+    stickyCtaThreshold,
+    subtitle,
+    headline,
+    selectedTags,
+    selectedCountrySetupId
+  ]);
 
   const handleCreateTag = async () => {
     if (!newTagName.trim()) {
@@ -765,6 +808,11 @@ const Index = () => {
         
         if (error) throw error;
         pageId = insertData?.[0]?.id || null;
+        
+        // Update editId for future autosaves
+        if (pageId) {
+          setEditId(pageId);
+        }
       }
 
       // Handle tags
@@ -798,7 +846,12 @@ const Index = () => {
       }
 
       toast({ title: `Page ${status === "published" ? "published" : "saved"}!` });
-      navigate("/dashboard");
+      setHasUnsavedChanges(false);
+      setLastSavedTime(new Date());
+      
+      if (status === "published") {
+        navigate("/dashboard");
+      }
     } catch (error: any) {
       console.error("Save error:", error);
       
@@ -814,6 +867,98 @@ const Index = () => {
         variant: "destructive",
         duration: 5000
       });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleAutosave = async () => {
+    // Only autosave if we have content and a title
+    if (!pageTitle.trim() || !analysisResult) {
+      return;
+    }
+
+    // Don't autosave if already saving
+    if (saving) {
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const baseSlug = pageSlug || generateSlug(pageTitle, !editId);
+      const slug = await ensureUniqueSlug(baseSlug, editId || undefined);
+      const pageData = {
+        user_id: user.id,
+        title: pageTitle,
+        slug: slug,
+        status: "draft" as const,
+        template: selectedTemplate,
+        cta_style: ctaStyle,
+        sticky_cta_threshold: stickyCtaThreshold,
+        subtitle: subtitle,
+        headline: headline,
+        content: { sections: analysisResult?.sections || [] } as any,
+        cta_text: analysisResult?.cta.primary || "Get Started",
+        cta_url: ctaUrl,
+        image_url: imageUrl,
+        published_at: null,
+        tracking_script_set_id: selectedCountrySetupId || null
+      };
+
+      let pageId = editId;
+
+      if (editId) {
+        const { error } = await supabase
+          .from("pages")
+          .update(pageData)
+          .eq("id", editId);
+
+        if (error) throw error;
+      } else {
+        const { data: insertData, error } = await supabase
+          .from("pages")
+          .insert([pageData])
+          .select();
+        
+        if (error) throw error;
+        pageId = insertData?.[0]?.id || null;
+        
+        // Update editId for future autosaves
+        if (pageId) {
+          setEditId(pageId);
+        }
+      }
+
+      // Handle tags
+      if (pageId) {
+        await supabase
+          .from("page_tags")
+          .delete()
+          .eq("page_id", pageId);
+
+        if (selectedTags.length > 0) {
+          const pageTagsToInsert = selectedTags.map(tagId => ({
+            page_id: pageId,
+            tag_id: tagId
+          }));
+
+          await supabase
+            .from("page_tags")
+            .insert(pageTagsToInsert);
+        }
+      }
+
+      setHasUnsavedChanges(false);
+      setLastSavedTime(new Date());
+      
+      toast({ 
+        title: "Autosaved", 
+        description: "Your changes have been saved automatically.",
+        duration: 2000
+      });
+    } catch (error: any) {
+      console.error("Autosave error:", error);
+      // Silently fail autosave - don't show error toast to avoid disruption
     } finally {
       setSaving(false);
     }
@@ -1367,6 +1512,25 @@ const Index = () => {
                     <Globe className="mr-1 h-3 w-3" />
                     Publish
                   </Button>
+                  
+                  {/* Autosave indicator */}
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground ml-2">
+                    {hasUnsavedChanges && (
+                      <Badge variant="outline" className="h-6 text-xs">
+                        Unsaved changes
+                      </Badge>
+                    )}
+                    {lastSavedTime && !hasUnsavedChanges && (
+                      <span className="text-xs">
+                        Saved {new Date(lastSavedTime).toLocaleTimeString()}
+                      </span>
+                    )}
+                    {autosaveEnabled && (
+                      <Badge variant="secondary" className="h-6 text-xs">
+                        Autosave ON
+                      </Badge>
+                    )}
+                  </div>
                 </div>
               </div>
 
