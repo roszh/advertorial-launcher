@@ -382,7 +382,8 @@ const Index = () => {
       }
       
       // Auto-save as draft
-      const slug = generateSlug(autoTitle, !editId);
+      const baseSlug = generateSlug(autoTitle, !editId);
+      const slug = await ensureUniqueSlug(baseSlug, editId || undefined);
       setPageSlug(slug);
       const pageData = {
         user_id: user.id,
@@ -426,7 +427,18 @@ const Index = () => {
       toast({ title: "Page analyzed and saved as draft!" });
     } catch (error) {
       console.error("Analysis error:", error);
-      toast({ title: "Error", description: error instanceof Error ? error.message : "Failed to analyze text", variant: "destructive" });
+      
+      // Better error messaging
+      let errorMessage = error instanceof Error ? error.message : "Failed to analyze text";
+      if (errorMessage?.includes("duplicate") || errorMessage?.includes("unique constraint")) {
+        errorMessage = "A page with this URL already exists. The system will automatically create a unique URL when you save.";
+      }
+      
+      toast({ 
+        title: "Error", 
+        description: errorMessage, 
+        variant: "destructive" 
+      });
     } finally {
       setIsAnalyzing(false);
     }
@@ -605,6 +617,30 @@ const Index = () => {
     return baseSlug;
   };
 
+  const ensureUniqueSlug = async (proposedSlug: string, currentPageId?: string): Promise<string> => {
+    // Check if slug exists for another page
+    let query = supabase
+      .from("pages")
+      .select("id")
+      .eq("slug", proposedSlug);
+    
+    if (currentPageId) {
+      query = query.neq("id", currentPageId);
+    }
+    
+    const { data } = await query;
+    
+    // If slug doesn't exist or only exists for current page, it's unique
+    if (!data || data.length === 0) {
+      return proposedSlug;
+    }
+    
+    // Slug exists, add unique suffix
+    const timestamp = Date.now().toString(36);
+    const random = Math.random().toString(36).substring(2, 6);
+    return `${proposedSlug}-${timestamp}${random}`;
+  };
+
   const handleSave = async (status: "draft" | "published") => {
     if (!pageTitle.trim()) {
       toast({ title: "Please enter a page title", variant: "destructive" });
@@ -670,7 +706,8 @@ const Index = () => {
 
     setSaving(true);
     try {
-      const slug = pageSlug || generateSlug(pageTitle, !editId);
+      const baseSlug = pageSlug || generateSlug(pageTitle, !editId);
+      const slug = await ensureUniqueSlug(baseSlug, editId || undefined);
       const pageData = {
         user_id: user.id,
         title: pageTitle,
@@ -733,7 +770,19 @@ const Index = () => {
       navigate("/dashboard");
     } catch (error: any) {
       console.error("Save error:", error);
-      toast({ title: "Error saving page", description: error.message, variant: "destructive" });
+      
+      // Better error messaging for common issues
+      let errorMessage = error.message;
+      if (error.message?.includes("duplicate") || error.message?.includes("unique constraint")) {
+        errorMessage = "A page with this URL already exists. Please choose a different title or URL.";
+      }
+      
+      toast({ 
+        title: "Error saving page", 
+        description: errorMessage, 
+        variant: "destructive",
+        duration: 5000
+      });
     } finally {
       setSaving(false);
     }
@@ -1281,8 +1330,10 @@ const Index = () => {
                       value={pageTitle}
                       onChange={(e) => {
                         setPageTitle(e.target.value);
-                        if (!pageSlug || pageSlug === generateSlug(pageTitle)) {
-                          setPageSlug(generateSlug(e.target.value, !editId));
+                        // Auto-update slug only if it hasn't been manually customized
+                        const currentGeneratedSlug = generateSlug(pageTitle, false);
+                        if (!pageSlug || pageSlug === currentGeneratedSlug || pageSlug.startsWith(currentGeneratedSlug + "-")) {
+                          setPageSlug(generateSlug(e.target.value, false));
                         }
                       }}
                       className="h-10 bg-background border-border/50 focus:border-primary transition-colors"
