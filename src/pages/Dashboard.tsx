@@ -147,10 +147,10 @@ export default function Dashboard() {
       .from("pages")
       .select("*")
       .eq("id", pageId)
-      .single();
+      .maybeSingle();
 
     if (fetchError || !pageData) {
-      toast({ title: "Error", description: "Failed to load page data", variant: "destructive" });
+      toast({ title: "Error", description: fetchError?.message || "Page not found", variant: "destructive" });
       return;
     }
 

@@ -173,10 +173,16 @@ const Index = () => {
       .from("pages")
       .select("*")
       .eq("id", pageId)
-      .single();
+      .maybeSingle();
 
     if (error) {
       toast({ title: "Error loading page", description: error.message, variant: "destructive" });
+      return;
+    }
+
+    if (!data) {
+      toast({ title: "Page not found", description: "This page may have been deleted.", variant: "destructive" });
+      navigate("/dashboard");
       return;
     }
 
@@ -246,8 +252,8 @@ const Index = () => {
         .from("tracking_script_sets")
         .select("*")
         .eq("id", selectedCountrySetupId)
-        .single()
-        .then(({ data }) => setSelectedSetupDetails(data));
+        .maybeSingle()
+        .then(({ data }) => setSelectedSetupDetails(data || null));
     } else {
       setSelectedSetupDetails(null);
     }
@@ -668,7 +674,7 @@ const Index = () => {
         .from("tracking_script_sets")
         .select("*")
         .eq("id", selectedCountrySetupId)
-        .single();
+        .maybeSingle();
       
       const hasScripts = setupData && (
         setupData.google_analytics_id ||

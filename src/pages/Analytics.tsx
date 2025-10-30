@@ -146,11 +146,12 @@ export default function Analytics() {
       .from("pages")
       .select("title")
       .eq("id", pageId)
-      .single();
+      .maybeSingle();
 
-    if (pageError) {
-      toast({ title: "Error", description: pageError.message, variant: "destructive" });
+    if (pageError || !pageData) {
+      toast({ title: "Error", description: pageError?.message || "Page not found", variant: "destructive" });
       setLoading(false);
+      navigate("/dashboard");
       return;
     }
 
@@ -161,7 +162,7 @@ export default function Analytics() {
       .from("page_analytics_summary")
       .select("*")
       .eq("page_id", pageId)
-      .single();
+      .maybeSingle();
 
     if (!summaryError && summaryData) {
       setSummary({

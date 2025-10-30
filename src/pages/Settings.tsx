@@ -69,7 +69,7 @@ export default function Settings() {
       .from("profiles")
       .select("full_name")
       .eq("id", userId)
-      .single();
+      .maybeSingle();
     
     if (data) {
       setFullName(data.full_name || "");

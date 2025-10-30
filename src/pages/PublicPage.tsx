@@ -44,7 +44,7 @@ export default function PublicPage() {
         .from("published_pages")
         .select("*")
         .eq("slug", slug)
-        .single();
+        .maybeSingle();
 
       if (error || !data) {
         throw new Error("Page not found");
