@@ -16,6 +16,7 @@ interface Section {
   buttonText?: string;
   buttonUrl?: string;
   items?: string[];
+  order?: number;
   [key: string]: any;
 }
 
@@ -45,9 +46,17 @@ export const ListicleTemplate = ({
   userId = "",
 }: ListicleTemplateProps) => {
 
-  const heroSection = sections.find(s => s.type === "hero");
-  const bodySections = sections.filter(s => s.type !== "hero" && s.type !== "final-cta");
-  const finalCtaSection = sections.find(s => s.type === "final-cta");
+  // Sort sections by order field if present
+  const sortedSections = [...sections].sort((a, b) => {
+    if (a.order !== undefined && b.order !== undefined) {
+      return a.order - b.order;
+    }
+    return 0; // Preserve original order if no order field
+  });
+
+  const heroSection = sortedSections.find(s => s.type === "hero");
+  const bodySections = sortedSections.filter(s => s.type !== "hero" && s.type !== "final-cta");
+  const finalCtaSection = sortedSections.find(s => s.type === "final-cta");
 
   const handleCtaClick = () => {
     if (ctaUrl) {
@@ -184,7 +193,7 @@ export const ListicleTemplate = ({
                     </h3>
                     <div
                       className="prose prose-lg max-w-none text-foreground/90"
-                      dangerouslySetInnerHTML={{ __html: section.content }}
+                      dangerouslySetInnerHTML={{ __html: formatMarkdownText(section.content) }}
                     />
                   </>
                 )}
@@ -258,9 +267,10 @@ export const ListicleTemplate = ({
             />
           )}
           {isHeadline && section.heading && !isEditing && (
-            <h2 className="text-3xl font-bold mb-4 text-foreground">
-              {section.heading}
-            </h2>
+            <h2 
+              className="text-3xl font-bold mb-4 text-foreground"
+              dangerouslySetInnerHTML={{ __html: formatMarkdownText(section.heading) }}
+            />
           )}
           {isEditing && isHeadline && (
             <input
@@ -280,7 +290,7 @@ export const ListicleTemplate = ({
           ) : (
             <div
               className="prose prose-lg max-w-none text-foreground/90"
-              dangerouslySetInnerHTML={{ __html: section.content }}
+              dangerouslySetInnerHTML={{ __html: formatMarkdownText(section.content) }}
             />
           )}
         </div>

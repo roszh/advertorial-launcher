@@ -46,6 +46,7 @@ interface Section {
   buttonText?: string;
   buttonUrl?: string;
   updateDate?: string;
+  order?: number;
 }
 
 interface AnalysisResult {
@@ -57,10 +58,11 @@ interface AnalysisResult {
   };
 }
 
-const ensureSectionId = (section: Section): Section & { id: string } => {
+const ensureSectionMetadata = (section: Section, index: number): Section & { id: string } => {
   return {
     ...section,
-    id: section.id || crypto.randomUUID()
+    id: section.id || crypto.randomUUID(),
+    order: section.order !== undefined ? section.order : index
   };
 };
 
@@ -209,7 +211,7 @@ const Index = () => {
       
       setAnalysisResult({
         layout: "default",
-        sections: content.sections.map((s: Section) => ensureSectionId(s)),
+        sections: content.sections.map((s: Section, i: number) => ensureSectionMetadata(s, i)),
         cta: { primary: data.cta_text || "Get Started" }
       });
       setIsEditorMode(true);
@@ -413,11 +415,11 @@ const Index = () => {
       // Strip HTML tags from all content and ensure IDs
       const cleanedData = {
         ...data,
-        sections: data.sections.map((section: Section) => ensureSectionId({
+        sections: data.sections.map((section: Section, i: number) => ensureSectionMetadata({
           ...section,
           heading: section.heading ? stripHtmlTags(section.heading) : section.heading,
           content: stripHtmlTags(section.content),
-        })),
+        }, i)),
       };
       
       setAnalysisResult(cleanedData);
@@ -505,19 +507,19 @@ const Index = () => {
         headline: "This Discovery Is Changing Everything",
         subtitle: "Featured Story",
         sections: [
-          ensureSectionId({
+          ensureSectionMetadata({
             type: "hero" as const,
             heading: "This Discovery Is Changing Everything",
             content: "Scientists are calling it the breakthrough of the decade. What started as a simple observation has turned into a revolutionary finding that could change the way we live.",
             style: "normal" as const,
             imagePosition: "none" as const,
-          }),
-          ensureSectionId({
+          }, 0),
+          ensureSectionMetadata({
             type: "text" as const,
             content: "For years, researchers struggled with this problem. Traditional approaches weren't working, and many had given up hope. But then everything changed when a team discovered something unexpected.",
             style: "normal" as const,
             imagePosition: "none" as const,
-          }),
+          }, 1),
         ],
         cta: { primary: "Learn More", secondary: "" },
       },
@@ -526,13 +528,13 @@ const Index = () => {
         headline: "Just Announced: Major Development",
         subtitle: "Breaking News",
         sections: [
-          ensureSectionId({
+          ensureSectionMetadata({
             type: "hero" as const,
             heading: "Just Announced: Major Development",
             content: "In a surprising turn of events, experts have confirmed what many suspected. This changes everything we thought we knew.",
             style: "normal" as const,
             imagePosition: "none" as const,
-          }),
+          }, 0),
         ],
         cta: { primary: "Read Full Story", secondary: "" },
       },
@@ -541,13 +543,13 @@ const Index = () => {
         headline: "Everything You Need To Know",
         subtitle: "Expert Insights",
         sections: [
-          ensureSectionId({
+          ensureSectionMetadata({
             type: "hero" as const,
             heading: "Everything You Need To Know",
             content: "After years of research and testing, we've compiled the complete guide. Here's what actually works.",
             style: "normal" as const,
             imagePosition: "none" as const,
-          }),
+          }, 0),
         ],
         cta: { primary: "Get Started", secondary: "" },
       },
@@ -556,54 +558,54 @@ const Index = () => {
         headline: "5 Amazing Reasons Why This Changes Everything",
         subtitle: "Top List",
         sections: [
-          ensureSectionId({
+          ensureSectionMetadata({
             type: "hero" as const,
             heading: "5 Amazing Reasons Why This Changes Everything",
             content: "Discover the top 5 reasons why everyone is talking about this revolutionary discovery. Here's what you need to know.",
             style: "normal" as const,
             imagePosition: "none" as const,
-          }),
-          ensureSectionId({
+          }, 0),
+          ensureSectionMetadata({
             type: "list-item" as const,
             heading: "1. It's Faster, Easier, & More Convenient",
             content: "Unlike traditional methods that take hours or even days, this new approach delivers results in minutes. It's designed to fit seamlessly into your busy lifestyle.",
             imageUrl: "https://images.unsplash.com/photo-1498049794561-7780e7231661?w=600&h=600&fit=crop",
             style: "normal" as const,
             imagePosition: "left" as const,
-          }),
-          ensureSectionId({
+          }, 1),
+          ensureSectionMetadata({
             type: "list-item" as const,
             heading: "2. Customize It However You Want",
             content: "Every person is different, and this solution recognizes that. With multiple options and settings, you can personalize your experience to match your exact needs and preferences.",
             imageUrl: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&h=600&fit=crop",
             style: "normal" as const,
             imagePosition: "left" as const,
-          }),
-          ensureSectionId({
+          }, 2),
+          ensureSectionMetadata({
             type: "list-item" as const,
             heading: "3. Save Money While Getting Better Results",
             content: "Traditional solutions cost a fortune, and the results are often disappointing. This approach delivers superior outcomes at a fraction of the cost, helping you achieve more while spending less.",
             imageUrl: "https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?w=600&h=600&fit=crop",
             style: "normal" as const,
             imagePosition: "left" as const,
-          }),
-          ensureSectionId({
+          }, 3),
+          ensureSectionMetadata({
             type: "list-item" as const,
             heading: "4. Backed By Science & Real Results",
             content: "This isn't just marketing hype. Leading researchers have validated the approach through rigorous testing, and thousands of people are already experiencing the benefits firsthand.",
             imageUrl: "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=600&h=600&fit=crop",
             style: "normal" as const,
             imagePosition: "left" as const,
-          }),
-          ensureSectionId({
+          }, 4),
+          ensureSectionMetadata({
             type: "list-item" as const,
             heading: "5. Join A Growing Community of Success Stories",
             content: "You're not alone in this journey. Over 150,000 people have already made the switch, and they're sharing their incredible experiences. Join the community and see why everyone is talking about it.",
             imageUrl: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600&h=600&fit=crop",
             style: "normal" as const,
             imagePosition: "left" as const,
-          }),
-          ensureSectionId({
+          }, 5),
+          ensureSectionMetadata({
             type: "final-cta" as const,
             heading: "Exclusive Limited-Time Offer",
             content: "Act now and get access to this revolutionary solution before it's too late.",
@@ -612,7 +614,7 @@ const Index = () => {
             buttonText: "SELL-OUT RISK: HIGH | FREE SHIPPING",
             style: "normal" as const,
             imagePosition: "left" as const,
-          }),
+          }, 6),
         ],
         cta: { primary: "Claim Your Offer Now", secondary: "" },
       },
@@ -622,7 +624,7 @@ const Index = () => {
           title: storyTemplate.headline,
           headline: storyTemplate.headline,
           subtitle: "Advertorial",
-          sections: storyTemplate.sections.map(ensureSectionId),
+          sections: storyTemplate.sections.map((s, i) => ensureSectionMetadata(s, i)),
           cta: { primary: "Claim Your Exclusive Discount Now", secondary: "" },
         };
       })(),
@@ -632,7 +634,7 @@ const Index = () => {
           title: personalTemplate.headline,
           headline: personalTemplate.headline,
           subtitle: "Personal Story",
-          sections: personalTemplate.sections.map(ensureSectionId),
+          sections: personalTemplate.sections.map((s, i) => ensureSectionMetadata(s, i)),
           cta: { primary: "Start Your Transformation Today", secondary: "" },
         };
       })(),
@@ -1094,13 +1096,13 @@ const Index = () => {
   const handleAddSection = () => {
     if (!analysisResult) return;
     
-    const newSection: Section = ensureSectionId({
+    const newSection: Section = ensureSectionMetadata({
       type: "text",
       content: "Enter your content here...",
       heading: "New Section",
       imagePosition: "none",
       style: "normal",
-    });
+    }, analysisResult.sections.length);
     
     setAnalysisResult({
       ...analysisResult,
@@ -1113,10 +1115,10 @@ const Index = () => {
     if (!analysisResult) return;
     const newSections = [...analysisResult.sections];
     // Preserve existing ID and other fields, then apply updates
-    newSections[index] = ensureSectionId({
+    newSections[index] = ensureSectionMetadata({
       ...newSections[index],
       ...updatedSection
-    });
+    }, index);
     setAnalysisResult({
       ...analysisResult,
       sections: newSections,
@@ -1182,7 +1184,7 @@ const Index = () => {
 
     // For Listicle template, we need different prop mapping
     if (selectedTemplate === "listicle") {
-      const sectionsWithIds = (analysisResult?.sections || []).map(ensureSectionId);
+      const sectionsWithIds = (analysisResult?.sections || []).map(ensureSectionMetadata);
       return (
         <ListicleTemplate
           sections={sectionsWithIds}
@@ -1208,24 +1210,24 @@ const Index = () => {
               
               switch (type) {
                 case "cta":
-                  newSection = ensureSectionId({
+                  newSection = ensureSectionMetadata({
                     type: "cta",
                     content: "",
                     buttonText: "Click Here",
                     buttonUrl: "",
-                  });
+                  }, index + 1);
                   break;
                 case "quote":
-                  newSection = ensureSectionId({
+                  newSection = ensureSectionMetadata({
                     type: "quote",
                     content: "Enter your quote here...",
                     author: "Author Name",
                     authorRole: "Role or Title",
                     style: "normal",
-                  });
+                  }, index + 1);
                   break;
                 case "facebook-testimonial":
-                  newSection = ensureSectionId({
+                  newSection = ensureSectionMetadata({
                     type: "facebook-testimonial",
                     content: "Share your experience here...",
                     author: "User Name",
@@ -1233,67 +1235,74 @@ const Index = () => {
                     timestamp: "2 days ago",
                     reactions: 0,
                     style: "normal",
-                  });
+                  }, index + 1);
                   break;
                 case "bullet-box":
-                  newSection = ensureSectionId({
+                  newSection = ensureSectionMetadata({
                     type: "bullet-box",
                     content: "",
                     heading: "Key Points",
                     items: ["Point 1", "Point 2", "Point 3"],
                     boxColor: "blue",
                     style: "normal",
-                  });
+                  }, index + 1);
                   break;
                 case "update":
-                  newSection = ensureSectionId({
+                  newSection = ensureSectionMetadata({
                     type: "update",
                     content: "Update content here...",
                     updateDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
                     style: "normal",
-                  });
+                  }, index + 1);
                   break;
                 case "list-item":
-                  newSection = ensureSectionId({
+                  newSection = ensureSectionMetadata({
                     type: "list-item",
                     content: "Enter list item content...",
                     heading: "List Item Title",
                     imagePosition: "none",
                     style: "normal",
-                  });
+                  }, index + 1);
                   break;
                 case "image":
-                  newSection = ensureSectionId({
+                  newSection = ensureSectionMetadata({
                     type: "image",
                     content: "",
                     imageUrl: "",
                     imagePosition: "full",
                     style: "normal",
-                  });
+                  }, index + 1);
                   break;
                 case "headline":
-                  newSection = ensureSectionId({
+                  newSection = ensureSectionMetadata({
                     type: "text",
                     content: "Enter your headline here...",
                     heading: "New Headline",
                     style: "emphasized",
-                  });
+                  }, index + 1);
                   break;
                 default: // "text"
-                  newSection = ensureSectionId({
+                  newSection = ensureSectionMetadata({
                     type: "text",
                     content: "Enter your paragraph here...",
                     imagePosition: "none",
                     style: "normal",
-                  });
+                  }, index + 1);
               }
               
+              // Recalculate order for all sections after insertion
               const newSections = [...analysisResult.sections];
               newSections.splice(index + 1, 0, newSection);
               
+              // Update order for all sections
+              const reorderedSections = newSections.map((s, i) => ({
+                ...s,
+                order: i
+              }));
+              
               setAnalysisResult({
                 ...analysisResult,
-                sections: newSections,
+                sections: reorderedSections,
               });
               toast({ title: "Section added!" });
             }}
@@ -1309,12 +1318,17 @@ const Index = () => {
             const index = analysisResult.sections.findIndex((s) => s.id === id);
             if (index !== -1) {
               const sectionToClone = analysisResult.sections[index];
-              const clonedSection = ensureSectionId({ ...sectionToClone });
+              const clonedSection = ensureSectionMetadata({ ...sectionToClone }, index + 1);
               const newSections = [...analysisResult.sections];
               newSections.splice(index + 1, 0, clonedSection);
+              // Update order for all sections
+              const reorderedSections = newSections.map((s, i) => ({
+                ...s,
+                order: i
+              }));
               setAnalysisResult({
                 ...analysisResult,
-                sections: newSections,
+                sections: reorderedSections,
               });
               toast({ title: "Section cloned successfully!" });
             }
@@ -1364,10 +1378,10 @@ const Index = () => {
     }
     
     // Merge with custom configuration if provided
-    const newSection: Section = ensureSectionId({
+    const newSection: Section = ensureSectionMetadata({
       ...baseSection,
       ...sectionConfig
-    });
+    }, afterIndex + 1);
     
     const newSections = [...analysisResult.sections];
     newSections.splice(afterIndex + 1, 0, newSection);
@@ -1434,7 +1448,7 @@ const Index = () => {
     
     setAnalysisResult({
       ...analysisResult,
-      sections: [...analysisResult.sections, ensureSectionId(newSection)],
+      sections: [...analysisResult.sections, ensureSectionMetadata(newSection, analysisResult.sections.length)],
     });
     
     setShowTemplateModal(false);
@@ -1466,7 +1480,7 @@ const Index = () => {
         // Append new sections to existing ones
         setAnalysisResult({
           ...analysisResult,
-          sections: [...analysisResult.sections, ...newSections.map((s: Section) => ensureSectionId(s))]
+          sections: [...analysisResult.sections, ...newSections.map((s: Section, i: number) => ensureSectionMetadata(s, analysisResult.sections.length + i))]
         });
         
         toast({ 
@@ -1519,11 +1533,11 @@ const Index = () => {
       
       const cleanedData = {
         ...data,
-        sections: data.sections.map((section: Section) => ensureSectionId({
+        sections: data.sections.map((section: Section, i: number) => ensureSectionMetadata({
           ...section,
           heading: section.heading ? stripHtmlTags(section.heading) : section.heading,
           content: stripHtmlTags(section.content),
-        })),
+        }, i)),
       };
       
       setAnalysisResult(cleanedData);
