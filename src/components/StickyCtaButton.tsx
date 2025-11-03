@@ -7,10 +7,14 @@ interface StickyCtaButtonProps {
   onClick: () => void;
   variant?: "ctaAmazon" | "ctaUrgent" | "ctaPremium" | "ctaTrust";
   scrollThreshold?: number;
+  isEditing?: boolean;
 }
 
-export const StickyCtaButton = ({ text, onClick, variant = "ctaAmazon", scrollThreshold = 20 }: StickyCtaButtonProps) => {
+export const StickyCtaButton = ({ text, onClick, variant = "ctaAmazon", scrollThreshold = 20, isEditing = false }: StickyCtaButtonProps) => {
   const [isVisible, setIsVisible] = useState(false);
+
+  // Hide sticky button completely when in editing mode
+  if (isEditing) return null;
 
   useEffect(() => {
     const handleScroll = () => {

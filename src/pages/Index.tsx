@@ -1349,6 +1349,7 @@ const Index = () => {
           ctaText={analysisResult?.cta.primary || "Get Started"}
           ctaUrl={ctaUrl}
           userId={user?.id}
+          onCtaTextUpdate={handleUpdateCta}
         />
       );
     }

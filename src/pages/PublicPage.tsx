@@ -10,11 +10,15 @@ import { StickyCtaButton } from "@/components/StickyCtaButton";
 import { PublicPageSkeleton } from "@/components/PublicPageSkeleton";
 
 interface Section {
-  type: "hero" | "text" | "image" | "cta" | "testimonial" | "benefits";
+  id?: string;
+  type: "hero" | "text" | "image" | "cta" | "testimonial" | "benefits" | "list-item" | "final-cta";
   heading?: string;
   content: string;
   imagePosition?: "left" | "right" | "full" | "none";
   style?: "normal" | "emphasized" | "callout";
+  order?: number;
+  number?: number;
+  [key: string]: any;
 }
 
 interface PageData {
@@ -35,6 +39,18 @@ interface PageData {
 
 export default function PublicPage() {
   const { slug } = useParams();
+
+  // Normalize section to ensure required fields exist (for backwards compatibility)
+  const normalizeSection = (section: any, index: number): Section => ({
+    ...section,
+    id: section.id || crypto.randomUUID(),
+    order: section.order !== undefined ? section.order : index,
+    number: section.type === "list-item" 
+      ? (section.number !== undefined ? section.number : index) 
+      : undefined,
+    content: section.content || "",
+    heading: section.heading || "",
+  });
 
   // Use React Query for automatic caching and background refetching
   const { data: pageData, isLoading, error } = useQuery({
@@ -71,12 +87,15 @@ export default function PublicPage() {
       const template = (pageData.template as "magazine" | "news" | "blog" | "listicle") || "magazine";
       const trackingScripts = fullPageData?.tracking_script_sets;
       
+      // Normalize sections for backwards compatibility
+      const normalizedSections = ((pageData.content as any)?.sections || []).map(normalizeSection);
+
       return {
         id: pageData.id || undefined,
         title: pageData.title,
         headline: pageData.headline,
         subtitle: pageData.subtitle || (template === "news" ? "Breaking News" : template === "blog" ? "Expert Insights" : "Featured Story"),
-        content: pageData.content as any,
+        content: { sections: normalizedSections },
         cta_text: pageData.cta_text || "",
         cta_url: pageData.cta_url || "",
         cta_style: pageData.cta_style || "ctaAmazon",
@@ -350,6 +369,7 @@ export default function PublicPage() {
         onClick={() => handleCtaClick("sticky_button")} 
         variant={(pageData.cta_style as any) || "ctaAmazon"}
         scrollThreshold={pageData.sticky_cta_threshold || 20}
+        isEditing={false}
       />
     </div>
   );

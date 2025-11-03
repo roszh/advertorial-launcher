@@ -3,6 +3,8 @@ import { InlineImageUpload } from "@/components/InlineImageUpload";
 import { SectionControls } from "@/components/SectionControls";
 import { DraggableSections } from "@/components/DraggableSections";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Check } from "lucide-react";
 import { formatMarkdownText } from "@/lib/utils";
 import { PresellSection } from "@/components/PresellSection";
@@ -32,6 +34,7 @@ interface ListicleTemplateProps {
   ctaUrl: string;
   onSectionClone?: (id: string) => void;
   userId?: string;
+  onCtaTextUpdate?: (text: string) => void;
 }
 
 export const ListicleTemplate = ({
@@ -45,6 +48,7 @@ export const ListicleTemplate = ({
   ctaUrl,
   onSectionClone,
   userId = "",
+  onCtaTextUpdate,
 }: ListicleTemplateProps) => {
 
   // Sort sections by order field if present
@@ -171,7 +175,7 @@ export const ListicleTemplate = ({
               {isEditing ? (
                 <input
                   type="number"
-                  value={section.number !== undefined ? section.number : index + 1}
+                  value={section.number ?? index + 1}
                   onChange={(e) => onSectionUpdate(section.id, { number: parseInt(e.target.value) || 1 })}
                   className="flex-shrink-0 w-12 h-12 bg-primary text-white rounded-full text-xl font-bold text-center border-2 border-primary focus:border-white outline-none appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                   min="1"
@@ -179,7 +183,7 @@ export const ListicleTemplate = ({
                 />
               ) : (
                 <div className="flex-shrink-0 w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center text-xl font-bold">
-                  {section.number !== undefined ? section.number : index + 1}
+                  {section.number ?? index + 1}
                 </div>
               )}
               <div className="flex-1">
@@ -201,11 +205,11 @@ export const ListicleTemplate = ({
                 ) : (
                   <>
                     <h3 className="text-2xl font-bold mb-3 text-foreground">
-                      {section.heading}
+                      {section.heading || ""}
                     </h3>
                     <div
                       className="prose prose-lg max-w-none text-foreground/90"
-                      dangerouslySetInnerHTML={{ __html: formatMarkdownText(section.content) }}
+                      dangerouslySetInnerHTML={{ __html: formatMarkdownText(section.content || "") }}
                     />
                   </>
                 )}
@@ -281,7 +285,7 @@ export const ListicleTemplate = ({
           {isHeadline && section.heading && !isEditing && (
             <h2 
               className="text-3xl font-bold mb-4 text-foreground"
-              dangerouslySetInnerHTML={{ __html: formatMarkdownText(section.heading) }}
+              dangerouslySetInnerHTML={{ __html: formatMarkdownText(section.heading || "") }}
             />
           )}
           {isEditing && isHeadline && (
@@ -302,7 +306,7 @@ export const ListicleTemplate = ({
           ) : (
             <div
               className="prose prose-lg max-w-none text-foreground/90"
-              dangerouslySetInnerHTML={{ __html: formatMarkdownText(section.content) }}
+              dangerouslySetInnerHTML={{ __html: formatMarkdownText(section.content || "") }}
             />
           )}
         </div>
@@ -486,6 +490,24 @@ export const ListicleTemplate = ({
                 onCloneSection={onSectionClone ? () => onSectionClone(finalCtaSection.id) : undefined}
               />
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Sticky Button Text Editor (Editing Mode Only) */}
+      {isEditing && onCtaTextUpdate && (
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-4">
+          <div className="border-2 border-dashed border-primary/50 rounded-lg p-4 bg-card">
+            <Label className="text-sm font-medium mb-2 block">Sticky Button Text</Label>
+            <Input
+              value={ctaText}
+              onChange={(e) => onCtaTextUpdate(e.target.value)}
+              placeholder="Enter sticky button text..."
+              className="w-full"
+            />
+            <p className="text-xs text-muted-foreground mt-2">
+              This button appears at the bottom when users scroll
+            </p>
           </div>
         </div>
       )}
