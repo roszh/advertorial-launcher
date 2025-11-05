@@ -1,13 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense, lazy } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { MagazineTemplate } from "@/components/templates/MagazineTemplate";
-import { NewsTemplate } from "@/components/templates/NewsTemplate";
-import { BlogTemplate } from "@/components/templates/BlogTemplate";
-import { ListicleTemplate } from "@/components/templates/ListicleTemplate";
 import { StickyCtaButton } from "@/components/StickyCtaButton";
-import { PublicPageSkeleton } from "@/components/PublicPageSkeleton";
+import { HeroSkeleton } from "@/components/HeroSkeleton";
+import { LazySection } from "@/components/LazySection";
+
+// Code-split template imports for better performance
+const MagazineTemplate = lazy(() => import("@/components/templates/MagazineTemplate").then(m => ({ default: m.MagazineTemplate })));
+const NewsTemplate = lazy(() => import("@/components/templates/NewsTemplate").then(m => ({ default: m.NewsTemplate })));
+const BlogTemplate = lazy(() => import("@/components/templates/BlogTemplate").then(m => ({ default: m.BlogTemplate })));
+const ListicleTemplate = lazy(() => import("@/components/templates/ListicleTemplate").then(m => ({ default: m.ListicleTemplate })));
 
 interface Section {
   id?: string;
@@ -52,7 +55,27 @@ export default function PublicPage() {
     heading: section.heading || "",
   });
 
-  // Use React Query for automatic caching and background refetching
+  // Separate queries for hero and full page data for progressive loading
+  const [heroLoaded, setHeroLoaded] = useState(false);
+
+  // First, fetch minimal data for hero section
+  const { data: heroData } = useQuery({
+    queryKey: ['published-page-hero', slug],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("published_pages")
+        .select("id, title, headline, subtitle, image_url, template")
+        .eq("slug", slug)
+        .maybeSingle();
+
+      if (error || !data) throw new Error("Page not found");
+      setHeroLoaded(true);
+      return data;
+    },
+    staleTime: 10 * 60 * 1000,
+  });
+
+  // Then fetch full page data (including body sections)
   const { data: pageData, isLoading, error } = useQuery({
     queryKey: ['published-page', slug],
     queryFn: async () => {
@@ -280,9 +303,9 @@ export default function PublicPage() {
     }
   }, [pageData?.trackingScripts]);
 
-  // Show skeleton while loading
-  if (isLoading) {
-    return <PublicPageSkeleton />;
+  // Show hero skeleton while loading hero data
+  if (!heroLoaded && isLoading) {
+    return <HeroSkeleton />;
   }
 
   // Show error state
@@ -363,7 +386,11 @@ export default function PublicPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {renderTemplate()}
+      <Suspense fallback={<HeroSkeleton />}>
+        <LazySection threshold={0} rootMargin="0px" fallback={<HeroSkeleton />}>
+          {renderTemplate()}
+        </LazySection>
+      </Suspense>
       <StickyCtaButton 
         text={pageData.cta_text} 
         onClick={() => handleCtaClick("sticky_button")} 
