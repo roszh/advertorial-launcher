@@ -99,7 +99,7 @@ const Index = () => {
   const [newTagName, setNewTagName] = useState("");
   const [newTagColor, setNewTagColor] = useState("#3b82f6");
   const [showAddMoreDialog, setShowAddMoreDialog] = useState(false);
-  const [preserveFormatting, setPreserveFormatting] = useState(false);
+  const [preserveFormatting, setPreserveFormatting] = useState(true);
   const [addMoreText, setAddMoreText] = useState("");
   const [isAddingMore, setIsAddingMore] = useState(false);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
