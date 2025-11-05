@@ -15,9 +15,11 @@ serve(async (req) => {
   let inputText = "";
 
   try {
+    let preserveHtml = false;
     try {
       const body = await req.json();
       inputText = body?.text || "";
+      preserveHtml = body?.preserveHtml || false;
     } catch (_) {
       inputText = "";
     }
@@ -35,11 +37,11 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const systemPrompt = `You are a content structuring assistant. Your job is to take raw text and organize it naturally into sections for a presell/advertorial page.
+    const systemPrompt = `You are a content structuring assistant. Your job is to take ${preserveHtml ? 'HTML-formatted' : 'raw'} text and organize it naturally into sections for a presell/advertorial page.
 
-ONLY 2 RULES:
+ONLY ${preserveHtml ? '3' : '2'} RULES:
 1. Preserve all original text - don't rewrite or omit anything
-2. Use your judgment to structure content naturally - create as many or as few sections as make sense
+2. Use your judgment to structure content naturally - create as many or as few sections as make sense${preserveHtml ? '\n3. PRESERVE ALL HTML TAGS - Keep <h1>, <h2>, <h3>, <strong>, <b>, <em>, <i>, <p>, <br>, <ul>, <ol>, <li>, and other HTML formatting intact' : ''}
 
 SECTION TYPES:
 - "hero" - Opening hook/main value proposition
@@ -54,7 +56,7 @@ STRUCTURE DECISION:
 - If you see a list (bullet points, numbered items), format as "benefits" type
 - When text is continuous without breaks, group by topic changes into logical paragraphs
 - Create section breaks where the topic or tone naturally shifts
-- Ignore any text in square brackets like [ПРЕДЛОЖЕНИЕ ЗА ИЗОБРАЖЕНИЕ...]
+- Ignore any text in square brackets like [ПРЕДЛОЖЕНИЕ ЗА ИЗОБРАЖЕНИЕ...]${preserveHtml ? '\n- DO NOT strip or convert HTML tags - keep them exactly as they are in the input' : ''}
 
 EXAMPLES:
 

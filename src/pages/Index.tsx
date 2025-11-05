@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -98,6 +99,7 @@ const Index = () => {
   const [newTagName, setNewTagName] = useState("");
   const [newTagColor, setNewTagColor] = useState("#3b82f6");
   const [showAddMoreDialog, setShowAddMoreDialog] = useState(false);
+  const [preserveFormatting, setPreserveFormatting] = useState(false);
   const [addMoreText, setAddMoreText] = useState("");
   const [isAddingMore, setIsAddingMore] = useState(false);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
@@ -402,7 +404,7 @@ const Index = () => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
           },
-          body: JSON.stringify({ text: inputText }),
+          body: JSON.stringify({ text: inputText, preserveHtml: preserveFormatting }),
         }
       );
 
@@ -413,13 +415,13 @@ const Index = () => {
 
       const data = await response.json();
       
-      // Strip HTML tags from all content and ensure IDs
+      // Strip HTML tags from content only if not preserving formatting
       const cleanedData = {
         ...data,
         sections: data.sections.map((section: Section, i: number) => ensureSectionMetadata({
           ...section,
-          heading: section.heading ? stripHtmlTags(section.heading) : section.heading,
-          content: stripHtmlTags(section.content),
+          heading: section.heading && !preserveFormatting ? stripHtmlTags(section.heading) : section.heading,
+          content: preserveFormatting ? section.content : stripHtmlTags(section.content),
         }, i)),
       };
       
@@ -1481,7 +1483,7 @@ const Index = () => {
     
     try {
       const { data, error } = await supabase.functions.invoke("analyze-text", {
-        body: { text: addMoreText }
+        body: { text: addMoreText, preserveHtml: preserveFormatting }
       });
       
       if (error) throw error;
@@ -2036,9 +2038,21 @@ const Index = () => {
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="add-more-text">
-                  Paste additional text to add to your page
-                </Label>
+                <div className="flex items-center justify-between mb-2">
+                  <Label htmlFor="add-more-text">
+                    Paste additional text to add to your page
+                  </Label>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      id="preserve-formatting-more"
+                      checked={preserveFormatting}
+                      onCheckedChange={setPreserveFormatting}
+                    />
+                    <Label htmlFor="preserve-formatting-more" className="text-sm font-normal cursor-pointer">
+                      Preserve Formatting
+                    </Label>
+                  </div>
+                </div>
                 <Textarea
                   id="add-more-text"
                   placeholder="Paste your additional content here... The AI will structure it and add it to the end of your page."
@@ -2048,7 +2062,9 @@ const Index = () => {
                   disabled={isAddingMore}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Tip: For best results with long texts (5,000+ words), paste in chunks of ~3,000 words at a time.
+                  {preserveFormatting 
+                    ? "💡 HTML formatting will be preserved. Tip: For long texts (5,000+ words), paste in chunks of ~3,000 words."
+                    : "Tip: For best results with long texts (5,000+ words), paste in chunks of ~3,000 words at a time."}
                 </p>
               </div>
             </div>
@@ -2229,9 +2245,21 @@ const Index = () => {
             </div>
 
             <div>
-              <label htmlFor="content" className="block text-sm font-medium mb-2">
-                Your Content
-              </label>
+              <div className="flex items-center justify-between mb-2">
+                <label htmlFor="content" className="block text-sm font-medium">
+                  Your Content
+                </label>
+                <div className="flex items-center gap-2">
+                  <Switch
+                    id="preserve-formatting"
+                    checked={preserveFormatting}
+                    onCheckedChange={setPreserveFormatting}
+                  />
+                  <Label htmlFor="preserve-formatting" className="text-sm font-normal cursor-pointer">
+                    Preserve Formatting
+                  </Label>
+                </div>
+              </div>
               <Textarea
                 id="content"
                 placeholder="Paste your advertorial or presell content here... The AI will analyze it and create an optimized layout with headlines, sections, and CTAs."
@@ -2239,6 +2267,11 @@ const Index = () => {
                 onChange={(e) => setInputText(e.target.value)}
                 className="min-h-[300px] resize-y"
               />
+              {preserveFormatting && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  💡 HTML formatting (headlines, bold, italic) will be preserved when splitting into sections
+                </p>
+              )}
             </div>
 
             <Button
