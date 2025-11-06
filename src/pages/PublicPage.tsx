@@ -139,12 +139,57 @@ export default function PublicPage() {
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  // Set page title when data loads
+  // Set page title and SEO meta tags when data loads
   useEffect(() => {
-    if (pageData?.title) {
-      document.title = pageData.title;
+    if (!pageData) return;
+
+    // Set page title
+    document.title = pageData.title;
+
+    // Extract description from first text section or use headline
+    const firstTextSection = pageData.content.sections.find(s => s.type === 'text' || s.type === 'hero');
+    const description = firstTextSection?.content 
+      ? firstTextSection.content.replace(/<[^>]*>/g, '').substring(0, 160) 
+      : pageData.headline || pageData.title;
+
+    // Helper to set or update meta tag
+    const setMetaTag = (selector: string, attribute: string, content: string) => {
+      let element = document.querySelector(selector);
+      if (!element) {
+        element = document.createElement('meta');
+        const [key, value] = selector.match(/\[([^=]+)="([^"]+)"\]/)?.slice(1, 3) || [];
+        if (key && value) {
+          element.setAttribute(key, value);
+          document.head.appendChild(element);
+        }
+      }
+      element.setAttribute(attribute, content);
+    };
+
+    // Set standard meta description
+    setMetaTag('meta[name="description"]', 'content', description);
+
+    // Set Open Graph tags
+    setMetaTag('meta[property="og:title"]', 'content', pageData.title);
+    setMetaTag('meta[property="og:description"]', 'content', description);
+    if (pageData.image_url) {
+      setMetaTag('meta[property="og:image"]', 'content', pageData.image_url);
     }
-  }, [pageData?.title]);
+    setMetaTag('meta[property="og:type"]', 'content', 'article');
+
+    // Set Twitter Card tags
+    setMetaTag('meta[name="twitter:title"]', 'content', pageData.title);
+    setMetaTag('meta[name="twitter:description"]', 'content', description);
+    if (pageData.image_url) {
+      setMetaTag('meta[name="twitter:image"]', 'content', pageData.image_url);
+    }
+    setMetaTag('meta[name="twitter:card"]', 'content', 'summary_large_image');
+
+    // Cleanup function to reset meta tags when component unmounts
+    return () => {
+      document.title = "G&R Advertorial Launcher";
+    };
+  }, [pageData]);
 
   // Log Country Setup being used for debugging
   useEffect(() => {
