@@ -1391,7 +1391,7 @@ const Index = () => {
       baseSection = {
         type: "text",
         content: "Enter your paragraph here...",
-        imagePosition: "none",
+        imagePosition: "right",
         style: "normal",
       };
     }
@@ -1461,6 +1461,7 @@ const Index = () => {
           type: "text",
           content: "Enter content here...",
           heading: type === "headline" ? "New Section" : undefined,
+          imagePosition: "right",
           style: "normal",
         };
     }
