@@ -76,6 +76,7 @@ const Index = () => {
 
   const [user, setUser] = useState<any>(null);
   const [inputText, setInputText] = useState("");
+  const [inputHtml, setInputHtml] = useState(""); // Store HTML version when pasting
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [isEditorMode, setIsEditorMode] = useState(false);
@@ -396,6 +397,9 @@ const Index = () => {
 
     setIsAnalyzing(true);
     try {
+      // Use HTML version if preserve formatting is on and we have HTML
+      const contentToAnalyze = preserveFormatting && inputHtml ? inputHtml : inputText;
+      
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/analyze-text`,
         {
@@ -404,7 +408,7 @@ const Index = () => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
           },
-          body: JSON.stringify({ text: inputText, preserveHtml: preserveFormatting }),
+          body: JSON.stringify({ text: contentToAnalyze, preserveHtml: preserveFormatting }),
         }
       );
 
@@ -1482,8 +1486,13 @@ const Index = () => {
     setIsAddingMore(true);
     
     try {
+      // Get HTML from the textarea if available
+      const textarea = document.getElementById('add-more-text') as HTMLTextAreaElement;
+      const pastedHtml = textarea?.dataset.pastedHtml;
+      const contentToAnalyze = preserveFormatting && pastedHtml ? pastedHtml : addMoreText;
+      
       const { data, error } = await supabase.functions.invoke("analyze-text", {
-        body: { text: addMoreText, preserveHtml: preserveFormatting }
+        body: { text: contentToAnalyze, preserveHtml: preserveFormatting }
       });
       
       if (error) throw error;
@@ -2058,6 +2067,17 @@ const Index = () => {
                   placeholder="Paste your additional content here... The AI will structure it and add it to the end of your page."
                   value={addMoreText}
                   onChange={(e) => setAddMoreText(e.target.value)}
+                  onPaste={(e) => {
+                    // Capture HTML when pasting if preserve formatting is on
+                    if (preserveFormatting) {
+                      const html = e.clipboardData.getData('text/html');
+                      if (html) {
+                        // Store for later use in handleAddMoreText
+                        e.currentTarget.dataset.pastedHtml = html;
+                        console.log('Captured HTML from paste:', html.substring(0, 200));
+                      }
+                    }
+                  }}
                   className="min-h-[300px] font-mono text-sm"
                   disabled={isAddingMore}
                 />
@@ -2265,6 +2285,16 @@ const Index = () => {
                 placeholder="Paste your advertorial or presell content here... The AI will analyze it and create an optimized layout with headlines, sections, and CTAs."
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
+                onPaste={(e) => {
+                  // Capture HTML when pasting if preserve formatting is on
+                  if (preserveFormatting) {
+                    const html = e.clipboardData.getData('text/html');
+                    if (html) {
+                      setInputHtml(html);
+                      console.log('Captured HTML from paste:', html.substring(0, 200));
+                    }
+                  }
+                }}
                 className="min-h-[300px] resize-y"
               />
               {preserveFormatting && (
