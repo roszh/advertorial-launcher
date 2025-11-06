@@ -105,24 +105,51 @@ export const SectionEditor = ({
         </div>
 
         {section.imagePosition && (
-          <div>
-            <label className="text-sm font-medium mb-2 block">Image Position</label>
-            <select
-              className="w-full rounded-md border border-input bg-background px-3 py-2"
-              value={editedSection.imagePosition}
-              onChange={(e) =>
-                setEditedSection({
-                  ...editedSection,
-                  imagePosition: e.target.value as any,
-                })
-              }
-            >
-              <option value="left">Left</option>
-              <option value="right">Right</option>
-              <option value="full">Full</option>
-              <option value="none">None</option>
-            </select>
-          </div>
+          <>
+            <div>
+              <label className="text-sm font-medium mb-2 block">Image Position</label>
+              <select
+                className="w-full rounded-md border border-input bg-background px-3 py-2"
+                value={editedSection.imagePosition}
+                onChange={(e) =>
+                  setEditedSection({
+                    ...editedSection,
+                    imagePosition: e.target.value as any,
+                  })
+                }
+              >
+                <option value="left">Left</option>
+                <option value="right">Right</option>
+                <option value="full">Full</option>
+                <option value="none">None</option>
+              </select>
+            </div>
+
+            {editedSection.imagePosition !== "none" && (
+              <div>
+                <label className="text-sm font-medium mb-2 block">Section Image</label>
+                <InlineImageUpload
+                  currentImageUrl={editedSection.imageUrl || ""}
+                  onImageUploaded={(url) =>
+                    setEditedSection({ ...editedSection, imageUrl: url })
+                  }
+                  userId={userId}
+                  aspectRatio={editedSection.imagePosition === "full" ? "wide" : "video"}
+                />
+                {editedSection.imageUrl && (
+                  <div className="mt-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setEditedSection({ ...editedSection, imageUrl: "" })}
+                    >
+                      Remove Image
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+          </>
         )}
 
         {section.style && (
