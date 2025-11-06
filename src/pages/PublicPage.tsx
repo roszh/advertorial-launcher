@@ -306,10 +306,41 @@ export default function PublicPage() {
             
             let insertedCount = 0;
             Array.from(tempDiv.children).forEach(element => {
-              document.head.appendChild(element.cloneNode(true));
+              if (element.tagName === 'SCRIPT') {
+                // Script elements must be recreated to execute
+                const newScript = document.createElement('script');
+                newScript.type = 'text/javascript';
+                
+                // Copy all attributes
+                Array.from(element.attributes).forEach(attr => {
+                  newScript.setAttribute(attr.name, attr.value);
+                });
+                
+                // Copy script content
+                newScript.textContent = element.textContent;
+                
+                // Add error/load handlers
+                newScript.onerror = () => console.error('[Tracking] ✗ Triple Whale script failed to load');
+                newScript.onload = () => console.log('[Tracking] ✓ Triple Whale script executed');
+                
+                document.head.appendChild(newScript);
+                console.log('[Tracking] Triple Whale script element created and appended');
+              } else {
+                // Link tags and other elements can be cloned normally
+                document.head.appendChild(element.cloneNode(true));
+              }
               insertedCount++;
             });
             console.log(`[Tracking] ✓ Triple Whale injected (${insertedCount} elements)`);
+            
+            // Verify TriplePixel loaded after 2 seconds
+            setTimeout(() => {
+              if ((window as any).TriplePixel) {
+                console.log('[Tracking] ✓ Triple Whale TriplePixel verified loaded');
+              } else {
+                console.warn('[Tracking] ⚠ Triple Whale TriplePixel not found on window');
+              }
+            }, 2000);
           } catch (error) {
             console.error('[Tracking] ✗ Triple Whale failed to inject:', error);
           }
