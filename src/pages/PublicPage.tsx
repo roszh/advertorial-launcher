@@ -333,14 +333,51 @@ export default function PublicPage() {
             });
             console.log(`[Tracking] ✓ Triple Whale injected (${insertedCount} elements)`);
             
-            // Verify TriplePixel loaded after 2 seconds
+            // Prepare basic context for SPAs if not provided
+            (function ensureTWContext(){
+              try {
+                const w = window as any;
+                w.TriplePixelData = w.TriplePixelData || {};
+                if (!w.TriplePixelData.plat) w.TriplePixelData.plat = 'CUSTOM';
+                w.TriplePixelData.isHeadless = true;
+              } catch (e) {
+                console.warn('[Tracking] ⚠ Could not set TriplePixelData context', e);
+              }
+            })();
+
+            // Fire a page view for SPAs once the pixel is ready, with retries
+            const fireTWPageLoad = (attempt = 1) => {
+              const w = window as any;
+              if (typeof w.TriplePixel === 'function') {
+                if (!w.__twPageLoadFired) {
+                  try {
+                    w.TriplePixel('pageLoad');
+                    w.__twPageLoadFired = true;
+                    console.log('[Tracking] ✓ Triple Whale pageLoad event fired');
+                  } catch (err) {
+                    console.error('[Tracking] ✗ Error firing Triple Whale pageLoad:', err);
+                  }
+                }
+                return;
+              }
+              if (attempt < 5) {
+                setTimeout(() => fireTWPageLoad(attempt + 1), 1000);
+              } else {
+                console.warn('[Tracking] ⚠ Triple Whale not available after retries');
+              }
+            };
+
+            // Initial verification and pageLoad attempt
             setTimeout(() => {
-              if ((window as any).TriplePixel) {
+              const w = window as any;
+              if (typeof w.TriplePixel === 'function') {
                 console.log('[Tracking] ✓ Triple Whale TriplePixel verified loaded');
+                fireTWPageLoad();
               } else {
                 console.warn('[Tracking] ⚠ Triple Whale TriplePixel not found on window');
+                fireTWPageLoad(); // continue retrying
               }
-            }, 2000);
+            }, 1000);
           } catch (error) {
             console.error('[Tracking] ✗ Triple Whale failed to inject:', error);
           }
