@@ -34,7 +34,20 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Skip cross-origin requests
+  // COMPLETELY skip tracking scripts - let browser handle them naturally
+  if (
+    url.hostname.includes('googletagmanager.com') ||
+    url.hostname.includes('google-analytics.com') ||
+    url.hostname.includes('facebook.net') ||
+    url.hostname.includes('clarity.ms') ||
+    url.hostname.includes('config-security.com') || // TripleWhale
+    url.hostname.includes('doubleclick.net')
+  ) {
+    // Do NOT intercept - return immediately
+    return;
+  }
+
+  // Skip cross-origin requests except Supabase
   if (url.origin !== location.origin && !url.hostname.includes('supabase.co')) {
     return;
   }
@@ -92,25 +105,6 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Tracking scripts - Stale while revalidate
-  if (
-    url.hostname.includes('googletagmanager.com') ||
-    url.hostname.includes('facebook.net') ||
-    url.hostname.includes('clarity.ms')
-  ) {
-    event.respondWith(
-      caches.match(request).then((cached) => {
-        const fetchPromise = fetch(request).then((response) => {
-          caches.open(RUNTIME_CACHE).then((cache) => {
-            cache.put(request, response.clone());
-          });
-          return response;
-        });
-        return cached || fetchPromise;
-      })
-    );
-    return;
-  }
 
   // All other requests - network first
   event.respondWith(

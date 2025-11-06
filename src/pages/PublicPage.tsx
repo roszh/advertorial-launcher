@@ -79,20 +79,8 @@ export default function PublicPage() {
   const { data: pageData, isLoading, error } = useQuery({
     queryKey: ['published-page', slug],
     queryFn: async () => {
-      // Fetch page data from the published_pages view
-      const { data: pageData, error: pageError } = await supabase
-        .from("published_pages")
-        .select("*")
-        .eq("slug", slug)
-        .maybeSingle();
-
-      if (pageError || !pageData) {
-        throw new Error("Page not found");
-      }
-
-      // Fetch tracking scripts separately from the pages table
-      // (tracking scripts are stored in tracking_script_sets which is joined to pages)
-      const { data: fullPageData } = await supabase
+      // Single optimized query - fetch page data with tracking scripts
+      const { data: fullPageData, error: pageError } = await supabase
         .from("pages")
         .select(`
           *,
@@ -100,40 +88,45 @@ export default function PublicPage() {
             google_analytics_id,
             facebook_pixel_id,
             triplewhale_token,
-            microsoft_clarity_id
+            microsoft_clarity_id,
+            name
           )
         `)
-        .eq("id", pageData.id)
+        .eq("slug", slug)
         .eq("status", "published")
         .maybeSingle();
 
-      const template = (pageData.template as "magazine" | "news" | "blog" | "listicle") || "magazine";
+      if (pageError || !fullPageData) {
+        throw new Error("Page not found");
+      }
+
+      const template = (fullPageData.template as "magazine" | "news" | "blog" | "listicle") || "magazine";
       const trackingScripts = fullPageData?.tracking_script_sets;
       
       // Normalize sections for backwards compatibility
-      const normalizedSections = ((pageData.content as any)?.sections || []).map(normalizeSection);
+      const normalizedSections = ((fullPageData.content as any)?.sections || []).map(normalizeSection);
 
       return {
-        id: pageData.id || undefined,
-        title: pageData.title,
-        headline: pageData.headline,
-        subtitle: pageData.subtitle || (template === "news" ? "Breaking News" : template === "blog" ? "Expert Insights" : "Featured Story"),
+        id: fullPageData.id || undefined,
+        title: fullPageData.title,
+        headline: fullPageData.headline,
+        subtitle: fullPageData.subtitle || (template === "news" ? "Breaking News" : template === "blog" ? "Expert Insights" : "Featured Story"),
         content: { sections: normalizedSections },
-        cta_text: pageData.cta_text || "",
-        cta_url: pageData.cta_url || "",
-        cta_style: pageData.cta_style || "ctaAmazon",
-        sticky_cta_threshold: pageData.sticky_cta_threshold || 20,
-        image_url: pageData.image_url || "",
+        cta_text: fullPageData.cta_text || "",
+        cta_url: fullPageData.cta_url || "",
+        cta_style: fullPageData.cta_style || "ctaAmazon",
+        sticky_cta_threshold: fullPageData.sticky_cta_threshold || 20,
+        image_url: fullPageData.image_url || "",
         template,
-        user_id: pageData.user_id,
-        // Tracking scripts from Country Setup (fetched separately for security)
+        user_id: fullPageData.user_id,
+        // Tracking scripts from Country Setup
         trackingScripts: {
           googleAnalyticsId: trackingScripts?.google_analytics_id || undefined,
           facebookPixelId: trackingScripts?.facebook_pixel_id || undefined,
           triplewhaleToken: trackingScripts?.triplewhale_token || undefined,
           microsoftClarityId: trackingScripts?.microsoft_clarity_id || undefined,
         },
-        countrySetupName: pageData.tracking_script_set_name || undefined,
+        countrySetupName: trackingScripts?.name || undefined,
       };
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -234,17 +227,27 @@ export default function PublicPage() {
     
     const injectScripts = () => {
       try {
-        // Google Analytics
+        // Google Analytics with retry
         if (scripts.googleAnalyticsId) {
           console.log('[Tracking] Injecting Google Analytics:', scripts.googleAnalyticsId);
           
-          // Check if already loaded
           if (!(window as any).gtag) {
             const gaScript = document.createElement('script');
             gaScript.async = true;
             gaScript.src = `https://www.googletagmanager.com/gtag/js?id=${scripts.googleAnalyticsId}`;
+            
+            gaScript.onerror = () => {
+              console.error('[Tracking] ✗ Google Analytics failed, retrying...');
+              setTimeout(() => {
+                const retryScript = document.createElement('script');
+                retryScript.async = true;
+                retryScript.src = gaScript.src;
+                retryScript.onload = () => console.log('[Tracking] ✓ Google Analytics loaded (retry)');
+                document.head.appendChild(retryScript);
+              }, 1000);
+            };
+            
             gaScript.onload = () => console.log('[Tracking] ✓ Google Analytics loaded');
-            gaScript.onerror = () => console.error('[Tracking] ✗ Google Analytics failed to load');
             document.head.appendChild(gaScript);
 
             const gaConfigScript = document.createElement('script');
@@ -261,11 +264,10 @@ export default function PublicPage() {
           }
         }
 
-        // Facebook Pixel
+        // Facebook Pixel with retry
         if (scripts.facebookPixelId) {
           console.log('[Tracking] Injecting Facebook Pixel:', scripts.facebookPixelId);
           
-          // Check if already loaded
           if (!(window as any).fbq) {
             const fbScript = document.createElement('script');
             fbScript.innerHTML = `
@@ -274,7 +276,9 @@ export default function PublicPage() {
               n.callMethod.apply(n,arguments):n.queue.push(arguments)};
               if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
               n.queue=[];t=b.createElement(e);t.async=!0;
-              t.src=v;s=b.getElementsByTagName(e)[0];
+              t.src=v;t.onerror=function(){console.error('[Tracking] ✗ Facebook Pixel failed');};
+              t.onload=function(){console.log('[Tracking] ✓ Facebook Pixel loaded');};
+              s=b.getElementsByTagName(e)[0];
               s.parentNode.insertBefore(t,s)}(window, document,'script',
               'https://connect.facebook.net/en_US/fbevents.js');
               fbq('init', '${scripts.facebookPixelId}');
@@ -292,7 +296,7 @@ export default function PublicPage() {
           }
         }
 
-        // Triple Whale - inject raw HTML snippet
+        // Triple Whale
         if (scripts.triplewhaleToken) {
           console.log('[Tracking] Injecting Triple Whale snippet');
           
@@ -300,7 +304,6 @@ export default function PublicPage() {
             const tempDiv = document.createElement('div');
             tempDiv.innerHTML = scripts.triplewhaleToken.trim();
             
-            // Insert all elements from the snippet into head
             let insertedCount = 0;
             Array.from(tempDiv.children).forEach(element => {
               document.head.appendChild(element.cloneNode(true));
@@ -312,11 +315,10 @@ export default function PublicPage() {
           }
         }
 
-        // Microsoft Clarity
+        // Microsoft Clarity with retry
         if (scripts.microsoftClarityId) {
           console.log('[Tracking] Injecting Microsoft Clarity:', scripts.microsoftClarityId);
           
-          // Check if already loaded
           if (!(window as any).clarity) {
             const clarityScript = document.createElement('script');
             clarityScript.type = 'text/javascript';
@@ -324,6 +326,8 @@ export default function PublicPage() {
               (function(c,l,a,r,i,t,y){
                 c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
                 t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+                t.onerror=function(){console.error('[Tracking] ✗ Microsoft Clarity failed');};
+                t.onload=function(){console.log('[Tracking] ✓ Microsoft Clarity loaded');};
                 y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
               })(window, document, "clarity", "script", "${scripts.microsoftClarityId}");
               console.log('[Tracking] ✓ Microsoft Clarity initialized');
@@ -335,16 +339,38 @@ export default function PublicPage() {
         }
 
         console.log('[Tracking] All configured scripts injected successfully');
+        
+        // Verify scripts loaded after 3 seconds
+        setTimeout(() => {
+          const verification = {
+            gtag: typeof (window as any).gtag === 'function',
+            fbq: typeof (window as any).fbq === 'function',
+            clarity: typeof (window as any).clarity === 'function',
+          };
+          
+          console.log('[Tracking] Verification Results:', verification);
+          
+          if (verification.gtag && scripts.googleAnalyticsId) {
+            (window as any).gtag('event', 'page_view_verified');
+          }
+          if (verification.fbq && scripts.facebookPixelId) {
+            (window as any).fbq('trackCustom', 'PageViewVerified');
+          }
+        }, 3000);
       } catch (error) {
-        console.error('[Tracking] Error injecting scripts:', error);
+        console.error('[Tracking] CRITICAL ERROR injecting scripts:', error);
       }
     };
     
-    // Use requestIdleCallback with fallback for Safari
+    // Reduced delay: 500ms with requestIdleCallback, DOMContentLoaded for Safari
     if ('requestIdleCallback' in window) {
-      (window as any).requestIdleCallback(injectScripts, { timeout: 2000 });
+      (window as any).requestIdleCallback(injectScripts, { timeout: 500 });
     } else {
-      setTimeout(injectScripts, 2000);
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', injectScripts);
+      } else {
+        setTimeout(injectScripts, 100);
+      }
     }
   }, [pageData?.trackingScripts]);
 
