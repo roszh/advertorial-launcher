@@ -11,6 +11,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { toast } from "@/hooks/use-toast";
 import { X } from "lucide-react";
 import { PagesUsingSetup } from "@/components/PagesUsingSetup";
+import { ImageLibrary } from "@/components/ImageLibrary";
 import { cn } from "@/lib/utils";
 
 export default function Settings() {
@@ -532,7 +533,7 @@ export default function Settings() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="mb-6">
           <CardHeader>
             <CardTitle>Tags</CardTitle>
             <CardDescription>Create and manage tags to organize your pages</CardDescription>
@@ -603,6 +604,16 @@ export default function Settings() {
                 )}
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Image Library</CardTitle>
+            <CardDescription>Upload and manage images to reuse across all your pages</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {user && <ImageLibrary userId={user.id} />}
           </CardContent>
         </Card>
       </div>

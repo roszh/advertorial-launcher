@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      image_library: {
+        Row: {
+          created_at: string
+          file_size: number | null
+          filename: string
+          id: string
+          image_url: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_size?: number | null
+          filename: string
+          id?: string
+          image_url: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          file_size?: number | null
+          filename?: string
+          id?: string
+          image_url?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       page_analytics: {
         Row: {
           created_at: string | null

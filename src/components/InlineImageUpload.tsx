@@ -1,8 +1,11 @@
 import { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Upload } from "lucide-react";
+import { Loader2, Upload, Image as ImageIcon } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { cn, compressImage } from "@/lib/utils";
+import { Button } from "./ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
+import { ImageLibrary } from "./ImageLibrary";
 
 interface InlineImageUploadProps {
   currentImageUrl?: string;
@@ -21,6 +24,7 @@ export const InlineImageUpload = ({
 }: InlineImageUploadProps) => {
   const [uploading, setUploading] = useState(false);
   const [imageUrl, setImageUrl] = useState(currentImageUrl || "");
+  const [libraryOpen, setLibraryOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const aspectRatioClasses = {
@@ -123,6 +127,13 @@ export const InlineImageUpload = ({
     fileInputRef.current?.click();
   };
 
+  const handleLibrarySelect = (url: string) => {
+    setImageUrl(url);
+    onImageUploaded(url);
+    setLibraryOpen(false);
+    toast({ title: "Image selected from library" });
+  };
+
   return (
     <>
       <input
@@ -133,45 +144,67 @@ export const InlineImageUpload = ({
         className="hidden"
       />
       
-      <div 
-        onClick={handleClick}
-        className={cn(
-          "relative w-full overflow-hidden rounded-lg cursor-pointer group",
-          aspectRatioClasses[aspectRatio],
-          className
-        )}
-      >
-        {imageUrl ? (
-          <>
-            <img
-              src={imageUrl}
-              alt="Section image"
-              className="w-full h-full object-cover transition-all group-hover:brightness-75"
-            />
-            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center">
+      <div className="space-y-2">
+        <div 
+          onClick={handleClick}
+          className={cn(
+            "relative w-full overflow-hidden rounded-lg cursor-pointer group",
+            aspectRatioClasses[aspectRatio],
+            className
+          )}
+        >
+          {imageUrl ? (
+            <>
+              <img
+                src={imageUrl}
+                alt="Section image"
+                className="w-full h-full object-cover transition-all group-hover:brightness-75"
+              />
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center">
+                {uploading ? (
+                  <Loader2 className="h-8 w-8 text-white animate-spin" />
+                ) : (
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity text-white text-center">
+                    <Upload className="h-8 w-8 mx-auto mb-2" />
+                    <span className="text-sm font-medium">Click to change image</span>
+                  </div>
+                )}
+              </div>
+            </>
+          ) : (
+            <div className="w-full h-full bg-muted flex items-center justify-center">
               {uploading ? (
-                <Loader2 className="h-8 w-8 text-white animate-spin" />
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
               ) : (
-                <div className="opacity-0 group-hover:opacity-100 transition-opacity text-white text-center">
-                  <Upload className="h-8 w-8 mx-auto mb-2" />
-                  <span className="text-sm font-medium">Click to change image</span>
+                <div className="text-center text-muted-foreground">
+                  <Upload className="h-12 w-12 mx-auto mb-2" />
+                  <p className="text-sm font-medium">Click to upload image</p>
+                  <p className="text-xs mt-1">Max 1MB • JPG, PNG, WebP</p>
                 </div>
               )}
             </div>
-          </>
-        ) : (
-          <div className="w-full h-full bg-muted flex items-center justify-center">
-            {uploading ? (
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            ) : (
-              <div className="text-center text-muted-foreground">
-                <Upload className="h-12 w-12 mx-auto mb-2" />
-                <p className="text-sm font-medium">Click to upload image</p>
-                <p className="text-xs mt-1">Max 1MB • JPG, PNG, WebP</p>
-              </div>
-            )}
-          </div>
-        )}
+          )}
+        </div>
+
+        <Dialog open={libraryOpen} onOpenChange={setLibraryOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline" className="w-full" type="button">
+              <ImageIcon className="mr-2 h-4 w-4" />
+              Choose from Library
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Select from Image Library</DialogTitle>
+            </DialogHeader>
+            <ImageLibrary 
+              userId={userId} 
+              onImageSelect={handleLibrarySelect}
+              selectionMode={true}
+              selectedImageUrl={imageUrl}
+            />
+          </DialogContent>
+        </Dialog>
       </div>
     </>
   );
