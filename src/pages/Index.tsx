@@ -1628,6 +1628,9 @@ const Index = () => {
   }
 
   if (isEditorMode && analysisResult) {
+    // Check if all required fields are filled
+    const isValidForSave = pageTitle.trim() && pageSlug.trim() && selectedTags.length > 0 && selectedCountrySetupId;
+
     return (
       <div className="min-h-screen w-full flex flex-col bg-background">
         <Navigation user={user} />
@@ -1636,8 +1639,8 @@ const Index = () => {
             {/* Sidebar */}
             <Sidebar className="border-r">
               <div className="p-4 border-b flex items-center justify-between">
-                <h2 className="font-semibold text-sm">Editor Settings</h2>
-                <SidebarTrigger className="lg:hidden" />
+                <h2 className="font-semibold text-sm">Page Settings</h2>
+                <SidebarTrigger />
               </div>
               
               <SidebarContent>
@@ -1648,7 +1651,12 @@ const Index = () => {
                       <SidebarGroupLabel className="flex items-center justify-between cursor-pointer hover:bg-accent/50 px-3 py-2 rounded-md transition-colors">
                         <div className="flex items-center gap-2">
                           <Settings className="h-4 w-4" />
-                          <span>Page Settings</span>
+                          <span>Required Settings</span>
+                          {!isValidForSave && (
+                            <Badge variant="destructive" className="text-[10px] px-1 py-0">
+                              Incomplete
+                            </Badge>
+                          )}
                         </div>
                         <ChevronDown className={cn("h-4 w-4 transition-transform", pageSettingsOpen && "rotate-180")} />
                       </SidebarGroupLabel>
@@ -1656,38 +1664,69 @@ const Index = () => {
                     <CollapsibleContent>
                       <SidebarGroupContent className="px-3 py-2 space-y-3">
                         <div>
-                          <Label htmlFor="pageTitle" className="text-xs font-medium">Page Title</Label>
+                          <Label htmlFor="pageTitle" className="text-xs font-medium flex items-center gap-1">
+                            Page Title <span className="text-destructive">*</span>
+                          </Label>
                           <Input
                             id="pageTitle"
                             type="text"
                             placeholder="Enter page title"
                             value={pageTitle}
                             onChange={(e) => {
-                              setPageTitle(e.target.value);
+                              const value = e.target.value.slice(0, 200); // Max 200 chars
+                              setPageTitle(value);
                               const currentGeneratedSlug = generateSlug(pageTitle, false);
                               if (!pageSlug || pageSlug === currentGeneratedSlug || pageSlug.startsWith(currentGeneratedSlug + "-")) {
-                                setPageSlug(generateSlug(e.target.value, false));
+                                setPageSlug(generateSlug(value, false));
                               }
                             }}
-                            className="h-8 mt-1"
+                            className={cn(
+                              "h-8 mt-1",
+                              !pageTitle.trim() && "border-destructive focus:border-destructive"
+                            )}
+                            required
                           />
+                          {!pageTitle.trim() && (
+                            <p className="text-xs text-destructive mt-1">Page title is required</p>
+                          )}
                         </div>
 
                         <div>
-                          <Label htmlFor="slug" className="text-xs font-medium">URL Slug</Label>
+                          <Label htmlFor="slug" className="text-xs font-medium flex items-center gap-1">
+                            URL Slug <span className="text-destructive">*</span>
+                          </Label>
                           <Input
                             id="slug"
                             type="text"
                             placeholder="auto-generated"
                             value={pageSlug}
-                            onChange={(e) => setPageSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/^-|-$/g, ''))}
-                            className="h-8 mt-1 font-mono"
+                            onChange={(e) => {
+                              const sanitized = e.target.value
+                                .toLowerCase()
+                                .replace(/[^a-z0-9-]/g, '-')
+                                .replace(/^-|-$/g, '')
+                                .slice(0, 100); // Max 100 chars
+                              setPageSlug(sanitized);
+                            }}
+                            className={cn(
+                              "h-8 mt-1 font-mono",
+                              !pageSlug.trim() && "border-destructive focus:border-destructive"
+                            )}
+                            required
                           />
+                          {!pageSlug.trim() && (
+                            <p className="text-xs text-destructive mt-1">URL slug is required</p>
+                          )}
                         </div>
 
                         <div>
-                          <Label htmlFor="tags" className="text-xs font-medium">Tags</Label>
-                          <div className="flex items-center gap-2 flex-wrap min-h-[32px] p-2 mt-1 rounded-md border bg-background/50">
+                          <Label htmlFor="tags" className="text-xs font-medium flex items-center gap-1">
+                            Tags <span className="text-destructive">*</span>
+                          </Label>
+                          <div className={cn(
+                            "flex items-center gap-2 flex-wrap min-h-[32px] p-2 mt-1 rounded-md border bg-background/50",
+                            selectedTags.length === 0 && "border-destructive"
+                          )}>
                             {selectedTags.map(tagId => {
                               const tag = availableTags.find(t => t.id === tagId);
                               return tag ? (
@@ -1734,16 +1773,14 @@ const Index = () => {
                               </SelectContent>
                             </Select>
                           </div>
+                          {selectedTags.length === 0 && (
+                            <p className="text-xs text-destructive mt-1">At least one tag is required</p>
+                          )}
                         </div>
 
                         <div>
                           <Label htmlFor="countrySetup" className="text-xs font-medium flex items-center gap-1">
-                            Country Setup
-                            {!selectedCountrySetupId && (
-                              <Badge variant="destructive" className="text-[10px] px-1 py-0">
-                                Required
-                              </Badge>
-                            )}
+                            Tracking Setup <span className="text-destructive">*</span>
                           </Label>
                           <Select
                             value={selectedCountrySetupId || ""}
@@ -1751,7 +1788,7 @@ const Index = () => {
                           >
                             <SelectTrigger id="countrySetup" className={cn(
                               "h-8 mt-1",
-                              !selectedCountrySetupId && "border-red-500/50"
+                              !selectedCountrySetupId && "border-destructive focus:border-destructive"
                             )}>
                               <SelectValue placeholder="Select setup" />
                             </SelectTrigger>
@@ -1785,26 +1822,11 @@ const Index = () => {
                               )}
                             </SelectContent>
                           </Select>
+                          {!selectedCountrySetupId && (
+                            <p className="text-xs text-destructive mt-1">Tracking setup is required</p>
+                          )}
                         </div>
-                      </SidebarGroupContent>
-                    </CollapsibleContent>
-                  </SidebarGroup>
-                </Collapsible>
 
-                {/* CTA Configuration */}
-                <Collapsible open={ctaConfigOpen} onOpenChange={setCtaConfigOpen}>
-                  <SidebarGroup>
-                    <CollapsibleTrigger className="w-full">
-                      <SidebarGroupLabel className="flex items-center justify-between cursor-pointer hover:bg-accent/50 px-3 py-2 rounded-md transition-colors">
-                        <div className="flex items-center gap-2">
-                          <LinkIcon className="h-4 w-4" />
-                          <span>CTA Configuration</span>
-                        </div>
-                        <ChevronDown className={cn("h-4 w-4 transition-transform", ctaConfigOpen && "rotate-180")} />
-                      </SidebarGroupLabel>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                      <SidebarGroupContent className="px-3 py-2 space-y-3">
                         <div>
                           <Label htmlFor="ctaUrl" className="text-xs font-medium">CTA URL</Label>
                           <Input
@@ -1812,14 +1834,22 @@ const Index = () => {
                             type="url"
                             placeholder="https://example.com"
                             value={ctaUrl}
-                            onChange={(e) => setCTAUrl(e.target.value)}
+                            onChange={(e) => {
+                              const value = e.target.value.slice(0, 500); // Max 500 chars
+                              setCTAUrl(value);
+                            }}
                             className="h-8 mt-1"
                           />
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Where users go when clicking CTA buttons
+                          </p>
                         </div>
                       </SidebarGroupContent>
                     </CollapsibleContent>
                   </SidebarGroup>
                 </Collapsible>
+
+                {/* Remove the separate CTA Configuration section */}
 
                 {/* Design Options */}
                 <Collapsible open={designOptionsOpen} onOpenChange={setDesignOptionsOpen}>
@@ -1903,18 +1933,22 @@ const Index = () => {
                 <div className="px-4 py-3">
                   <div className="flex items-center justify-between gap-4">
                     <div className="flex items-center gap-2">
-                  
-                  {selectedCountrySetupId && (
-                    <Badge variant="outline" className="text-xs flex items-center gap-1">
-                      📊 {availableCountrySetups.find(s => s.id === selectedCountrySetupId)?.name || 'Unknown'}
-                    </Badge>
-                  )}
-                  {!selectedCountrySetupId && (
-                    <Badge variant="destructive" className="text-xs">
-                      ⚠️ No Country Setup
-                    </Badge>
-                  )}
-                </div>
+                      <SidebarTrigger className="h-8 px-3" />
+                      
+                      {!isValidForSave && (
+                        <Badge variant="destructive" className="flex items-center gap-1 text-xs">
+                          <AlertTriangle className="h-3 w-3" />
+                          <span className="hidden sm:inline">Incomplete</span>
+                        </Badge>
+                      )}
+                      
+                      {selectedCountrySetupId && (
+                        <Badge variant="secondary" className="flex items-center gap-1 text-xs">
+                          <Globe className="h-3 w-3" />
+                          <span className="hidden sm:inline">{availableCountrySetups.find(s => s.id === selectedCountrySetupId)?.name || 'Unknown'}</span>
+                        </Badge>
+                      )}
+                    </div>
                 
                 <div className="flex gap-2 items-center">
                   <Button 
@@ -1947,25 +1981,58 @@ const Index = () => {
                   <Button onClick={handleReset} variant="ghost" size="sm" className="h-8 px-3 text-xs">
                     Cancel
                   </Button>
-                  <Button onClick={() => handleSave("draft")} disabled={saving} variant="ghost" size="sm" className="h-8 px-3 text-xs">
-                    <Save className="mr-1 h-3 w-3" />
-                    Draft
-                  </Button>
-                  <Button 
-                    onClick={handleUndo} 
-                    disabled={!undoStack || saving}
-                    variant="outline" 
-                    size="sm" 
-                    className="h-8 px-3 text-xs"
-                    title={undoStack ? "Undo last change" : "No changes to undo"}
-                  >
-                    <Undo2 className="mr-1 h-3 w-3" />
-                    Undo
-                  </Button>
-                  <Button onClick={() => handleSave("published")} disabled={saving} size="sm" className="h-8 px-3 text-xs">
-                    <Globe className="mr-1 h-3 w-3" />
-                    Publish
-                  </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleSave("draft")}
+                        disabled={saving || !isValidForSave}
+                        className="gap-2 h-8"
+                        title={!isValidForSave ? "Please fill all required fields" : "Save draft"}
+                      >
+                        {saving ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span className="hidden md:inline">Saving...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Save className="h-4 w-4" />
+                            <span className="hidden md:inline">Save</span>
+                          </>
+                        )}
+                      </Button>
+
+                      {undoStack && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleUndo}
+                          className="gap-2 h-8"
+                        >
+                          <Undo2 className="h-4 w-4" />
+                          <span className="hidden md:inline">Undo</span>
+                        </Button>
+                      )}
+
+                      <Button
+                        size="sm"
+                        onClick={() => handleSave("published")}
+                        disabled={saving || !isValidForSave}
+                        className="gap-2 h-8"
+                        title={!isValidForSave ? "Please fill all required fields" : "Publish page"}
+                      >
+                        {saving ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span className="hidden md:inline">Publishing...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="h-4 w-4" />
+                            <span className="hidden md:inline">Publish</span>
+                          </>
+                        )}
+                      </Button>
                   {isPublished && pageSlug && (
                     <Button
                       onClick={() => window.open(`/p/${pageSlug}`, "_blank")}
