@@ -1342,6 +1342,44 @@ const Index = () => {
                     style: "emphasized",
                   }, index + 1);
                   break;
+                case "complete-section":
+                  // Create headline + image + paragraph as three sections
+                  const headlineSection = ensureSectionMetadata({
+                    type: "text",
+                    content: "",
+                    heading: "New Section Headline",
+                    style: "emphasized",
+                  }, index + 1);
+                  const imageSection = ensureSectionMetadata({
+                    type: "image",
+                    content: "",
+                    imageUrl: "",
+                    imagePosition: "full",
+                    style: "normal",
+                  }, index + 2);
+                  const textSection = ensureSectionMetadata({
+                    type: "text",
+                    content: "Enter your paragraph here...",
+                    imagePosition: "none",
+                    style: "normal",
+                  }, index + 3);
+                  
+                  // Insert all three sections
+                  const newSections = [...analysisResult.sections];
+                  newSections.splice(index + 1, 0, headlineSection, imageSection, textSection);
+                  
+                  // Update order for all sections
+                  const reorderedSections = newSections.map((s, i) => ({
+                    ...s,
+                    order: i
+                  }));
+                  
+                  setAnalysisResult({
+                    ...analysisResult,
+                    sections: reorderedSections,
+                  });
+                  toast({ title: "Complete section added!" });
+                  return; // Early return to avoid the default single-section logic below
                 default: // "text"
                   newSection = ensureSectionMetadata({
                     type: "text",

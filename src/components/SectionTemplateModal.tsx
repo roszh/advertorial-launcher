@@ -14,6 +14,13 @@ export const SectionTemplateModal = ({ open, onOpenChange, onSelectTemplate }: S
       category: "Basic",
       items: [
         {
+          type: "complete-section",
+          name: "Complete Section",
+          description: "Headline + Image + Paragraph",
+          icon: Plus,
+          color: "text-pink-600 dark:text-pink-400"
+        },
+        {
           type: "text",
           name: "Text",
           description: "Basic paragraph section",
