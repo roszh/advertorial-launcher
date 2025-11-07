@@ -869,7 +869,23 @@ export default function Dashboard() {
                       className="mt-1 h-4 w-4 cursor-pointer"
                     />
                     <div className="flex-1">
-                      <CardTitle>{page.title}</CardTitle>
+                      <CardTitle 
+                        className="cursor-pointer hover:text-primary transition-colors"
+                        onClick={() => {
+                          const titleElement = document.getElementById(`title-${page.id}`);
+                          if (titleElement) {
+                            titleElement.classList.toggle('line-clamp-1');
+                          }
+                        }}
+                        title={page.title.length > 130 ? page.title : undefined}
+                      >
+                        <span id={`title-${page.id}`} className="line-clamp-1">
+                          {page.title}
+                        </span>
+                        {page.title.length > 130 && (
+                          <span className="text-xs text-muted-foreground ml-2">(click to expand)</span>
+                        )}
+                      </CardTitle>
                       <CardDescription>
                         Created {new Date(page.created_at).toLocaleString('en-GB', { 
                           day: '2-digit', 
@@ -928,8 +944,9 @@ export default function Dashboard() {
                         variant="outline"
                         size="sm"
                         onClick={() => window.open(`/p/${page.slug}`, "_blank")}
+                        className="text-[0.8125rem] h-8 px-3"
                       >
-                        <Eye className="mr-2 h-4 w-4" />
+                        <Eye className="mr-1.5 h-3.5 w-3.5" />
                         Preview
                       </Button>
                     )}
@@ -937,16 +954,18 @@ export default function Dashboard() {
                       variant="outline"
                       size="sm"
                       onClick={() => navigate(`/?edit=${page.id}`)}
+                      className="text-[0.8125rem] h-8 px-3"
                     >
-                      <Edit className="mr-2 h-4 w-4" />
+                      <Edit className="mr-1.5 h-3.5 w-3.5" />
                       Edit
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleClone(page.id)}
+                      className="text-[0.8125rem] h-8 px-3"
                     >
-                      <Copy className="mr-2 h-4 w-4" />
+                      <Copy className="mr-1.5 h-3.5 w-3.5" />
                       Clone
                     </Button>
                     {page.status === "published" && (
@@ -954,8 +973,9 @@ export default function Dashboard() {
                         variant="outline"
                         size="sm"
                         onClick={() => navigate(`/analytics/${page.id}`)}
+                        className="text-[0.8125rem] h-8 px-3"
                       >
-                        <BarChart3 className="mr-2 h-4 w-4" />
+                        <BarChart3 className="mr-1.5 h-3.5 w-3.5" />
                         Analytics
                       </Button>
                     )}
@@ -963,8 +983,9 @@ export default function Dashboard() {
                       variant="outline"
                       size="sm"
                       onClick={() => handleToggleStatus(page)}
+                      className="text-[0.8125rem] h-8 px-3"
                     >
-                      <Globe className="mr-2 h-4 w-4" />
+                      <Globe className="mr-1.5 h-3.5 w-3.5" />
                       {page.status === "published" ? "Unpublish" : "Publish"}
                     </Button>
                   </div>
