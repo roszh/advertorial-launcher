@@ -870,21 +870,11 @@ export default function Dashboard() {
                     />
                     <div className="flex-1">
                       <CardTitle 
-                        className="cursor-pointer hover:text-primary transition-colors"
-                        onClick={() => {
-                          const titleElement = document.getElementById(`title-${page.id}`);
-                          if (titleElement) {
-                            titleElement.classList.toggle('line-clamp-1');
-                          }
-                        }}
-                        title={page.title.length > 130 ? page.title : undefined}
+                        className="cursor-pointer hover:text-primary transition-colors line-clamp-2"
+                        onClick={() => navigate(`/?edit=${page.id}`)}
+                        title={page.title}
                       >
-                        <span id={`title-${page.id}`} className="line-clamp-1">
-                          {page.title}
-                        </span>
-                        {page.title.length > 130 && (
-                          <span className="text-xs text-muted-foreground ml-2">(click to expand)</span>
-                        )}
+                        {page.title}
                       </CardTitle>
                       <CardDescription>
                         Created {new Date(page.created_at).toLocaleString('en-GB', { 
