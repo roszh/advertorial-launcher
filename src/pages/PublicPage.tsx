@@ -55,31 +55,11 @@ export default function PublicPage() {
     heading: section.heading || "",
   });
 
-  // Separate queries for hero and full page data for progressive loading
-  const [heroLoaded, setHeroLoaded] = useState(false);
-
-  // First, fetch minimal data for hero section
-  const { data: heroData } = useQuery({
-    queryKey: ['published-page-hero', slug],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("published_pages")
-        .select("id, title, headline, subtitle, image_url, template")
-        .eq("slug", slug)
-        .maybeSingle();
-
-      if (error || !data) throw new Error("Page not found");
-      setHeroLoaded(true);
-      return data;
-    },
-    staleTime: 10 * 60 * 1000,
-  });
-
-  // Then fetch full page data (including body sections)
+  // Single optimized query for published pages with aggressive caching
   const { data: pageData, isLoading, error } = useQuery({
     queryKey: ['published-page', slug],
     queryFn: async () => {
-      // Single optimized query - fetch page data with tracking scripts
+      // Fetch from published_pages view with tracking scripts in single query
       const { data: fullPageData, error: pageError } = await supabase
         .from("pages")
         .select(`
@@ -96,9 +76,8 @@ export default function PublicPage() {
         .eq("status", "published")
         .maybeSingle();
 
-      if (pageError || !fullPageData) {
-        throw new Error("Page not found");
-      }
+      if (pageError) throw pageError;
+      if (!fullPageData) throw new Error("Page not found");
 
       const template = (fullPageData.template as "magazine" | "news" | "blog" | "listicle") || "magazine";
       const trackingScripts = fullPageData?.tracking_script_sets;
@@ -129,7 +108,10 @@ export default function PublicPage() {
         countrySetupName: trackingScripts?.name || undefined,
       };
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 15 * 60 * 1000, // 15 minutes - aggressive caching for published pages
+    gcTime: 30 * 60 * 1000, // Keep in cache for 30 minutes
+    retry: 2, // Retry failed requests twice
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 3000),
   });
 
   // Set page title and SEO meta tags when data loads
@@ -442,12 +424,12 @@ export default function PublicPage() {
     }
   }, [pageData?.trackingScripts]);
 
-  // Show hero skeleton while loading hero data
-  if (!heroLoaded && isLoading) {
+  // Show loading state while fetching
+  if (isLoading) {
     return <HeroSkeleton />;
   }
 
-  // Show error state
+  // Show error state only when there's an actual error (not during loading)
   if (error || !pageData) {
     return (
       <div className="min-h-screen flex items-center justify-center">
