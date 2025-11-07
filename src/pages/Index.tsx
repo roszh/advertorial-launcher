@@ -2000,6 +2000,7 @@ const Index = () => {
                   </div>
                 </div>
               </div>
+              </div>
 
               {/* Preview Area */}
               <div className="container mx-auto px-4 pb-24" style={{
@@ -2222,6 +2223,7 @@ const Index = () => {
           onOpenChange={setShowTemplateModal}
           onSelectTemplate={handleSelectTemplate}
         />
+        </div>
       </SidebarProvider>
     );
   }
