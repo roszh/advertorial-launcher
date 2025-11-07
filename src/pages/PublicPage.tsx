@@ -192,7 +192,7 @@ export default function PublicPage() {
     })();
   }, [pageData?.id]);
 
-  // Inject tracking scripts from Country Setup lazily when browser is idle
+  // Inject tracking scripts immediately when page data loads (CRITICAL for tracking reliability)
   useEffect(() => {
     const scripts = pageData?.trackingScripts;
     if (!scripts || !Object.values(scripts).some(v => v)) {
@@ -412,16 +412,9 @@ export default function PublicPage() {
       }
     };
     
-    // Reduced delay: 500ms with requestIdleCallback, DOMContentLoaded for Safari
-    if ('requestIdleCallback' in window) {
-      (window as any).requestIdleCallback(injectScripts, { timeout: 500 });
-    } else {
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', injectScripts);
-      } else {
-        setTimeout(injectScripts, 100);
-      }
-    }
+    // CRITICAL: Inject scripts IMMEDIATELY to ensure they load on every page view
+    // Using setTimeout(0) to make it non-blocking but still immediate
+    setTimeout(injectScripts, 0);
   }, [pageData?.trackingScripts]);
 
   // Show loading state while fetching
