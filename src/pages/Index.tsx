@@ -1635,12 +1635,11 @@ const Index = () => {
       <div className="min-h-screen w-full flex flex-col bg-background">
         <Navigation user={user} />
         <SidebarProvider defaultOpen={true}>
-          <div className="flex flex-1">
+          <div className="flex flex-1 w-full">
             {/* Sidebar */}
             <Sidebar className="border-r">
-              <div className="p-4 border-b flex items-center justify-between">
+              <div className="p-4 border-b flex items-center">
                 <h2 className="font-semibold text-sm">Page Settings</h2>
-                <SidebarTrigger />
               </div>
               
               <SidebarContent>
@@ -2091,9 +2090,10 @@ const Index = () => {
           </SheetContent>
         </Sheet>
 
-        <StickyCtaButton
+        <StickyCtaButton 
           text={analysisResult.cta.primary} 
           onClick={() => ctaUrl && window.open(ctaUrl, "_blank")} 
+          isEditing={true}
         />
 
         {/* Parse & Add More Text Dialog */}
