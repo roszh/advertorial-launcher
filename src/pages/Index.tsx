@@ -1457,9 +1457,11 @@ const Index = () => {
     sectionConfig?: Partial<Section>
   ) => {
     if (!analysisResult) return;
+    console.log("[handleAddSectionAt] type=", type, "afterIndex=", afterIndex);
     
     // Handle complete-section separately
     if (type === "complete-section") {
+      console.log("[handleAddSectionAt] inserting complete-section bundle");
       const headlineSection = ensureSectionMetadata({
         type: "text",
         content: "",
@@ -1578,6 +1580,7 @@ const Index = () => {
         break;
       case "complete-section": {
         // Append headline + image + paragraph to the end
+        console.log("[handleSelectTemplate] complete-section selected");
         const startIndex = analysisResult.sections.length;
         const headlineSection = ensureSectionMetadata({
           type: "text",
