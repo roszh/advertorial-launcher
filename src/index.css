@@ -10,45 +10,49 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* iOS HIG Semantic Colors - Light Mode */
-    --ios-background: 0 0% 100%;
-    --ios-secondary-background: 240 12% 95%;
-    --ios-tertiary-background: 0 0% 100%;
-    --ios-grouped-background: 240 12% 95%;
-    --ios-label: 240 10% 0%;
-    --ios-secondary-label: 240 10% 26%;
-    --ios-tertiary-label: 240 10% 26%;
-    --ios-separator: 240 10% 26%;
-    --ios-tint: 211 100% 50%;
+    /* macOS System Colors - Light Mode */
+    --macos-background: 0 0% 100%;
+    --macos-secondary-background: 0 0% 98%;
+    --macos-tertiary-background: 0 0% 96%;
+    --macos-grouped-background: 210 17% 98%;
+    --macos-label: 0 0% 0%;
+    --macos-secondary-label: 240 3% 42%;
+    --macos-tertiary-label: 240 2% 58%;
+    --macos-quaternary-label: 240 2% 74%;
+    --macos-separator: 240 5% 88%;
+    --macos-opaque-separator: 240 4% 92%;
+    --macos-link: 211 100% 50%;
+    --macos-system-blue: 211 100% 50%;
+    --macos-system-blue-secondary: 211 100% 92%;
     
     /* Map to existing tokens for compatibility */
-    --background: var(--ios-background);
-    --foreground: var(--ios-label);
+    --background: var(--macos-background);
+    --foreground: var(--macos-label);
 
-    --card: var(--ios-secondary-background);
-    --card-foreground: var(--ios-label);
+    --card: var(--macos-background);
+    --card-foreground: var(--macos-label);
 
-    --popover: var(--ios-secondary-background);
-    --popover-foreground: var(--ios-label);
+    --popover: var(--macos-background);
+    --popover-foreground: var(--macos-label);
 
-    --primary: var(--ios-tint);
+    --primary: var(--macos-system-blue);
     --primary-foreground: 0 0% 100%;
 
-    --secondary: var(--ios-tertiary-background);
-    --secondary-foreground: var(--ios-label);
+    --secondary: var(--macos-secondary-background);
+    --secondary-foreground: var(--macos-label);
 
-    --muted: var(--ios-secondary-background);
-    --muted-foreground: var(--ios-secondary-label);
+    --muted: var(--macos-tertiary-background);
+    --muted-foreground: var(--macos-secondary-label);
 
-    --accent: var(--ios-tint);
-    --accent-foreground: 0 0% 100%;
+    --accent: var(--macos-system-blue-secondary);
+    --accent-foreground: var(--macos-label);
 
-    --destructive: 0 100% 50%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: var(--ios-separator);
-    --input: var(--ios-separator);
-    --ring: var(--ios-tint);
+    --border: var(--macos-separator);
+    --input: var(--macos-separator);
+    --ring: var(--macos-system-blue);
 
     --radius: 0.75rem;
     
@@ -71,62 +75,59 @@ All colors MUST be HSL.
     --font-serif: 'Merriweather', Georgia, serif;
 
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
   .dark {
-    /* iOS HIG Semantic Colors - Dark Mode */
-    --ios-background: 0 0% 0%;
-    --ios-secondary-background: 240 6% 11%;
-    --ios-tertiary-background: 240 5% 17%;
-    --ios-grouped-background: 0 0% 0%;
-    --ios-label: 0 0% 100%;
-    --ios-secondary-label: 240 5% 92%;
-    --ios-tertiary-label: 240 5% 92%;
-    --ios-separator: 240 7% 33%;
-    --ios-tint: 211 100% 52%;
+    /* macOS System Colors - Dark Mode */
+    --macos-background: 0 0% 12%;
+    --macos-secondary-background: 0 0% 16%;
+    --macos-tertiary-background: 0 0% 19%;
+    --macos-grouped-background: 0 0% 10%;
+    --macos-label: 0 0% 100%;
+    --macos-secondary-label: 0 0% 78%;
+    --macos-tertiary-label: 0 0% 62%;
+    --macos-quaternary-label: 0 0% 46%;
+    --macos-separator: 0 0% 27%;
+    --macos-opaque-separator: 0 0% 22%;
+    --macos-link: 211 100% 60%;
+    --macos-system-blue: 211 100% 60%;
+    --macos-system-blue-secondary: 211 100% 20%;
     
     /* Map to existing tokens for compatibility */
-    --background: var(--ios-background);
-    --foreground: var(--ios-label);
+    --background: var(--macos-background);
+    --foreground: var(--macos-label);
 
-    --card: var(--ios-secondary-background);
-    --card-foreground: var(--ios-label);
+    --card: var(--macos-secondary-background);
+    --card-foreground: var(--macos-label);
 
-    --popover: var(--ios-secondary-background);
-    --popover-foreground: var(--ios-label);
+    --popover: var(--macos-secondary-background);
+    --popover-foreground: var(--macos-label);
 
-    --primary: var(--ios-tint);
-    --primary-foreground: 0 0% 0%;
+    --primary: var(--macos-system-blue);
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: var(--ios-tertiary-background);
-    --secondary-foreground: var(--ios-label);
+    --secondary: var(--macos-tertiary-background);
+    --secondary-foreground: var(--macos-label);
 
-    --muted: var(--ios-secondary-background);
-    --muted-foreground: var(--ios-secondary-label);
+    --muted: var(--macos-tertiary-background);
+    --muted-foreground: var(--macos-secondary-label);
 
-    --accent: var(--ios-tint);
-    --accent-foreground: 0 0% 0%;
+    --accent: var(--macos-system-blue-secondary);
+    --accent-foreground: var(--macos-label);
 
-    --destructive: 0 100% 52%;
+    --destructive: 0 62% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: var(--ios-separator);
-    --input: var(--ios-separator);
-    --ring: var(--ios-tint);
+    --border: var(--macos-separator);
+    --input: var(--macos-separator);
+    --ring: var(--macos-system-blue);
     
     --gradient-primary: linear-gradient(135deg, hsl(221 83% 53%), hsl(262 83% 58%));
     --gradient-hero: linear-gradient(180deg, hsl(220 18% 12%), hsl(220 15% 16%));
@@ -247,12 +248,12 @@ All colors MUST be HSL.
     letter-spacing: 0.066px;
   }
 
-  /* iOS Card Style */
+  /* macOS Card Style */
   .ios-card {
-    @apply bg-card rounded-xl shadow-sm border border-border/50;
+    @apply bg-card rounded-xl shadow-sm border border-border/40;
   }
   
-  /* iOS Grouped List */
+  /* macOS Grouped List */
   .ios-grouped-list {
     @apply bg-transparent space-y-2;
   }
@@ -261,28 +262,28 @@ All colors MUST be HSL.
     @apply bg-card rounded-xl px-4 py-3 border border-border/30;
   }
   
-  /* iOS Button Styles */
+  /* macOS Button Styles */
   .ios-button-primary {
-    @apply bg-primary text-primary-foreground rounded-xl px-4 py-2.5 font-medium transition-all active:scale-95;
+    @apply bg-primary text-primary-foreground rounded-xl px-4 py-2.5 font-medium transition-all active:scale-95 shadow-sm;
   }
   
   .ios-button-secondary {
-    @apply bg-secondary text-secondary-foreground rounded-xl px-4 py-2.5 font-medium transition-all active:scale-95;
+    @apply bg-secondary text-secondary-foreground rounded-xl px-4 py-2.5 font-medium transition-all active:scale-95 border border-border/60;
   }
   
-  /* iOS Input Style */
+  /* macOS Input Style */
   .ios-input {
     @apply bg-card border border-input rounded-xl px-4 py-2.5 text-base focus:ring-2 focus:ring-primary focus:border-transparent transition-all;
   }
   
-  /* iOS Sheet Handle */
+  /* macOS Sheet Handle */
   .ios-sheet-handle {
     @apply w-9 h-1.5 bg-muted-foreground/30 rounded-full mx-auto mb-2;
   }
   
-  /* iOS Translucent Effect */
+  /* macOS Translucent Effect */
   .ios-blur {
-    @apply backdrop-blur-xl bg-background/80;
+    @apply backdrop-blur-2xl bg-background/95;
   }
   
   /* Ensure bold and italic formatting works in published pages */

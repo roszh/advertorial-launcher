@@ -121,6 +121,16 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        macos: {
+          background: "hsl(var(--macos-background))",
+          'secondary-background': "hsl(var(--macos-secondary-background))",
+          'tertiary-background': "hsl(var(--macos-tertiary-background))",
+          label: "hsl(var(--macos-label))",
+          'secondary-label': "hsl(var(--macos-secondary-label))",
+          'tertiary-label': "hsl(var(--macos-tertiary-label))",
+          separator: "hsl(var(--macos-separator))",
+          'system-blue': "hsl(var(--macos-system-blue))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
