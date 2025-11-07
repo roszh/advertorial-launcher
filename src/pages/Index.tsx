@@ -1871,6 +1871,23 @@ const Index = () => {
                     <CollapsibleContent>
                       <SidebarGroupContent className="px-3 py-2 space-y-3">
                         <div>
+                          <Label htmlFor="templateSelect" className="text-xs font-medium">Template</Label>
+                          <Select value={selectedTemplate} onValueChange={setSelectedTemplate as any}>
+                            <SelectTrigger id="templateSelect" className="h-8 mt-1">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="magazine">Magazine</SelectItem>
+                              <SelectItem value="news">News</SelectItem>
+                              <SelectItem value="blog">Blog</SelectItem>
+                              <SelectItem value="listicle">Listicle</SelectItem>
+                              <SelectItem value="story-advertorial">Story Advertorial</SelectItem>
+                              <SelectItem value="personal-story">Personal Story</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div>
                           <Label htmlFor="ctaStyleSelect" className="text-xs font-medium">CTA Style</Label>
                           <Select value={ctaStyle} onValueChange={setCtaStyle as any}>
                             <SelectTrigger id="ctaStyleSelect" className="h-8 mt-1">
