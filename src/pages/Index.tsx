@@ -1611,6 +1611,7 @@ const Index = () => {
                   <TabsList className="h-9">
                     <TabsTrigger value="content" className="text-xs">Content</TabsTrigger>
                     <TabsTrigger value="design" className="text-xs">Design</TabsTrigger>
+                    <TabsTrigger value="settings" className="text-xs">Settings</TabsTrigger>
                   </TabsList>
                   
                   {selectedCountrySetupId && (
@@ -1707,8 +1708,40 @@ const Index = () => {
                 </div>
               </div>
 
-              <TabsContent value="content" className="m-0 space-y-6 p-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <TabsContent value="content" className="m-0 space-y-4 p-6">
+                <Collapsible defaultOpen={true}>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-sm font-medium text-foreground/90">CTA Configuration</label>
+                    <CollapsibleTrigger asChild>
+                      <Button variant="ghost" size="sm" className="h-7 px-2">
+                        <ChevronDown className="h-4 w-4" />
+                      </Button>
+                    </CollapsibleTrigger>
+                  </div>
+                  <CollapsibleContent>
+                    <div className="space-y-2">
+                      <Input
+                        placeholder="https://your-offer.com"
+                        value={ctaUrl}
+                        onChange={(e) => setCTAUrl(e.target.value)}
+                        className="h-9 bg-background border-border/50 focus:border-primary transition-colors text-sm"
+                      />
+                      <p className="text-xs text-muted-foreground/70">
+                        This URL will be used for all CTA buttons on the page
+                      </p>
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+                
+                <div className="pt-4 border-t border-border/50">
+                  <p className="text-xs text-muted-foreground/70 mb-3">
+                    📝 Edit page metadata and organization in the <span className="font-semibold text-foreground">Settings</span> tab
+                  </p>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="settings" className="m-0 space-y-6 p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-foreground/90">Page Title</label>
                     <Input
@@ -1716,13 +1749,12 @@ const Index = () => {
                       value={pageTitle}
                       onChange={(e) => {
                         setPageTitle(e.target.value);
-                        // Auto-update slug only if it hasn't been manually customized
                         const currentGeneratedSlug = generateSlug(pageTitle, false);
                         if (!pageSlug || pageSlug === currentGeneratedSlug || pageSlug.startsWith(currentGeneratedSlug + "-")) {
                           setPageSlug(generateSlug(e.target.value, false));
                         }
                       }}
-                      className="h-10 bg-background border-border/50 focus:border-primary transition-colors"
+                      className="h-9 bg-background border-border/50 focus:border-primary transition-colors text-sm"
                     />
                   </div>
                   <div className="space-y-2">
@@ -1731,35 +1763,26 @@ const Index = () => {
                       placeholder="your-page-url"
                       value={pageSlug}
                       onChange={(e) => setPageSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/^-|-$/g, ''))}
-                      className="h-10 bg-background border-border/50 focus:border-primary transition-colors font-mono text-sm"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground/90">CTA URL</label>
-                    <Input
-                      placeholder="https://your-offer.com"
-                      value={ctaUrl}
-                      onChange={(e) => setCTAUrl(e.target.value)}
-                      className="h-10 bg-background border-border/50 focus:border-primary transition-colors"
+                      className="h-9 bg-background border-border/50 focus:border-primary transition-colors font-mono text-sm"
                     />
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-foreground/90">Tags</label>
-                    <div className="flex items-center gap-2 flex-wrap min-h-[40px] p-3 rounded-lg border border-border/50 bg-background/50">
+                    <div className="flex items-center gap-2 flex-wrap min-h-[36px] p-2.5 rounded-lg border border-border/50 bg-background/50">
                       {selectedTags.map(tagId => {
                         const tag = availableTags.find(t => t.id === tagId);
                         return tag ? (
                           <Badge 
                             key={tagId}
                             style={{backgroundColor: tag.color, color: 'white'}}
-                            className="cursor-pointer text-xs px-2.5 py-1 rounded-md hover:opacity-80 transition-opacity"
+                            className="cursor-pointer text-xs px-2 py-0.5 rounded-md hover:opacity-80 transition-opacity"
                             onClick={() => setSelectedTags(prev => prev.filter(id => id !== tagId))}
                           >
                             {tag.name}
-                            <X className="ml-1.5 h-3 w-3" />
+                            <X className="ml-1 h-3 w-3" />
                           </Badge>
                         ) : null;
                       })}
@@ -1773,12 +1796,12 @@ const Index = () => {
                           }
                         }}
                       >
-                        <SelectTrigger className="h-8 w-[130px] text-xs border-dashed">
+                        <SelectTrigger className="h-7 w-[120px] text-xs border-dashed">
                           <SelectValue placeholder="Add tag..." />
                         </SelectTrigger>
                         <SelectContent className="bg-background z-50">
                           <SelectItem value="create-new" className="text-xs font-semibold text-primary">
-                            <Plus className="inline h-3.5 w-3.5 mr-1.5" />
+                            <Plus className="inline h-3 w-3 mr-1" />
                             Create new tag
                           </SelectItem>
                           {availableTags.length > 0 && <div className="h-px bg-border my-1" />}
@@ -1787,7 +1810,7 @@ const Index = () => {
                             .map(tag => (
                               <SelectItem key={tag.id} value={tag.id} className="text-xs">
                                 <div className="flex items-center gap-2">
-                                  <div className="w-2.5 h-2.5 rounded-full" style={{backgroundColor: tag.color}} />
+                                  <div className="w-2 h-2 rounded-full" style={{backgroundColor: tag.color}} />
                                   {tag.name}
                                 </div>
                               </SelectItem>
@@ -1800,14 +1823,14 @@ const Index = () => {
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-foreground/90 flex items-center gap-2">
                       Country Setup
-                      <Badge variant="destructive" className="text-xs px-2 py-0.5 font-medium">Required</Badge>
+                      <Badge variant="destructive" className="text-[10px] px-1.5 py-0 font-medium">Required</Badge>
                     </label>
                     <Select 
                       value={selectedCountrySetupId} 
                       onValueChange={setSelectedCountrySetupId}
                     >
                       <SelectTrigger className={cn(
-                        "h-10 bg-background border-border/50 focus:border-primary transition-colors",
+                        "h-9 bg-background border-border/50 focus:border-primary transition-colors text-sm",
                         !selectedCountrySetupId && "border-red-500/50 bg-red-50/5"
                       )}>
                         <SelectValue placeholder="Select Country Setup..." />
@@ -1836,7 +1859,7 @@ const Index = () => {
                             const hasScripts = scriptCount > 0;
                             
                             return (
-                              <SelectItem key={setup.id} value={setup.id}>
+                              <SelectItem key={setup.id} value={setup.id} className="text-sm">
                                 <div className="flex items-center justify-between w-full gap-2">
                                   <span>{setup.name}</span>
                                   {!hasScripts ? (
@@ -1855,8 +1878,8 @@ const Index = () => {
                         )}
                       </SelectContent>
                     </Select>
-                    <p className="text-xs text-muted-foreground/70 mt-1.5 leading-relaxed">
-                      Choose which tracking scripts to load for this page. Configure Country Setups in Settings.
+                    <p className="text-xs text-muted-foreground/70 mt-1 leading-relaxed">
+                      Choose which tracking scripts to load for this page
                     </p>
                   </div>
                 </div>
