@@ -1903,7 +1903,7 @@ const Index = () => {
             {/* Main Content Area */}
             <div className="flex-1 flex flex-col min-h-0">
               <div className={cn(
-                "border-b bg-background/95 backdrop-blur sticky top-0 z-50 transition-transform duration-300 ease-in-out",
+                "border-b bg-background sticky top-0 z-50 transition-transform duration-300 ease-in-out",
                 !isHeaderVisible && "-translate-y-full"
               )}>
                 <div className="px-4 py-3">
@@ -2040,9 +2040,11 @@ const Index = () => {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
 
               {/* Preview Area - Scrollable Content */}
-              <div className="flex-1 overflow-y-auto">
+              <div className="flex-1 overflow-y-auto overscroll-contain">
                 <div className="container mx-auto px-4 pb-24" style={{
                   maxWidth: previewMode === "mobile" ? "425px" : "100%",
                   transition: "max-width 0.3s ease"
