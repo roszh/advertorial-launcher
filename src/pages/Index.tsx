@@ -11,8 +11,16 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
 import { ImageUpload } from "@/components/ImageUpload";
 import { MagazineTemplate } from "@/components/templates/MagazineTemplate";
 import { NewsTemplate } from "@/components/templates/NewsTemplate";
@@ -26,7 +34,28 @@ import { HtmlEditor } from "@/components/HtmlEditor";
 import { SectionTemplateModal } from "@/components/SectionTemplateModal";
 import { toast } from "@/hooks/use-toast";
 import { stripHtmlTags, cn } from "@/lib/utils";
-import { Loader2, Save, Globe, Edit2, Plus, Sparkles, Code, X, Undo2, ChevronDown } from "lucide-react";
+import { 
+  Loader2, 
+  Save, 
+  Globe, 
+  Edit2, 
+  Plus, 
+  Sparkles, 
+  Code, 
+  X, 
+  Undo2, 
+  ChevronDown, 
+  Settings, 
+  Link as LinkIcon, 
+  Palette,
+  Monitor,
+  Smartphone,
+  AlertTriangle,
+  FileText,
+  Newspaper,
+  BookOpen,
+  ListOrdered
+} from "lucide-react";
 
 interface Section {
   id?: string;
@@ -123,6 +152,9 @@ const Index = () => {
   }>>([]);
   const [selectedSetupDetails, setSelectedSetupDetails] = useState<any>(null);
   const [isPublished, setIsPublished] = useState(false);
+  const [pageSettingsOpen, setPageSettingsOpen] = useState(true);
+  const [ctaConfigOpen, setCtaConfigOpen] = useState(false);
+  const [designOptionsOpen, setDesignOptionsOpen] = useState(false);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -1597,22 +1629,283 @@ const Index = () => {
 
   if (isEditorMode && analysisResult) {
     return (
-      <div className="min-h-screen bg-background">
-        <Navigation user={user} />
-        
-        <div className={cn(
-          "border-b bg-background/95 backdrop-blur sticky top-0 z-50 transition-transform duration-300 ease-in-out",
-          !isHeaderVisible && "-translate-y-full"
-        )}>
-          <div className="container py-2">
-            <Tabs defaultValue="content" className="w-full">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <TabsList className="h-9">
-                    <TabsTrigger value="content" className="text-xs">Content</TabsTrigger>
-                    <TabsTrigger value="design" className="text-xs">Design</TabsTrigger>
-                    <TabsTrigger value="settings" className="text-xs">Settings</TabsTrigger>
-                  </TabsList>
+      <SidebarProvider defaultOpen={true}>
+        <div className="min-h-screen w-full flex flex-col bg-background">
+          {/* Top Navigation */}
+          <Navigation user={user} />
+          
+          {/* Main Layout with Sidebar */}
+          <div className="flex flex-1">
+            {/* Sidebar */}
+            <Sidebar className="border-r">
+              <div className="p-4 border-b flex items-center justify-between">
+                <h2 className="font-semibold text-sm">Editor Settings</h2>
+                <SidebarTrigger className="lg:hidden" />
+              </div>
+              
+              <SidebarContent>
+                {/* Page Settings */}
+                <Collapsible open={pageSettingsOpen} onOpenChange={setPageSettingsOpen}>
+                  <SidebarGroup>
+                    <CollapsibleTrigger className="w-full">
+                      <SidebarGroupLabel className="flex items-center justify-between cursor-pointer hover:bg-accent/50 px-3 py-2 rounded-md transition-colors">
+                        <div className="flex items-center gap-2">
+                          <Settings className="h-4 w-4" />
+                          <span>Page Settings</span>
+                        </div>
+                        <ChevronDown className={cn("h-4 w-4 transition-transform", pageSettingsOpen && "rotate-180")} />
+                      </SidebarGroupLabel>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <SidebarGroupContent className="px-3 py-2 space-y-3">
+                        <div>
+                          <Label htmlFor="pageTitle" className="text-xs font-medium">Page Title</Label>
+                          <Input
+                            id="pageTitle"
+                            type="text"
+                            placeholder="Enter page title"
+                            value={pageTitle}
+                            onChange={(e) => {
+                              setPageTitle(e.target.value);
+                              const currentGeneratedSlug = generateSlug(pageTitle, false);
+                              if (!pageSlug || pageSlug === currentGeneratedSlug || pageSlug.startsWith(currentGeneratedSlug + "-")) {
+                                setPageSlug(generateSlug(e.target.value, false));
+                              }
+                            }}
+                            className="h-8 mt-1"
+                          />
+                        </div>
+
+                        <div>
+                          <Label htmlFor="slug" className="text-xs font-medium">URL Slug</Label>
+                          <Input
+                            id="slug"
+                            type="text"
+                            placeholder="auto-generated"
+                            value={pageSlug}
+                            onChange={(e) => setPageSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/^-|-$/g, ''))}
+                            className="h-8 mt-1 font-mono"
+                          />
+                        </div>
+
+                        <div>
+                          <Label htmlFor="tags" className="text-xs font-medium">Tags</Label>
+                          <div className="flex items-center gap-2 flex-wrap min-h-[32px] p-2 mt-1 rounded-md border bg-background/50">
+                            {selectedTags.map(tagId => {
+                              const tag = availableTags.find(t => t.id === tagId);
+                              return tag ? (
+                                <Badge 
+                                  key={tagId}
+                                  style={{backgroundColor: tag.color, color: 'white'}}
+                                  className="cursor-pointer text-xs px-2 py-0.5 rounded hover:opacity-80 transition-opacity"
+                                  onClick={() => setSelectedTags(prev => prev.filter(id => id !== tagId))}
+                                >
+                                  {tag.name}
+                                  <X className="ml-1 h-3 w-3" />
+                                </Badge>
+                              ) : null;
+                            })}
+                            <Select 
+                              value="" 
+                              onValueChange={(val) => {
+                                if (val === "create-new") {
+                                  setShowNewTagDialog(true);
+                                } else if (val && !selectedTags.includes(val)) {
+                                  setSelectedTags([...selectedTags, val]);
+                                }
+                              }}
+                            >
+                              <SelectTrigger className="h-6 w-[100px] text-xs border-dashed">
+                                <SelectValue placeholder="Add..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="create-new" className="text-xs font-semibold text-primary">
+                                  <Plus className="inline h-3 w-3 mr-1" />
+                                  Create new
+                                </SelectItem>
+                                {availableTags.length > 0 && <div className="h-px bg-border my-1" />}
+                                {availableTags
+                                  .filter(tag => !selectedTags.includes(tag.id))
+                                  .map(tag => (
+                                    <SelectItem key={tag.id} value={tag.id} className="text-xs">
+                                      <div className="flex items-center gap-2">
+                                        <div className="w-2 h-2 rounded-full" style={{backgroundColor: tag.color}} />
+                                        {tag.name}
+                                      </div>
+                                    </SelectItem>
+                                  ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+
+                        <div>
+                          <Label htmlFor="countrySetup" className="text-xs font-medium flex items-center gap-1">
+                            Country Setup
+                            {!selectedCountrySetupId && (
+                              <Badge variant="destructive" className="text-[10px] px-1 py-0">
+                                Required
+                              </Badge>
+                            )}
+                          </Label>
+                          <Select
+                            value={selectedCountrySetupId || ""}
+                            onValueChange={setSelectedCountrySetupId}
+                          >
+                            <SelectTrigger id="countrySetup" className={cn(
+                              "h-8 mt-1",
+                              !selectedCountrySetupId && "border-red-500/50"
+                            )}>
+                              <SelectValue placeholder="Select setup" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {availableCountrySetups.length === 0 ? (
+                                <div className="p-3 text-xs text-muted-foreground">
+                                  No setups. <Button variant="link" className="p-0 h-auto text-xs" onClick={() => navigate("/settings")}>Create one</Button>
+                                </div>
+                              ) : (
+                                availableCountrySetups.map(setup => {
+                                  const scriptCount = [
+                                    setup.google_analytics_id,
+                                    setup.facebook_pixel_id,
+                                    setup.triplewhale_token,
+                                    setup.microsoft_clarity_id
+                                  ].filter(Boolean).length;
+                                  
+                                  return (
+                                    <SelectItem key={setup.id} value={setup.id} className="text-xs">
+                                      <div className="flex items-center justify-between w-full gap-2">
+                                        <span>{setup.name}</span>
+                                        {scriptCount > 0 && (
+                                          <Badge variant="secondary" className="text-[10px] px-1 py-0">
+                                            {scriptCount}
+                                          </Badge>
+                                        )}
+                                      </div>
+                                    </SelectItem>
+                                  );
+                                })
+                              )}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </SidebarGroupContent>
+                    </CollapsibleContent>
+                  </SidebarGroup>
+                </Collapsible>
+
+                {/* CTA Configuration */}
+                <Collapsible open={ctaConfigOpen} onOpenChange={setCtaConfigOpen}>
+                  <SidebarGroup>
+                    <CollapsibleTrigger className="w-full">
+                      <SidebarGroupLabel className="flex items-center justify-between cursor-pointer hover:bg-accent/50 px-3 py-2 rounded-md transition-colors">
+                        <div className="flex items-center gap-2">
+                          <LinkIcon className="h-4 w-4" />
+                          <span>CTA Configuration</span>
+                        </div>
+                        <ChevronDown className={cn("h-4 w-4 transition-transform", ctaConfigOpen && "rotate-180")} />
+                      </SidebarGroupLabel>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <SidebarGroupContent className="px-3 py-2 space-y-3">
+                        <div>
+                          <Label htmlFor="ctaUrl" className="text-xs font-medium">CTA URL</Label>
+                          <Input
+                            id="ctaUrl"
+                            type="url"
+                            placeholder="https://example.com"
+                            value={ctaUrl}
+                            onChange={(e) => setCTAUrl(e.target.value)}
+                            className="h-8 mt-1"
+                          />
+                        </div>
+                      </SidebarGroupContent>
+                    </CollapsibleContent>
+                  </SidebarGroup>
+                </Collapsible>
+
+                {/* Design Options */}
+                <Collapsible open={designOptionsOpen} onOpenChange={setDesignOptionsOpen}>
+                  <SidebarGroup>
+                    <CollapsibleTrigger className="w-full">
+                      <SidebarGroupLabel className="flex items-center justify-between cursor-pointer hover:bg-accent/50 px-3 py-2 rounded-md transition-colors">
+                        <div className="flex items-center gap-2">
+                          <Palette className="h-4 w-4" />
+                          <span>Design Options</span>
+                        </div>
+                        <ChevronDown className={cn("h-4 w-4 transition-transform", designOptionsOpen && "rotate-180")} />
+                      </SidebarGroupLabel>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <SidebarGroupContent className="px-3 py-2 space-y-3">
+                        <div>
+                          <Label className="text-xs font-medium">Template</Label>
+                          <div className="grid grid-cols-2 gap-2 mt-1">
+                            {[
+                              { key: 'magazine', icon: Newspaper, label: 'Magazine' },
+                              { key: 'news', icon: FileText, label: 'News' },
+                              { key: 'blog', icon: BookOpen, label: 'Blog' },
+                              { key: 'listicle', icon: ListOrdered, label: 'Listicle' }
+                            ].map(({ key, icon: Icon, label }) => (
+                              <Button
+                                key={key}
+                                variant={selectedTemplate === key ? "default" : "outline"}
+                                onClick={() => setSelectedTemplate(key as any)}
+                                size="sm"
+                                className="h-auto py-2 flex flex-col items-center gap-1"
+                              >
+                                <Icon className="h-4 w-4" />
+                                <span className="text-xs">{label}</span>
+                              </Button>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div>
+                          <Label htmlFor="ctaStyleSelect" className="text-xs font-medium">CTA Style</Label>
+                          <Select value={ctaStyle} onValueChange={setCtaStyle as any}>
+                            <SelectTrigger id="ctaStyleSelect" className="h-8 mt-1">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="ctaAmazon">Amazon</SelectItem>
+                              <SelectItem value="ctaUrgent">Urgent</SelectItem>
+                              <SelectItem value="ctaPremium">Premium</SelectItem>
+                              <SelectItem value="ctaTrust">Trust</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div>
+                          <Label className="text-xs font-medium">Sticky CTA ({stickyCtaThreshold}%)</Label>
+                          <div className="pt-2">
+                            <input
+                              type="range"
+                              min="0"
+                              max="100"
+                              step="5"
+                              value={stickyCtaThreshold}
+                              onChange={(e) => setStickyCtaThreshold(Number(e.target.value))}
+                              className="w-full h-2 bg-border rounded-lg appearance-none cursor-pointer accent-primary"
+                            />
+                          </div>
+                        </div>
+                      </SidebarGroupContent>
+                    </CollapsibleContent>
+                  </SidebarGroup>
+                </Collapsible>
+              </SidebarContent>
+            </Sidebar>
+
+            {/* Main Content Area */}
+            <div className="flex-1 flex flex-col">
+              <div className={cn(
+                "border-b bg-background/95 backdrop-blur sticky top-0 z-50 transition-transform duration-300 ease-in-out",
+                !isHeaderVisible && "-translate-y-full"
+              )}>
+                <div className="px-4 py-3">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-2">
                   
                   {selectedCountrySetupId && (
                     <Badge variant="outline" className="text-xs flex items-center gap-1">
@@ -2012,7 +2305,22 @@ const Index = () => {
           </div>
         </div>
 
-        {showHtmlEditor && (
+        <div
+          className="container mx-auto px-4 pb-24"
+          style={{
+            maxWidth: previewMode === "mobile" ? "425px" : "100%",
+            transition: "max-width 0.3s ease"
+          }}
+        >
+          {renderTemplate()}
+        </div>
+          </div>
+        </div>
+      </SidebarProvider>
+    );
+  }
+
+  {showHtmlEditor && (
           <HtmlEditor
             sections={analysisResult.sections}
             onSave={(newSections) => {
