@@ -2091,43 +2091,7 @@ const Index = () => {
           </SheetContent>
         </Sheet>
 
-        {editingSectionIndex === null && (
-          <>
-            <div className={cn(
-              "mx-auto transition-all duration-300",
-              previewMode === "mobile" ? "max-w-[375px]" : "w-full"
-            )}>
-              {renderTemplate()}
-            </div>
-            <div className="container py-8">
-              <div className="flex gap-2 justify-center">
-                <Button
-                  variant="outline"
-                  onClick={() => setEditingSectionIndex(0)}
-                >
-                  <Edit2 className="h-4 w-4 mr-2" />
-                  Edit Content
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => setShowTemplateModal(true)}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Section
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => setShowAddMoreDialog(true)}
-                >
-                  <Sparkles className="h-4 w-4 mr-2" />
-                  Parse & Add More Text
-                </Button>
-              </div>
-            </div>
-          </>
-        )}
-
-        <StickyCtaButton 
+        <StickyCtaButton
           text={analysisResult.cta.primary} 
           onClick={() => ctaUrl && window.open(ctaUrl, "_blank")} 
         />
