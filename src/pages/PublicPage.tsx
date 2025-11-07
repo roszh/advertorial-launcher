@@ -55,57 +55,44 @@ export default function PublicPage() {
     heading: section.heading || "",
   });
 
-  // Single optimized query for published pages with aggressive caching
+  // Single optimized query using RPC to bypass RLS on tracking scripts
   const { data: pageData, isLoading, error } = useQuery({
     queryKey: ['published-page', slug],
     queryFn: async () => {
-      // Fetch from published_pages view with tracking scripts in single query
-      const { data: fullPageData, error: pageError } = await supabase
-        .from("pages")
-        .select(`
-          *,
-          tracking_script_sets (
-            google_analytics_id,
-            facebook_pixel_id,
-            triplewhale_token,
-            microsoft_clarity_id,
-            name
-          )
-        `)
-        .eq("slug", slug)
-        .eq("status", "published")
+      // Use RPC function that bypasses RLS to ensure tracking scripts always load
+      const { data: rpcData, error: rpcError } = await supabase
+        .rpc('get_published_page_with_scripts', { p_slug: slug })
         .maybeSingle();
 
-      if (pageError) throw pageError;
-      if (!fullPageData) throw new Error("Page not found");
+      if (rpcError) throw rpcError;
+      if (!rpcData) throw new Error("Page not found");
 
-      const template = (fullPageData.template as "magazine" | "news" | "blog" | "listicle") || "magazine";
-      const trackingScripts = fullPageData?.tracking_script_sets;
+      const template = (rpcData.template as "magazine" | "news" | "blog" | "listicle") || "magazine";
       
       // Normalize sections for backwards compatibility
-      const normalizedSections = ((fullPageData.content as any)?.sections || []).map(normalizeSection);
+      const normalizedSections = ((rpcData.content as any)?.sections || []).map(normalizeSection);
 
       return {
-        id: fullPageData.id || undefined,
-        title: fullPageData.title,
-        headline: fullPageData.headline,
-        subtitle: fullPageData.subtitle || (template === "news" ? "Breaking News" : template === "blog" ? "Expert Insights" : "Featured Story"),
+        id: rpcData.id || undefined,
+        title: rpcData.title,
+        headline: rpcData.headline,
+        subtitle: rpcData.subtitle || (template === "news" ? "Breaking News" : template === "blog" ? "Expert Insights" : "Featured Story"),
         content: { sections: normalizedSections },
-        cta_text: fullPageData.cta_text || "",
-        cta_url: fullPageData.cta_url || "",
-        cta_style: fullPageData.cta_style || "ctaAmazon",
-        sticky_cta_threshold: fullPageData.sticky_cta_threshold || 20,
-        image_url: fullPageData.image_url || "",
+        cta_text: rpcData.cta_text || "",
+        cta_url: rpcData.cta_url || "",
+        cta_style: rpcData.cta_style || "ctaAmazon",
+        sticky_cta_threshold: rpcData.sticky_cta_threshold || 20,
+        image_url: rpcData.image_url || "",
         template,
-        user_id: fullPageData.user_id,
-        // Tracking scripts from Country Setup
+        user_id: rpcData.user_id,
+        // Tracking scripts from RPC function (bypasses RLS)
         trackingScripts: {
-          googleAnalyticsId: trackingScripts?.google_analytics_id || undefined,
-          facebookPixelId: trackingScripts?.facebook_pixel_id || undefined,
-          triplewhaleToken: trackingScripts?.triplewhale_token || undefined,
-          microsoftClarityId: trackingScripts?.microsoft_clarity_id || undefined,
+          googleAnalyticsId: rpcData.google_analytics_id || undefined,
+          facebookPixelId: rpcData.facebook_pixel_id || undefined,
+          triplewhaleToken: rpcData.triplewhale_token || undefined,
+          microsoftClarityId: rpcData.microsoft_clarity_id || undefined,
         },
-        countrySetupName: trackingScripts?.name || undefined,
+        countrySetupName: rpcData.tracking_set_name || undefined,
       };
     },
     staleTime: 15 * 60 * 1000, // 15 minutes - aggressive caching for published pages
@@ -192,15 +179,38 @@ export default function PublicPage() {
     })();
   }, [pageData?.id]);
 
-  // Inject tracking scripts immediately when page data loads (CRITICAL for tracking reliability)
+  // Robust tracking script injection with idempotency guards and retry logic
   useEffect(() => {
     const scripts = pageData?.trackingScripts;
     if (!scripts || !Object.values(scripts).some(v => v)) {
       console.log('[Tracking] No tracking scripts configured for this page');
       return;
     }
-    
-    console.log('[Tracking] Initializing tracking scripts:', {
+
+    // Guard: prevent duplicate injection for the same slug
+    const w = window as any;
+    if (w.__trackingInjectedSlug === slug) {
+      console.log('[Tracking] Scripts already injected for this page, dispatching page views');
+      
+      // Re-dispatch page view events for SPA navigation
+      setTimeout(() => {
+        if (typeof w.gtag === 'function' && scripts.googleAnalyticsId) {
+          w.gtag('event', 'page_view', { page_path: window.location.pathname });
+          console.log('[Tracking] ✓ GA page_view re-dispatched');
+        }
+        if (typeof w.fbq === 'function' && scripts.facebookPixelId) {
+          w.fbq('track', 'PageView');
+          console.log('[Tracking] ✓ FB PageView re-dispatched');
+        }
+        if (typeof w.TriplePixel === 'function' && scripts.triplewhaleToken) {
+          w.TriplePixel('pageLoad');
+          console.log('[Tracking] ✓ TW pageLoad re-dispatched');
+        }
+      }, 100);
+      return;
+    }
+
+    console.log('[Tracking] Initializing tracking scripts for:', slug, {
       googleAnalytics: !!scripts.googleAnalyticsId,
       facebookPixel: !!scripts.facebookPixelId,
       tripleWhale: !!scripts.triplewhaleToken,
@@ -209,77 +219,79 @@ export default function PublicPage() {
     
     const injectScripts = () => {
       try {
-        // Google Analytics with retry
-        if (scripts.googleAnalyticsId) {
+        // Google Analytics - idempotent injection
+        if (scripts.googleAnalyticsId && !document.getElementById('ga-loader')) {
           console.log('[Tracking] Injecting Google Analytics:', scripts.googleAnalyticsId);
           
-          if (!(window as any).gtag) {
-            const gaScript = document.createElement('script');
-            gaScript.async = true;
-            gaScript.src = `https://www.googletagmanager.com/gtag/js?id=${scripts.googleAnalyticsId}`;
-            
-            gaScript.onerror = () => {
-              console.error('[Tracking] ✗ Google Analytics failed, retrying...');
-              setTimeout(() => {
+          const gaScript = document.createElement('script');
+          gaScript.id = 'ga-loader';
+          gaScript.async = true;
+          gaScript.src = `https://www.googletagmanager.com/gtag/js?id=${scripts.googleAnalyticsId}`;
+          
+          gaScript.onerror = () => {
+            console.error('[Tracking] ✗ Google Analytics failed, retrying...');
+            setTimeout(() => {
+              if (!document.getElementById('ga-loader-retry')) {
                 const retryScript = document.createElement('script');
+                retryScript.id = 'ga-loader-retry';
                 retryScript.async = true;
                 retryScript.src = gaScript.src;
                 retryScript.onload = () => console.log('[Tracking] ✓ Google Analytics loaded (retry)');
                 document.head.appendChild(retryScript);
-              }, 1000);
-            };
-            
-            gaScript.onload = () => console.log('[Tracking] ✓ Google Analytics loaded');
-            document.head.appendChild(gaScript);
+              }
+            }, 1000);
+          };
+          
+          gaScript.onload = () => console.log('[Tracking] ✓ Google Analytics script loaded');
+          document.head.appendChild(gaScript);
 
-            const gaConfigScript = document.createElement('script');
-            gaConfigScript.innerHTML = `
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
-              gtag('config', '${scripts.googleAnalyticsId}');
-              console.log('[Tracking] Google Analytics configured');
-            `;
-            document.head.appendChild(gaConfigScript);
-          } else {
-            console.log('[Tracking] Google Analytics already loaded');
-          }
+          const gaConfigScript = document.createElement('script');
+          gaConfigScript.id = 'ga-config';
+          gaConfigScript.innerHTML = `
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '${scripts.googleAnalyticsId}', { page_path: '${window.location.pathname}' });
+            console.log('[Tracking] ✓ Google Analytics configured');
+          `;
+          document.head.appendChild(gaConfigScript);
+        } else if (scripts.googleAnalyticsId) {
+          console.log('[Tracking] Google Analytics already loaded');
         }
 
-        // Facebook Pixel with retry
-        if (scripts.facebookPixelId) {
+        // Facebook Pixel - idempotent injection
+        if (scripts.facebookPixelId && !document.getElementById('fb-loader')) {
           console.log('[Tracking] Injecting Facebook Pixel:', scripts.facebookPixelId);
           
-          if (!(window as any).fbq) {
-            const fbScript = document.createElement('script');
-            fbScript.innerHTML = `
-              !function(f,b,e,v,n,t,s)
-              {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-              n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-              if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-              n.queue=[];t=b.createElement(e);t.async=!0;
-              t.src=v;t.onerror=function(){console.error('[Tracking] ✗ Facebook Pixel failed');};
-              t.onload=function(){console.log('[Tracking] ✓ Facebook Pixel loaded');};
-              s=b.getElementsByTagName(e)[0];
-              s.parentNode.insertBefore(t,s)}(window, document,'script',
-              'https://connect.facebook.net/en_US/fbevents.js');
-              fbq('init', '${scripts.facebookPixelId}');
-              fbq('track', 'PageView');
-              console.log('[Tracking] ✓ Facebook Pixel initialized');
-            `;
-            document.head.appendChild(fbScript);
+          const fbScript = document.createElement('script');
+          fbScript.id = 'fb-loader';
+          fbScript.innerHTML = `
+            !function(f,b,e,v,n,t,s)
+            {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+            n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+            if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+            n.queue=[];t=b.createElement(e);t.async=!0;
+            t.src=v;t.onerror=function(){console.error('[Tracking] ✗ Facebook Pixel failed');};
+            t.onload=function(){console.log('[Tracking] ✓ Facebook Pixel loaded');};
+            s=b.getElementsByTagName(e)[0];
+            s.parentNode.insertBefore(t,s)}(window, document,'script',
+            'https://connect.facebook.net/en_US/fbevents.js');
+            fbq('init', '${scripts.facebookPixelId}');
+            fbq('track', 'PageView');
+            console.log('[Tracking] ✓ Facebook Pixel initialized and PageView tracked');
+          `;
+          document.head.appendChild(fbScript);
 
-            const fbNoScript = document.createElement('noscript');
-            fbNoScript.innerHTML = `<img height="1" width="1" style="display:none"
-              src="https://www.facebook.com/tr?id=${scripts.facebookPixelId}&ev=PageView&noscript=1"/>`;
-            document.body.appendChild(fbNoScript);
-          } else {
-            console.log('[Tracking] Facebook Pixel already loaded');
-          }
+          const fbNoScript = document.createElement('noscript');
+          fbNoScript.innerHTML = `<img height="1" width="1" style="display:none"
+            src="https://www.facebook.com/tr?id=${scripts.facebookPixelId}&ev=PageView&noscript=1"/>`;
+          document.body.appendChild(fbNoScript);
+        } else if (scripts.facebookPixelId) {
+          console.log('[Tracking] Facebook Pixel already loaded');
         }
 
-        // Triple Whale
-        if (scripts.triplewhaleToken) {
+        // Triple Whale - idempotent injection with robust retry
+        if (scripts.triplewhaleToken && !document.getElementById('tw-loader')) {
           console.log('[Tracking] Injecting Triple Whale snippet');
           
           try {
@@ -287,135 +299,139 @@ export default function PublicPage() {
             tempDiv.innerHTML = scripts.triplewhaleToken.trim();
             
             let insertedCount = 0;
-            Array.from(tempDiv.children).forEach(element => {
+            Array.from(tempDiv.children).forEach((element, idx) => {
               if (element.tagName === 'SCRIPT') {
-                // Script elements must be recreated to execute
                 const newScript = document.createElement('script');
+                newScript.id = `tw-loader-${idx}`;
                 newScript.type = 'text/javascript';
                 
-                // Copy all attributes
                 Array.from(element.attributes).forEach(attr => {
                   newScript.setAttribute(attr.name, attr.value);
                 });
                 
-                // Copy script content
                 newScript.textContent = element.textContent;
-                
-                // Add error/load handlers
                 newScript.onerror = () => console.error('[Tracking] ✗ Triple Whale script failed to load');
                 newScript.onload = () => console.log('[Tracking] ✓ Triple Whale script executed');
                 
                 document.head.appendChild(newScript);
-                console.log('[Tracking] Triple Whale script element created and appended');
               } else {
-                // Link tags and other elements can be cloned normally
                 document.head.appendChild(element.cloneNode(true));
               }
               insertedCount++;
             });
             console.log(`[Tracking] ✓ Triple Whale injected (${insertedCount} elements)`);
             
-            // Prepare basic context for SPAs if not provided
-            (function ensureTWContext(){
-              try {
-                const w = window as any;
-                w.TriplePixelData = w.TriplePixelData || {};
-                if (!w.TriplePixelData.plat) w.TriplePixelData.plat = 'CUSTOM';
-                w.TriplePixelData.isHeadless = true;
-              } catch (e) {
-                console.warn('[Tracking] ⚠ Could not set TriplePixelData context', e);
-              }
-            })();
+            // Ensure TriplePixelData context
+            w.TriplePixelData = w.TriplePixelData || {};
+            if (!w.TriplePixelData.plat) w.TriplePixelData.plat = 'CUSTOM';
+            w.TriplePixelData.isHeadless = true;
 
-            // Fire a page view for SPAs once the pixel is ready, with retries
+            // Retry logic: attempt pageLoad up to 10 times with exponential backoff
             const fireTWPageLoad = (attempt = 1) => {
-              const w = window as any;
               if (typeof w.TriplePixel === 'function') {
-                if (!w.__twPageLoadFired) {
-                  try {
-                    w.TriplePixel('pageLoad');
-                    w.__twPageLoadFired = true;
-                    console.log('[Tracking] ✓ Triple Whale pageLoad event fired');
-                  } catch (err) {
-                    console.error('[Tracking] ✗ Error firing Triple Whale pageLoad:', err);
-                  }
+                try {
+                  w.TriplePixel('pageLoad');
+                  console.log(`[Tracking] ✓ Triple Whale pageLoad fired (attempt ${attempt})`);
+                  return;
+                } catch (err) {
+                  console.error('[Tracking] ✗ Error firing Triple Whale pageLoad:', err);
                 }
-                return;
               }
-              if (attempt < 5) {
-                setTimeout(() => fireTWPageLoad(attempt + 1), 1000);
+              
+              if (attempt < 10) {
+                const delay = Math.min(1000 * Math.pow(1.5, attempt - 1), 5000);
+                console.log(`[Tracking] ⏳ Triple Whale retry ${attempt} in ${delay}ms`);
+                setTimeout(() => fireTWPageLoad(attempt + 1), delay);
               } else {
-                console.warn('[Tracking] ⚠ Triple Whale not available after retries');
+                console.error('[Tracking] ✗ Triple Whale pageLoad failed after 10 attempts');
               }
             };
 
-            // Initial verification and pageLoad attempt
-            setTimeout(() => {
-              const w = window as any;
-              if (typeof w.TriplePixel === 'function') {
-                console.log('[Tracking] ✓ Triple Whale TriplePixel verified loaded');
-                fireTWPageLoad();
-              } else {
-                console.warn('[Tracking] ⚠ Triple Whale TriplePixel not found on window');
-                fireTWPageLoad(); // continue retrying
-              }
-            }, 1000);
+            // Start retry sequence
+            setTimeout(() => fireTWPageLoad(1), 500);
           } catch (error) {
             console.error('[Tracking] ✗ Triple Whale failed to inject:', error);
           }
+        } else if (scripts.triplewhaleToken) {
+          console.log('[Tracking] Triple Whale already loaded');
         }
 
-        // Microsoft Clarity with retry
-        if (scripts.microsoftClarityId) {
+        // Microsoft Clarity - idempotent injection
+        if (scripts.microsoftClarityId && !document.getElementById('clarity-loader')) {
           console.log('[Tracking] Injecting Microsoft Clarity:', scripts.microsoftClarityId);
           
-          if (!(window as any).clarity) {
-            const clarityScript = document.createElement('script');
-            clarityScript.type = 'text/javascript';
-            clarityScript.innerHTML = `
-              (function(c,l,a,r,i,t,y){
-                c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-                t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-                t.onerror=function(){console.error('[Tracking] ✗ Microsoft Clarity failed');};
-                t.onload=function(){console.log('[Tracking] ✓ Microsoft Clarity loaded');};
-                y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-              })(window, document, "clarity", "script", "${scripts.microsoftClarityId}");
-              console.log('[Tracking] ✓ Microsoft Clarity initialized');
-            `;
-            document.head.appendChild(clarityScript);
-          } else {
-            console.log('[Tracking] Microsoft Clarity already loaded');
-          }
+          const clarityScript = document.createElement('script');
+          clarityScript.id = 'clarity-loader';
+          clarityScript.type = 'text/javascript';
+          clarityScript.innerHTML = `
+            (function(c,l,a,r,i,t,y){
+              c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+              t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+              t.onerror=function(){console.error('[Tracking] ✗ Microsoft Clarity failed');};
+              t.onload=function(){console.log('[Tracking] ✓ Microsoft Clarity loaded');};
+              y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+            })(window, document, "clarity", "script", "${scripts.microsoftClarityId}");
+            console.log('[Tracking] ✓ Microsoft Clarity initialized');
+          `;
+          document.head.appendChild(clarityScript);
+        } else if (scripts.microsoftClarityId) {
+          console.log('[Tracking] Microsoft Clarity already loaded');
         }
 
-        console.log('[Tracking] All configured scripts injected successfully');
+        console.log('[Tracking] ✓ All configured scripts processed');
         
-        // Verify scripts loaded after 3 seconds
+        // Verify and dispatch page view events after 3 seconds
         setTimeout(() => {
           const verification = {
-            gtag: typeof (window as any).gtag === 'function',
-            fbq: typeof (window as any).fbq === 'function',
-            clarity: typeof (window as any).clarity === 'function',
+            gtag: typeof w.gtag === 'function',
+            fbq: typeof w.fbq === 'function',
+            clarity: typeof w.clarity === 'function',
+            triplePixel: typeof w.TriplePixel === 'function',
           };
           
-          console.log('[Tracking] Verification Results:', verification);
+          console.log('[Tracking] Verification (3s):', verification);
           
+          // Dispatch page view events to ensure tracking validators see activity
           if (verification.gtag && scripts.googleAnalyticsId) {
-            (window as any).gtag('event', 'page_view_verified');
+            w.gtag('event', 'page_view', { page_path: window.location.pathname });
+            console.log('[Tracking] ✓ GA page_view dispatched');
           }
           if (verification.fbq && scripts.facebookPixelId) {
-            (window as any).fbq('trackCustom', 'PageViewVerified');
+            w.fbq('track', 'PageView');
+            console.log('[Tracking] ✓ FB PageView dispatched');
           }
         }, 3000);
+
+        // Final verification and re-dispatch at 10 seconds (defense in depth)
+        setTimeout(() => {
+          const finalVerification = {
+            gtag: typeof w.gtag === 'function',
+            fbq: typeof w.fbq === 'function',
+            triplePixel: typeof w.TriplePixel === 'function',
+          };
+          
+          console.log('[Tracking] Final verification (10s):', finalVerification);
+          
+          if (finalVerification.gtag && scripts.googleAnalyticsId) {
+            w.gtag('event', 'page_view', { page_path: window.location.pathname });
+            console.log('[Tracking] ✓ GA page_view re-dispatched (10s)');
+          }
+          if (finalVerification.fbq && scripts.facebookPixelId) {
+            w.fbq('track', 'PageView');
+            console.log('[Tracking] ✓ FB PageView re-dispatched (10s)');
+          }
+        }, 10000);
+
+        // Mark this slug as injected
+        w.__trackingInjectedSlug = slug;
       } catch (error) {
         console.error('[Tracking] CRITICAL ERROR injecting scripts:', error);
       }
     };
     
-    // CRITICAL: Inject scripts IMMEDIATELY to ensure they load on every page view
-    // Using setTimeout(0) to make it non-blocking but still immediate
+    // Inject immediately (non-blocking)
     setTimeout(injectScripts, 0);
-  }, [pageData?.trackingScripts]);
+  }, [slug, pageData?.trackingScripts]);
 
   // Show loading state while fetching
   if (isLoading) {

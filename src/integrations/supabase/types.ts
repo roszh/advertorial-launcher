@@ -422,6 +422,33 @@ export type Database = {
       }
     }
     Functions: {
+      get_published_page_with_scripts: {
+        Args: { p_slug: string }
+        Returns: {
+          content: Json
+          created_at: string
+          cta_style: string
+          cta_text: string
+          cta_url: string
+          facebook_pixel_id: string
+          google_analytics_id: string
+          headline: string
+          id: string
+          image_url: string
+          microsoft_clarity_id: string
+          published_at: string
+          slug: string
+          status: string
+          sticky_cta_threshold: number
+          subtitle: string
+          template: string
+          title: string
+          tracking_set_name: string
+          triplewhale_token: string
+          updated_at: string
+          user_id: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
