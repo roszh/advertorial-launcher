@@ -13,6 +13,8 @@ interface InlineImageUploadProps {
   userId: string;
   className?: string;
   aspectRatio?: "video" | "square" | "wide";
+  onAspectRatioChange?: (ratio: "video" | "square") => void;
+  showAspectRatioSelector?: boolean;
 }
 
 export const InlineImageUpload = ({ 
@@ -20,7 +22,9 @@ export const InlineImageUpload = ({
   onImageUploaded, 
   userId,
   className,
-  aspectRatio = "video"
+  aspectRatio = "video",
+  onAspectRatioChange,
+  showAspectRatioSelector = false
 }: InlineImageUploadProps) => {
   const [uploading, setUploading] = useState(false);
   const [imageUrl, setImageUrl] = useState(currentImageUrl || "");
@@ -185,6 +189,29 @@ export const InlineImageUpload = ({
             </div>
           )}
         </div>
+
+        {showAspectRatioSelector && onAspectRatioChange && (
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant={aspectRatio === "video" ? "default" : "outline"}
+              size="sm"
+              onClick={() => onAspectRatioChange("video")}
+              className="flex-1"
+            >
+              16:9
+            </Button>
+            <Button
+              type="button"
+              variant={aspectRatio === "square" ? "default" : "outline"}
+              size="sm"
+              onClick={() => onAspectRatioChange("square")}
+              className="flex-1"
+            >
+              1:1
+            </Button>
+          </div>
+        )}
 
         <Dialog open={libraryOpen} onOpenChange={setLibraryOpen}>
           <DialogTrigger asChild>

@@ -13,6 +13,7 @@ interface Section {
   imagePosition?: "left" | "right" | "full" | "none";
   style?: "normal" | "emphasized" | "callout";
   imageUrl?: string;
+  imageAspectRatio?: "video" | "square";
   ctaText?: string;
   author?: string;
   authorRole?: string;
@@ -134,7 +135,11 @@ export const SectionEditor = ({
                     setEditedSection({ ...editedSection, imageUrl: url })
                   }
                   userId={userId}
-                  aspectRatio={editedSection.imagePosition === "full" ? "wide" : "video"}
+                  aspectRatio={editedSection.imageAspectRatio || (editedSection.imagePosition === "full" ? "wide" : "video")}
+                  showAspectRatioSelector={editedSection.imagePosition !== "full"}
+                  onAspectRatioChange={(ratio) =>
+                    setEditedSection({ ...editedSection, imageAspectRatio: ratio })
+                  }
                 />
                 {editedSection.imageUrl && (
                   <div className="mt-2">

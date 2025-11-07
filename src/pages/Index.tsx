@@ -36,6 +36,7 @@ interface Section {
   imagePosition?: "left" | "right" | "full" | "none";
   style?: "normal" | "emphasized" | "callout";
   imageUrl?: string;
+  imageAspectRatio?: "video" | "square";
   ctaText?: string;
   author?: string;
   authorRole?: string;
@@ -120,6 +121,7 @@ const Index = () => {
     microsoft_clarity_id?: string | null;
   }>>([]);
   const [selectedSetupDetails, setSelectedSetupDetails] = useState<any>(null);
+  const [isPublished, setIsPublished] = useState(false);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -212,6 +214,7 @@ const Index = () => {
       setSubtitle(data.subtitle || "Featured Story");
       setHeadline((data as any).headline || "");
       setSelectedCountrySetupId((data as any).tracking_script_set_id || "");
+      setIsPublished(data.status === "published");
       
       setAnalysisResult({
         layout: "default",
@@ -866,10 +869,7 @@ const Index = () => {
       toast({ title: `Page ${status === "published" ? "published" : "saved"}!` });
       setHasUnsavedChanges(false);
       setLastSavedTime(new Date());
-      
-      if (status === "published") {
-        navigate("/dashboard");
-      }
+      setIsPublished(status === "published");
     } catch (error: any) {
       console.error("Save error:", error);
       
@@ -1659,6 +1659,16 @@ const Index = () => {
                     <Globe className="mr-1 h-3 w-3" />
                     Publish
                   </Button>
+                  {isPublished && pageSlug && (
+                    <Button
+                      onClick={() => window.open(`/p/${pageSlug}`, "_blank")}
+                      variant="outline"
+                      size="sm"
+                      className="h-8 px-3 text-xs"
+                    >
+                      View Live
+                    </Button>
+                  )}
                   
                   {/* Autosave indicator */}
                   <div className="flex items-center gap-2 text-xs text-muted-foreground ml-2">
