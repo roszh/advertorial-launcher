@@ -74,6 +74,7 @@ const Index = () => {
   const [searchParams] = useSearchParams();
   const initialEditId = searchParams.get("edit");
   const [editId, setEditId] = useState<string | null>(initialEditId);
+  const [isLoadingExistingPage, setIsLoadingExistingPage] = useState<boolean>(!!initialEditId);
 
   const [user, setUser] = useState<any>(null);
   const [inputText, setInputText] = useState("");
@@ -184,6 +185,7 @@ const Index = () => {
   }, []);
 
   const loadExistingPage = async (pageId: string) => {
+    setIsLoadingExistingPage(true);
     const { data, error } = await supabase
       .from("pages")
       .select("*")
@@ -192,12 +194,14 @@ const Index = () => {
 
     if (error) {
       toast({ title: "Error loading page", description: error.message, variant: "destructive" });
+      setIsLoadingExistingPage(false);
       return;
     }
 
     if (!data) {
       toast({ title: "Page not found", description: "This page may have been deleted.", variant: "destructive" });
       navigate("/dashboard");
+      setIsLoadingExistingPage(false);
       return;
     }
 
@@ -233,6 +237,7 @@ const Index = () => {
         setSelectedTags(pageTagsData.map(pt => pt.tag_id));
       }
     }
+    setIsLoadingExistingPage(false);
   };
 
   const fetchTags = async () => {
@@ -1578,6 +1583,17 @@ const Index = () => {
       setIsAnalyzing(false);
     }
   };
+
+  if (isLoadingExistingPage) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+          <p className="text-muted-foreground">Loading page...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (isEditorMode && analysisResult) {
     return (

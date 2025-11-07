@@ -870,7 +870,7 @@ export default function Dashboard() {
                     />
                     <div className="flex-1">
                       <CardTitle 
-                        className="cursor-pointer hover:text-primary transition-colors line-clamp-2"
+                        className="cursor-pointer hover:text-primary transition-colors line-clamp-1"
                         onClick={() => navigate(`/?edit=${page.id}`)}
                         title={page.title}
                       >
