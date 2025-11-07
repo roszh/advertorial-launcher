@@ -273,13 +273,14 @@ export default function Settings() {
   return (
     <div className="min-h-screen bg-background">
       <Navigation user={user} />
-      <div className="container mx-auto py-8 px-4 max-w-2xl">
-        <h1 className="text-3xl font-bold mb-6">Settings</h1>
+      <div className="container mx-auto px-4 md:px-5 py-6 md:py-8 max-w-2xl">
+        {/* iOS Large Title */}
+        <h1 className="ios-large-title mb-8">Settings</h1>
         
-        <Card className="mb-6">
+        <Card className="ios-card mb-6">
           <CardHeader>
-            <CardTitle>Profile Information</CardTitle>
-            <CardDescription>Update your account details</CardDescription>
+            <CardTitle className="ios-title3">Profile Information</CardTitle>
+            <CardDescription className="ios-subheadline">Update your account details</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleUpdateProfile} className="space-y-4">
@@ -302,10 +303,10 @@ export default function Settings() {
           </CardContent>
         </Card>
 
-        <Card className="mb-6">
+        <Card className="ios-card mb-6">
           <CardHeader>
-            <CardTitle>Country Setups</CardTitle>
-            <CardDescription>
+            <CardTitle className="ios-title3">Country Setups</CardTitle>
+            <CardDescription className="ios-subheadline">
               Create multiple tracking script configurations for different countries or traffic sources. 
               Each page must be assigned to one Country Setup.
             </CardDescription>

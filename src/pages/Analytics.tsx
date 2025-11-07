@@ -315,16 +315,19 @@ export default function Analytics() {
   return (
     <div className="min-h-screen bg-background">
       <Navigation user={user} />
-      <div className="container mx-auto py-8 px-4">
+      <div className="container mx-auto px-4 md:px-5 py-6 md:py-8 max-w-6xl">
         <div className="mb-6">
-          <Button variant="outline" onClick={() => navigate("/dashboard")}>
+          <Button variant="outline" onClick={() => navigate("/dashboard")} className="rounded-ios">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Dashboard
+            <span className="ios-callout">Back to Dashboard</span>
           </Button>
         </div>
 
-        <h1 className="text-3xl font-bold mb-2">Analytics</h1>
-        <p className="text-muted-foreground mb-6">{pageTitle}</p>
+        {/* iOS Large Title with Subtitle */}
+        <div className="mb-8">
+          <h1 className="ios-large-title mb-1">Analytics</h1>
+          <p className="ios-body text-muted-foreground">{pageTitle}</p>
+        </div>
 
         {loading ? (
           <p className="text-muted-foreground">Loading analytics...</p>
@@ -332,21 +335,21 @@ export default function Analytics() {
           <>
             {/* Summary Cards */}
             <div className="grid gap-4 md:grid-cols-3 mb-6">
-              <Card>
+              <Card className="ios-card">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Views</CardTitle>
-                  <Eye className="h-4 w-4 text-muted-foreground" />
+                  <CardTitle className="ios-callout font-medium">Total Views</CardTitle>
+                  <Eye className="h-5 w-5 text-primary" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{summary.total_views}</div>
-                  <p className="text-xs text-muted-foreground">Page impressions</p>
+                  <div className="ios-large-title">{summary.total_views}</div>
+                  <p className="ios-footnote text-muted-foreground mt-1">Page impressions</p>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="ios-card">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Clicks</CardTitle>
-                  <MousePointer className="h-4 w-4 text-muted-foreground" />
+                  <CardTitle className="ios-callout font-medium">Total Clicks</CardTitle>
+                  <MousePointer className="h-5 w-5 text-primary" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{summary.total_clicks}</div>

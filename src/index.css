@@ -10,33 +10,45 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 220 13% 18%;
+    /* iOS HIG Semantic Colors - Light Mode */
+    --ios-background: 0 0% 100%;
+    --ios-secondary-background: 240 12% 95%;
+    --ios-tertiary-background: 0 0% 100%;
+    --ios-grouped-background: 240 12% 95%;
+    --ios-label: 240 10% 0%;
+    --ios-secondary-label: 240 10% 26%;
+    --ios-tertiary-label: 240 10% 26%;
+    --ios-separator: 240 10% 26%;
+    --ios-tint: 211 100% 50%;
+    
+    /* Map to existing tokens for compatibility */
+    --background: var(--ios-background);
+    --foreground: var(--ios-label);
 
-    --card: 0 0% 100%;
-    --card-foreground: 220 13% 18%;
+    --card: var(--ios-secondary-background);
+    --card-foreground: var(--ios-label);
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 220 13% 18%;
+    --popover: var(--ios-secondary-background);
+    --popover-foreground: var(--ios-label);
 
-    --primary: 221 83% 53%;
+    --primary: var(--ios-tint);
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 220 13% 18%;
+    --secondary: var(--ios-tertiary-background);
+    --secondary-foreground: var(--ios-label);
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 220 9% 46%;
+    --muted: var(--ios-secondary-background);
+    --muted-foreground: var(--ios-secondary-label);
 
-    --accent: 262 83% 58%;
+    --accent: var(--ios-tint);
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84.2% 60.2%;
+    --destructive: 0 100% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221 83% 53%;
+    --border: var(--ios-separator);
+    --input: var(--ios-separator);
+    --ring: var(--ios-tint);
 
     --radius: 0.75rem;
     
@@ -76,33 +88,45 @@ All colors MUST be HSL.
   }
 
   .dark {
-    --background: 220 18% 12%;
-    --foreground: 210 40% 98%;
+    /* iOS HIG Semantic Colors - Dark Mode */
+    --ios-background: 0 0% 0%;
+    --ios-secondary-background: 240 6% 11%;
+    --ios-tertiary-background: 240 5% 17%;
+    --ios-grouped-background: 0 0% 0%;
+    --ios-label: 0 0% 100%;
+    --ios-secondary-label: 240 5% 92%;
+    --ios-tertiary-label: 240 5% 92%;
+    --ios-separator: 240 7% 33%;
+    --ios-tint: 211 100% 52%;
+    
+    /* Map to existing tokens for compatibility */
+    --background: var(--ios-background);
+    --foreground: var(--ios-label);
 
-    --card: 220 15% 16%;
-    --card-foreground: 210 40% 98%;
+    --card: var(--ios-secondary-background);
+    --card-foreground: var(--ios-label);
 
-    --popover: 220 15% 16%;
-    --popover-foreground: 210 40% 98%;
+    --popover: var(--ios-secondary-background);
+    --popover-foreground: var(--ios-label);
 
-    --primary: 221 83% 53%;
-    --primary-foreground: 0 0% 100%;
+    --primary: var(--ios-tint);
+    --primary-foreground: 0 0% 0%;
 
-    --secondary: 220 15% 20%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: var(--ios-tertiary-background);
+    --secondary-foreground: var(--ios-label);
 
-    --muted: 220 15% 20%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: var(--ios-secondary-background);
+    --muted-foreground: var(--ios-secondary-label);
 
-    --accent: 262 83% 58%;
-    --accent-foreground: 0 0% 100%;
+    --accent: var(--ios-tint);
+    --accent-foreground: 0 0% 0%;
 
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0 100% 52%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 15% 20%;
-    --input: 220 15% 20%;
-    --ring: 221 83% 53%;
+    --border: var(--ios-separator);
+    --input: var(--ios-separator);
+    --ring: var(--ios-tint);
     
     --gradient-primary: linear-gradient(135deg, hsl(221 83% 53%), hsl(262 83% 58%));
     --gradient-hero: linear-gradient(180deg, hsl(220 18% 12%), hsl(220 15% 16%));
@@ -136,11 +160,129 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
-    font-family: var(--font-sans);
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   
   .font-serif {
-    font-family: var(--font-serif);
+    font-family: 'Merriweather', Georgia, serif;
+  }
+
+  /* iOS Typography Hierarchy */
+  .ios-large-title {
+    font-size: 34px;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: 0.374px;
+  }
+  
+  .ios-title1 {
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: 0.364px;
+  }
+  
+  .ios-title2 {
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.3;
+    letter-spacing: 0.352px;
+  }
+  
+  .ios-title3 {
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 1.3;
+    letter-spacing: 0.38px;
+  }
+  
+  .ios-headline {
+    font-size: 17px;
+    font-weight: 600;
+    line-height: 1.4;
+    letter-spacing: -0.408px;
+  }
+  
+  .ios-body {
+    font-size: 17px;
+    font-weight: 400;
+    line-height: 1.4;
+    letter-spacing: -0.408px;
+  }
+  
+  .ios-callout {
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 1.4;
+    letter-spacing: -0.32px;
+  }
+  
+  .ios-subheadline {
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 1.4;
+    letter-spacing: -0.24px;
+  }
+  
+  .ios-footnote {
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.4;
+    letter-spacing: -0.078px;
+  }
+  
+  .ios-caption1 {
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 1.3;
+    letter-spacing: 0;
+  }
+  
+  .ios-caption2 {
+    font-size: 11px;
+    font-weight: 400;
+    line-height: 1.3;
+    letter-spacing: 0.066px;
+  }
+
+  /* iOS Card Style */
+  .ios-card {
+    @apply bg-card rounded-xl shadow-sm border border-border/50;
+  }
+  
+  /* iOS Grouped List */
+  .ios-grouped-list {
+    @apply bg-transparent space-y-2;
+  }
+  
+  .ios-list-item {
+    @apply bg-card rounded-xl px-4 py-3 border border-border/30;
+  }
+  
+  /* iOS Button Styles */
+  .ios-button-primary {
+    @apply bg-primary text-primary-foreground rounded-xl px-4 py-2.5 font-medium transition-all active:scale-95;
+  }
+  
+  .ios-button-secondary {
+    @apply bg-secondary text-secondary-foreground rounded-xl px-4 py-2.5 font-medium transition-all active:scale-95;
+  }
+  
+  /* iOS Input Style */
+  .ios-input {
+    @apply bg-card border border-input rounded-xl px-4 py-2.5 text-base focus:ring-2 focus:ring-primary focus:border-transparent transition-all;
+  }
+  
+  /* iOS Sheet Handle */
+  .ios-sheet-handle {
+    @apply w-9 h-1.5 bg-muted-foreground/30 rounded-full mx-auto mb-2;
+  }
+  
+  /* iOS Translucent Effect */
+  .ios-blur {
+    @apply backdrop-blur-xl bg-background/80;
   }
   
   /* Ensure bold and italic formatting works in published pages */

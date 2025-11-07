@@ -19,35 +19,52 @@ export function Navigation({ user }: NavigationProps) {
   if (!user) return null;
 
   return (
-    <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-14 items-center">
+    <nav className="sticky top-0 z-50 border-b border-border/30 ios-blur">
+      <div className="container flex h-11 md:h-13 items-center px-4 md:px-5">
         <Link to="/" className="flex items-center space-x-2 mr-6">
-          <FileText className="h-6 w-6" />
-          <span className="font-bold">Advertorial Launcher</span>
+          <FileText className="h-5 w-5 text-primary" />
+          <span className="ios-headline hidden sm:inline">Advertorial Launcher</span>
         </Link>
-        <div className="flex items-center space-x-4 flex-1">
+        <div className="flex items-center space-x-1 md:space-x-2 flex-1">
           <Link to="/">
-            <Button variant={location.pathname === "/" ? "default" : "ghost"} size="sm">
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Create New
+            <Button 
+              variant={location.pathname === "/" ? "default" : "ghost"} 
+              size="sm"
+              className="h-8 px-3 rounded-ios transition-all active:scale-95"
+            >
+              <PlusCircle className="mr-1.5 h-3.5 w-3.5" />
+              <span className="hidden sm:inline ios-callout">Create New</span>
             </Button>
           </Link>
           <Link to="/dashboard">
-            <Button variant={location.pathname === "/dashboard" ? "default" : "ghost"} size="sm">
-              <LayoutDashboard className="mr-2 h-4 w-4" />
-              My Pages
+            <Button 
+              variant={location.pathname === "/dashboard" ? "default" : "ghost"} 
+              size="sm"
+              className="h-8 px-3 rounded-ios transition-all active:scale-95"
+            >
+              <LayoutDashboard className="mr-1.5 h-3.5 w-3.5" />
+              <span className="hidden sm:inline ios-callout">My Pages</span>
             </Button>
           </Link>
           <Link to="/settings">
-            <Button variant={location.pathname === "/settings" ? "default" : "ghost"} size="sm">
-              <Settings className="mr-2 h-4 w-4" />
-              Settings
+            <Button 
+              variant={location.pathname === "/settings" ? "default" : "ghost"} 
+              size="sm"
+              className="h-8 px-3 rounded-ios transition-all active:scale-95"
+            >
+              <Settings className="mr-1.5 h-3.5 w-3.5" />
+              <span className="hidden sm:inline ios-callout">Settings</span>
             </Button>
           </Link>
         </div>
-        <Button variant="ghost" size="sm" onClick={handleLogout}>
-          <LogOut className="mr-2 h-4 w-4" />
-          Logout
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={handleLogout}
+          className="h-8 px-3 rounded-ios transition-all active:scale-95"
+        >
+          <LogOut className="mr-1.5 h-3.5 w-3.5" />
+          <span className="hidden sm:inline ios-callout">Logout</span>
         </Button>
       </div>
     </nav>
