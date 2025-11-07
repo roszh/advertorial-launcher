@@ -1635,7 +1635,7 @@ const Index = () => {
       <div className="min-h-screen w-full flex flex-col bg-background">
         <Navigation user={user} />
         <SidebarProvider defaultOpen={true}>
-          <div className="flex flex-1 w-full">
+          <div className="flex flex-1 w-full min-h-0 overflow-x-hidden">
             {/* Sidebar */}
             <Sidebar className="border-r">
               <div className="p-4 border-b flex items-center">
@@ -1901,7 +1901,7 @@ const Index = () => {
             </Sidebar>
 
             {/* Main Content Area */}
-            <div className="flex-1 flex flex-col">
+            <div className="flex-1 flex flex-col min-h-0">
               <div className={cn(
                 "border-b bg-background/95 backdrop-blur sticky top-0 z-50 transition-transform duration-300 ease-in-out",
                 !isHeaderVisible && "-translate-y-full"
@@ -2040,18 +2040,19 @@ const Index = () => {
                   </div>
                 </div>
               </div>
-              </div>
 
-              {/* Preview Area */}
-              <div className="container mx-auto px-4 pb-24" style={{
-                maxWidth: previewMode === "mobile" ? "425px" : "100%",
-                transition: "max-width 0.3s ease"
-              }}>
-                {renderTemplate()}
+              {/* Preview Area - Scrollable Content */}
+              <div className="flex-1 overflow-y-auto">
+                <div className="container mx-auto px-4 pb-24" style={{
+                  maxWidth: previewMode === "mobile" ? "425px" : "100%",
+                  transition: "max-width 0.3s ease"
+                }}>
+                  {renderTemplate()}
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        </SidebarProvider>
 
         {/* Dialogs and Modals */}
         {showHtmlEditor && (
@@ -2228,7 +2229,6 @@ const Index = () => {
           onOpenChange={setShowTemplateModal}
           onSelectTemplate={handleSelectTemplate}
         />
-        </SidebarProvider>
       </div>
     );
   }
