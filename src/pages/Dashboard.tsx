@@ -905,9 +905,20 @@ export default function Dashboard() {
                         </div>
                       )}
                     </div>
-                    <Badge variant={page.status === "published" ? "default" : "secondary"}>
-                      {page.status}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant={page.status === "published" ? "default" : "secondary"}>
+                        {page.status}
+                      </Badge>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDelete(page.id)}
+                        className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                        title="Delete page"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -955,14 +966,6 @@ export default function Dashboard() {
                     >
                       <Globe className="mr-2 h-4 w-4" />
                       {page.status === "published" ? "Unpublish" : "Publish"}
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleDelete(page.id)}
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Delete
                     </Button>
                   </div>
                   {page.status === "published" && (
