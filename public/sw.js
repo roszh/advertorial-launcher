@@ -52,27 +52,39 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // API calls - Network first, fallback to cache
+  // API calls - Network first, fallback to cache (GET only)
   if (url.pathname.includes('/rest/v1/') || url.pathname.includes('/published_pages')) {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          // Clone response to cache it
-          const responseToCache = response.clone();
-          caches.open(RUNTIME_CACHE).then((cache) => {
-            cache.put(request, responseToCache);
-          });
+          // Only cache GET requests - mutations should always hit the network
+          if (request.method === 'GET' && response.status === 200) {
+            const responseToCache = response.clone();
+            caches.open(RUNTIME_CACHE).then((cache) => {
+              cache.put(request, responseToCache);
+            });
+          }
           return response;
         })
         .catch(() => {
-          // Network failed, try cache
-          return caches.match(request).then((cached) => {
-            if (cached) {
-              return cached;
+          // Network failed, try cache (only meaningful for GET requests)
+          if (request.method === 'GET') {
+            return caches.match(request).then((cached) => {
+              if (cached) {
+                return cached;
+              }
+              // Return offline page or error
+              return new Response('Offline', { status: 503 });
+            });
+          }
+          // For mutations, just return an error response
+          return new Response(
+            JSON.stringify({ error: 'Network request failed' }), 
+            { 
+              status: 503,
+              headers: { 'Content-Type': 'application/json' }
             }
-            // Return offline page or error
-            return new Response('Offline', { status: 503 });
-          });
+          );
         })
     );
     return;
