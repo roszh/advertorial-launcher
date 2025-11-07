@@ -41,7 +41,7 @@ interface NewsTemplateProps {
   ctaVariant?: "ctaAmazon" | "ctaUrgent" | "ctaPremium" | "ctaTrust";
   onUpdateSection?: (index: number, section: Section) => void;
   onUpdateCta?: (text: string) => void;
-  onAddSection?: (index: number, type: "text" | "image", sectionConfig?: Partial<Section>) => void;
+  onAddSection?: (index: number, type: "text" | "image" | "complete-section", sectionConfig?: Partial<Section>) => void;
   onDeleteSection?: (index: number) => void;
   onReorderSections?: (newOrder: string[]) => void;
   onEditSection?: (index: number) => void;
@@ -256,7 +256,7 @@ export const NewsTemplate = ({
             <SectionControls
               index={actualIndex}
               onAddSectionBelow={(type) => {
-                if (type === "text" || type === "image") {
+                if (type === "text" || type === "image" || type === "complete-section") {
                   onAddSection(actualIndex, type);
                 } else if (type === "headline") {
                   onAddSection(actualIndex, "text", {
@@ -306,32 +306,7 @@ export const NewsTemplate = ({
                      updateDate: "September 14, 2024",
                      style: "normal"
                    });
-                 } else if (type === "complete-section") {
-                   // Insert headline, image, and paragraph sections sequentially
-                   onAddSection(actualIndex, "text", {
-                     type: "text",
-                     content: "",
-                     heading: "New Section Heading",
-                     style: "emphasized"
-                   });
-                   setTimeout(() => {
-                     onAddSection(actualIndex + 1, "image", {
-                       type: "image",
-                       content: "",
-                       imageUrl: "",
-                       imagePosition: "full",
-                       style: "normal"
-                     });
-                     setTimeout(() => {
-                       onAddSection(actualIndex + 2, "text", {
-                         type: "text",
-                         content: "Enter your paragraph here...",
-                         imagePosition: "none",
-                         style: "normal"
-                       });
-                     }, 50);
-                   }, 50);
-                 }
+                }
               }}
               onDeleteSection={() => onDeleteSection(actualIndex)}
               onCloneSection={() => {

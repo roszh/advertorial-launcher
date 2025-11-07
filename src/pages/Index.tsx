@@ -1453,10 +1453,49 @@ const Index = () => {
   };
   const handleAddSectionAt = (
     afterIndex: number, 
-    type: "text" | "image",
+    type: "text" | "image" | "complete-section",
     sectionConfig?: Partial<Section>
   ) => {
     if (!analysisResult) return;
+    
+    // Handle complete-section separately
+    if (type === "complete-section") {
+      const headlineSection = ensureSectionMetadata({
+        type: "text",
+        content: "",
+        heading: "New Section Headline",
+        style: "emphasized",
+      }, afterIndex + 1);
+      const imageSection = ensureSectionMetadata({
+        type: "image",
+        content: "",
+        imageUrl: "",
+        imagePosition: "full",
+        style: "normal",
+      }, afterIndex + 2);
+      const textSection = ensureSectionMetadata({
+        type: "text",
+        content: "Enter your paragraph here...",
+        imagePosition: "none",
+        style: "normal",
+      }, afterIndex + 3);
+      
+      const newSections = [...analysisResult.sections];
+      newSections.splice(afterIndex + 1, 0, headlineSection, imageSection, textSection);
+      
+      // Update order for all sections
+      const reorderedSections = newSections.map((s, i) => ({
+        ...s,
+        order: i
+      }));
+      
+      setAnalysisResult({
+        ...analysisResult,
+        sections: reorderedSections,
+      });
+      toast({ title: "Complete section added!" });
+      return;
+    }
     
     let baseSection: Section;
     
