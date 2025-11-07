@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "@/hooks/use-toast";
 import { Eye, Edit, Trash2, Globe, Copy, BarChart3, Search, Calendar, ArrowUp, ArrowDown } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format } from "date-fns";
@@ -37,6 +38,8 @@ export default function Dashboard() {
   const [selectedPages, setSelectedPages] = useState<string[]>([]);
   const [bulkSetupId, setBulkSetupId] = useState<string>("");
   const [availableCountrySetups, setAvailableCountrySetups] = useState<Array<{id: string, name: string}>>([]);
+  const [bulkTagsToAdd, setBulkTagsToAdd] = useState<string[]>([]);
+  const [bulkTagsToRemove, setBulkTagsToRemove] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [dateRange, setDateRange] = useState<{from: Date | undefined, to: Date | undefined}>({ from: undefined, to: undefined });
   const [sortBy, setSortBy] = useState<"created" | "updated" | "title" | "status">("created");
@@ -237,6 +240,157 @@ export default function Dashboard() {
     }
   };
 
+  const handleBulkDelete = async () => {
+    if (selectedPages.length === 0) return;
+    
+    const confirmed = confirm(
+      `Are you sure you want to delete ${selectedPages.length} page${selectedPages.length > 1 ? 's' : ''}? This cannot be undone.`
+    );
+    
+    if (!confirmed) return;
+    
+    const { error } = await supabase
+      .from("pages")
+      .delete()
+      .in("id", selectedPages);
+    
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ 
+        title: `${selectedPages.length} page${selectedPages.length > 1 ? 's' : ''} deleted`,
+        description: "Successfully removed from your account"
+      });
+      handleClearSelection();
+      fetchPages();
+    }
+  };
+
+  const handleBulkPublish = async () => {
+    if (selectedPages.length === 0) return;
+    
+    const draftPages = pages.filter(p => 
+      selectedPages.includes(p.id) && p.status === "draft"
+    );
+    
+    if (draftPages.length === 0) {
+      toast({ title: "No draft pages selected", variant: "destructive" });
+      return;
+    }
+    
+    const { error } = await supabase
+      .from("pages")
+      .update({ 
+        status: "published", 
+        published_at: new Date().toISOString() 
+      })
+      .in("id", draftPages.map(p => p.id));
+    
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ 
+        title: `${draftPages.length} page${draftPages.length > 1 ? 's' : ''} published`,
+        description: "Now live and accessible"
+      });
+      handleClearSelection();
+      fetchPages();
+    }
+  };
+
+  const handleBulkUnpublish = async () => {
+    if (selectedPages.length === 0) return;
+    
+    const publishedPages = pages.filter(p => 
+      selectedPages.includes(p.id) && p.status === "published"
+    );
+    
+    if (publishedPages.length === 0) {
+      toast({ title: "No published pages selected", variant: "destructive" });
+      return;
+    }
+    
+    const { error } = await supabase
+      .from("pages")
+      .update({ 
+        status: "draft", 
+        published_at: null 
+      })
+      .in("id", publishedPages.map(p => p.id));
+    
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ 
+        title: `${publishedPages.length} page${publishedPages.length > 1 ? 's' : ''} unpublished`,
+        description: "Moved back to drafts"
+      });
+      handleClearSelection();
+      fetchPages();
+    }
+  };
+
+  const handleBulkAddTags = async () => {
+    if (selectedPages.length === 0 || bulkTagsToAdd.length === 0) {
+      toast({ title: "Select pages and tags", variant: "destructive" });
+      return;
+    }
+    
+    const pageTagEntries = selectedPages.flatMap(pageId =>
+      bulkTagsToAdd.map(tagId => ({ page_id: pageId, tag_id: tagId }))
+    );
+    
+    const { error } = await supabase
+      .from("page_tags")
+      .upsert(pageTagEntries, { onConflict: "page_id,tag_id", ignoreDuplicates: true });
+    
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ 
+        title: "Tags added",
+        description: `Added ${bulkTagsToAdd.length} tag(s) to ${selectedPages.length} page(s)`
+      });
+      handleClearSelection();
+      fetchPages();
+    }
+  };
+
+  const handleBulkRemoveTags = async () => {
+    if (selectedPages.length === 0 || bulkTagsToRemove.length === 0) {
+      toast({ title: "Select pages and tags to remove", variant: "destructive" });
+      return;
+    }
+    
+    const { error } = await supabase
+      .from("page_tags")
+      .delete()
+      .in("page_id", selectedPages)
+      .in("tag_id", bulkTagsToRemove);
+    
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ 
+        title: "Tags removed",
+        description: `Removed ${bulkTagsToRemove.length} tag(s) from ${selectedPages.length} page(s)`
+      });
+      handleClearSelection();
+      fetchPages();
+    }
+  };
+
+  const handleSelectAll = () => {
+    setSelectedPages(sortedPages.map(p => p.id));
+  };
+
+  const handleClearSelection = () => {
+    setSelectedPages([]);
+    setBulkSetupId("");
+    setBulkTagsToAdd([]);
+    setBulkTagsToRemove([]);
+  };
+
   const filteredPages = pages.filter(p => {
     const statusMatch = filter === "all" || p.status === filter;
     const tagMatch = selectedTags.length === 0 || p.tags?.some(t => selectedTags.includes(t.id));
@@ -407,31 +561,179 @@ export default function Dashboard() {
         </div>
 
         {selectedPages.length > 0 && (
-          <div className="mb-4 p-4 border rounded-lg bg-muted/50">
-            <div className="flex items-center gap-3 flex-wrap">
-              <Badge variant="secondary">{selectedPages.length} selected</Badge>
-              <Select value={bulkSetupId} onValueChange={setBulkSetupId}>
-                <SelectTrigger className="w-[250px]">
-                  <SelectValue placeholder="Select Country Setup..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableCountrySetups.map(setup => (
-                    <SelectItem key={setup.id} value={setup.id}>
-                      {setup.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button onClick={handleBulkAssignSetup} size="sm">
-                Assign Setup
-              </Button>
+          <div className="mb-4 p-4 ios-card ios-blur animate-spring-in">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Badge variant="secondary" className="text-base">
+                  {selectedPages.length} selected
+                </Badge>
+                {selectedPages.length !== sortedPages.length && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={handleSelectAll}
+                    className="ios-callout rounded-ios"
+                  >
+                    Select All ({sortedPages.length})
+                  </Button>
+                )}
+              </div>
               <Button 
-                onClick={() => setSelectedPages([])} 
                 variant="ghost" 
-                size="sm"
+                size="sm" 
+                onClick={handleClearSelection}
+                className="ios-callout rounded-ios"
               >
                 Clear Selection
               </Button>
+            </div>
+
+            {/* Quick Actions */}
+            <div className="mb-4">
+              <p className="text-sm font-semibold mb-2 ios-subheadline">Quick Actions</p>
+              <div className="flex flex-wrap gap-2">
+                <Button 
+                  onClick={handleBulkDelete} 
+                  variant="destructive" 
+                  size="sm"
+                  className="rounded-ios"
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete
+                </Button>
+                <Button 
+                  onClick={handleBulkPublish} 
+                  size="sm"
+                  className="rounded-ios"
+                >
+                  <Globe className="mr-2 h-4 w-4" />
+                  Publish
+                </Button>
+                <Button 
+                  onClick={handleBulkUnpublish} 
+                  variant="outline" 
+                  size="sm"
+                  className="rounded-ios"
+                >
+                  <Globe className="mr-2 h-4 w-4" />
+                  Unpublish
+                </Button>
+              </div>
+            </div>
+
+            {/* Organize Section */}
+            <div>
+              <p className="text-sm font-semibold mb-2 ios-subheadline">Organize</p>
+              <div className="flex flex-wrap gap-3">
+                {/* Tracking Scripts Dropdown */}
+                <div className="flex items-center gap-2">
+                  <Select value={bulkSetupId} onValueChange={setBulkSetupId}>
+                    <SelectTrigger className="w-[220px] rounded-ios">
+                      <SelectValue placeholder="📊 Tracking Scripts..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableCountrySetups.map(setup => (
+                        <SelectItem key={setup.id} value={setup.id}>
+                          {setup.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button 
+                    onClick={handleBulkAssignSetup} 
+                    size="sm"
+                    disabled={!bulkSetupId}
+                    className="rounded-ios"
+                  >
+                    Assign
+                  </Button>
+                </div>
+
+                {/* Add Tags Dropdown */}
+                <div className="flex items-center gap-2">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="sm" className="rounded-ios">
+                        🏷️ Add Tags {bulkTagsToAdd.length > 0 && `(${bulkTagsToAdd.length})`}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-64">
+                      <div className="space-y-2">
+                        <p className="text-sm font-semibold">Select tags to add:</p>
+                        {availableTags.map(tag => (
+                          <div key={tag.id} className="flex items-center gap-2">
+                            <Checkbox
+                              checked={bulkTagsToAdd.includes(tag.id)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setBulkTagsToAdd([...bulkTagsToAdd, tag.id]);
+                                } else {
+                                  setBulkTagsToAdd(bulkTagsToAdd.filter(id => id !== tag.id));
+                                }
+                              }}
+                            />
+                            <Badge style={{backgroundColor: tag.color, color: 'white'}}>
+                              {tag.name}
+                            </Badge>
+                          </div>
+                        ))}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                  {bulkTagsToAdd.length > 0 && (
+                    <Button 
+                      onClick={handleBulkAddTags} 
+                      size="sm"
+                      className="rounded-ios"
+                    >
+                      Add
+                    </Button>
+                  )}
+                </div>
+
+                {/* Remove Tags Dropdown */}
+                <div className="flex items-center gap-2">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="sm" className="rounded-ios">
+                        ✂️ Remove Tags {bulkTagsToRemove.length > 0 && `(${bulkTagsToRemove.length})`}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-64">
+                      <div className="space-y-2">
+                        <p className="text-sm font-semibold">Select tags to remove:</p>
+                        {availableTags.map(tag => (
+                          <div key={tag.id} className="flex items-center gap-2">
+                            <Checkbox
+                              checked={bulkTagsToRemove.includes(tag.id)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setBulkTagsToRemove([...bulkTagsToRemove, tag.id]);
+                                } else {
+                                  setBulkTagsToRemove(bulkTagsToRemove.filter(id => id !== tag.id));
+                                }
+                              }}
+                            />
+                            <Badge style={{backgroundColor: tag.color, color: 'white'}}>
+                              {tag.name}
+                            </Badge>
+                          </div>
+                        ))}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                  {bulkTagsToRemove.length > 0 && (
+                    <Button 
+                      onClick={handleBulkRemoveTags} 
+                      size="sm"
+                      className="rounded-ios"
+                    >
+                      Remove
+                    </Button>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         )}
