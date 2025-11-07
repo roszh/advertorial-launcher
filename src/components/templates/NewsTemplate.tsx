@@ -300,13 +300,38 @@ export const NewsTemplate = ({
                     style: "normal"
                   });
                 } else if (type === "update") {
-                  onAddSection(actualIndex, "text", {
-                    type: "update",
-                    content: "Ever since more people have learned about this, we've seen a massive spike in interest. Due to its popularity and positive reviews, we're now offering a special **limited-time discount** with **FREE U.S. SHIPPING**.",
-                    updateDate: "September 14, 2024",
-                    style: "normal"
-                  });
-                }
+                   onAddSection(actualIndex, "text", {
+                     type: "update",
+                     content: "Ever since more people have learned about this, we've seen a massive spike in interest. Due to its popularity and positive reviews, we're now offering a special **limited-time discount** with **FREE U.S. SHIPPING**.",
+                     updateDate: "September 14, 2024",
+                     style: "normal"
+                   });
+                 } else if (type === "complete-section") {
+                   // Insert headline, image, and paragraph sections sequentially
+                   onAddSection(actualIndex, "text", {
+                     type: "text",
+                     content: "",
+                     heading: "New Section Heading",
+                     style: "emphasized"
+                   });
+                   setTimeout(() => {
+                     onAddSection(actualIndex + 1, "image", {
+                       type: "image",
+                       content: "",
+                       imageUrl: "",
+                       imagePosition: "full",
+                       style: "normal"
+                     });
+                     setTimeout(() => {
+                       onAddSection(actualIndex + 2, "text", {
+                         type: "text",
+                         content: "Enter your paragraph here...",
+                         imagePosition: "none",
+                         style: "normal"
+                       });
+                     }, 50);
+                   }, 50);
+                 }
               }}
               onDeleteSection={() => onDeleteSection(actualIndex)}
               onCloneSection={() => {

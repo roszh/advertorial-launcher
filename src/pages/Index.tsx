@@ -1537,6 +1537,36 @@ const Index = () => {
           style: "normal",
         };
         break;
+      case "complete-section": {
+        // Append headline + image + paragraph to the end
+        const startIndex = analysisResult.sections.length;
+        const headlineSection = ensureSectionMetadata({
+          type: "text",
+          content: "",
+          heading: "New Section Headline",
+          style: "emphasized",
+        }, startIndex);
+        const imageSection = ensureSectionMetadata({
+          type: "image",
+          content: "",
+          imageUrl: "",
+          imagePosition: "full",
+          style: "normal",
+        }, startIndex + 1);
+        const textSection = ensureSectionMetadata({
+          type: "text",
+          content: "Enter your paragraph here...",
+          imagePosition: "none",
+          style: "normal",
+        }, startIndex + 2);
+        setAnalysisResult({
+          ...analysisResult,
+          sections: [...analysisResult.sections, headlineSection, imageSection, textSection],
+        });
+        setShowTemplateModal(false);
+        toast({ title: "Complete section added!" });
+        return;
+      }
       default:
         newSection = {
           type: "text",

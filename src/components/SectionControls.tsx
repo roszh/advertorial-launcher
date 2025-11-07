@@ -52,6 +52,10 @@ export const SectionControls = ({
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56 bg-background z-50" align="center">
             <DropdownMenuLabel>Basic</DropdownMenuLabel>
+            <DropdownMenuItem onClick={() => onAddSectionBelow("complete-section")} className="cursor-pointer">
+              <Plus className="h-4 w-4 mr-2" />
+              Complete Section
+            </DropdownMenuItem>
             <DropdownMenuItem onClick={() => onAddSectionBelow("text")} className="cursor-pointer">
               <Type className="h-4 w-4 mr-2" />
               Text
