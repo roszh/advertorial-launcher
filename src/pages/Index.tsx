@@ -1866,29 +1866,6 @@ const Index = () => {
                     <CollapsibleContent>
                       <SidebarGroupContent className="px-3 py-2 space-y-3">
                         <div>
-                          <Label className="text-xs font-medium">Template</Label>
-                          <div className="grid grid-cols-2 gap-2 mt-1">
-                            {[
-                              { key: 'magazine', icon: Newspaper, label: 'Magazine' },
-                              { key: 'news', icon: FileText, label: 'News' },
-                              { key: 'blog', icon: BookOpen, label: 'Blog' },
-                              { key: 'listicle', icon: ListOrdered, label: 'Listicle' }
-                            ].map(({ key, icon: Icon, label }) => (
-                              <Button
-                                key={key}
-                                variant={selectedTemplate === key ? "default" : "outline"}
-                                onClick={() => setSelectedTemplate(key as any)}
-                                size="sm"
-                                className="h-auto py-2 flex flex-col items-center gap-1"
-                              >
-                                <Icon className="h-4 w-4" />
-                                <span className="text-xs">{label}</span>
-                              </Button>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div>
                           <Label htmlFor="ctaStyleSelect" className="text-xs font-medium">CTA Style</Label>
                           <Select value={ctaStyle} onValueChange={setCtaStyle as any}>
                             <SelectTrigger id="ctaStyleSelect" className="h-8 mt-1">
