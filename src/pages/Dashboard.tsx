@@ -12,6 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
 
 interface Page {
@@ -44,6 +45,11 @@ export default function Dashboard() {
   const [dateRange, setDateRange] = useState<{from: Date | undefined, to: Date | undefined}>({ from: undefined, to: undefined });
   const [sortBy, setSortBy] = useState<"created" | "updated" | "title" | "status">("created");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    action: "delete" | "publish" | "unpublish" | null;
+    pages: Page[];
+  }>({ open: false, action: null, pages: [] });
 
   useEffect(() => {
     const checkUser = async () => {
@@ -240,15 +246,18 @@ export default function Dashboard() {
     }
   };
 
-  const handleBulkDelete = async () => {
+  const handleBulkDelete = () => {
     if (selectedPages.length === 0) return;
     
-    const confirmed = confirm(
-      `Are you sure you want to delete ${selectedPages.length} page${selectedPages.length > 1 ? 's' : ''}? This cannot be undone.`
-    );
-    
-    if (!confirmed) return;
-    
+    const pagesToDelete = pages.filter(p => selectedPages.includes(p.id));
+    setConfirmDialog({
+      open: true,
+      action: "delete",
+      pages: pagesToDelete
+    });
+  };
+
+  const executeBulkDelete = async () => {
     const { error } = await supabase
       .from("pages")
       .delete()
@@ -264,9 +273,10 @@ export default function Dashboard() {
       handleClearSelection();
       fetchPages();
     }
+    setConfirmDialog({ open: false, action: null, pages: [] });
   };
 
-  const handleBulkPublish = async () => {
+  const handleBulkPublish = () => {
     if (selectedPages.length === 0) return;
     
     const draftPages = pages.filter(p => 
@@ -277,6 +287,16 @@ export default function Dashboard() {
       toast({ title: "No draft pages selected", variant: "destructive" });
       return;
     }
+    
+    setConfirmDialog({
+      open: true,
+      action: "publish",
+      pages: draftPages
+    });
+  };
+
+  const executeBulkPublish = async () => {
+    const draftPages = confirmDialog.pages;
     
     const { error } = await supabase
       .from("pages")
@@ -296,9 +316,10 @@ export default function Dashboard() {
       handleClearSelection();
       fetchPages();
     }
+    setConfirmDialog({ open: false, action: null, pages: [] });
   };
 
-  const handleBulkUnpublish = async () => {
+  const handleBulkUnpublish = () => {
     if (selectedPages.length === 0) return;
     
     const publishedPages = pages.filter(p => 
@@ -309,6 +330,16 @@ export default function Dashboard() {
       toast({ title: "No published pages selected", variant: "destructive" });
       return;
     }
+    
+    setConfirmDialog({
+      open: true,
+      action: "unpublish",
+      pages: publishedPages
+    });
+  };
+
+  const executeBulkUnpublish = async () => {
+    const publishedPages = confirmDialog.pages;
     
     const { error } = await supabase
       .from("pages")
@@ -328,6 +359,7 @@ export default function Dashboard() {
       handleClearSelection();
       fetchPages();
     }
+    setConfirmDialog({ open: false, action: null, pages: [] });
   };
 
   const handleBulkAddTags = async () => {
@@ -431,9 +463,80 @@ export default function Dashboard() {
     return sortOrder === "asc" ? comparison : -comparison;
   });
 
+  const getConfirmDialogContent = () => {
+    switch (confirmDialog.action) {
+      case "delete":
+        return {
+          title: "Delete Pages",
+          description: `Are you sure you want to delete ${confirmDialog.pages.length} page${confirmDialog.pages.length > 1 ? 's' : ''}? This action cannot be undone.`,
+          actionText: "Delete",
+          actionClassName: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+          onConfirm: executeBulkDelete
+        };
+      case "publish":
+        return {
+          title: "Publish Pages",
+          description: `You are about to publish ${confirmDialog.pages.length} page${confirmDialog.pages.length > 1 ? 's' : ''}. They will become publicly accessible.`,
+          actionText: "Publish",
+          actionClassName: "",
+          onConfirm: executeBulkPublish
+        };
+      case "unpublish":
+        return {
+          title: "Unpublish Pages",
+          description: `You are about to unpublish ${confirmDialog.pages.length} page${confirmDialog.pages.length > 1 ? 's' : ''}. They will be moved back to drafts.`,
+          actionText: "Unpublish",
+          actionClassName: "",
+          onConfirm: executeBulkUnpublish
+        };
+      default:
+        return null;
+    }
+  };
+
+  const dialogContent = getConfirmDialogContent();
+
   return (
     <div className="min-h-screen bg-background">
       <Navigation user={user} />
+      
+      {/* Confirmation Dialog */}
+      <AlertDialog open={confirmDialog.open} onOpenChange={(open) => !open && setConfirmDialog({ open: false, action: null, pages: [] })}>
+        <AlertDialogContent className="ios-card max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="ios-title3">{dialogContent?.title}</AlertDialogTitle>
+            <AlertDialogDescription className="ios-body">
+              {dialogContent?.description}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          
+          {/* Preview List */}
+          <div className="max-h-64 overflow-y-auto space-y-2 my-4">
+            <p className="text-sm font-semibold ios-subheadline mb-2">Affected pages:</p>
+            {confirmDialog.pages.map(page => (
+              <div key={page.id} className="flex items-start gap-2 p-2 rounded-lg bg-secondary/50">
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm truncate ios-callout">{page.title}</p>
+                  <p className="text-xs text-muted-foreground truncate ios-footnote">/{page.slug}</p>
+                </div>
+                <Badge variant={page.status === "published" ? "default" : "secondary"} className="text-xs shrink-0">
+                  {page.status}
+                </Badge>
+              </div>
+            ))}
+          </div>
+          
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-ios">Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={dialogContent?.onConfirm}
+              className={`rounded-ios ${dialogContent?.actionClassName}`}
+            >
+              {dialogContent?.actionText}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <div className="container mx-auto py-8 px-4">
         <div className="mb-6">
           <div className="flex justify-between items-center mb-4">
