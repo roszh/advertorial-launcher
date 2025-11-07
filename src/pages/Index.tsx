@@ -1629,12 +1629,10 @@ const Index = () => {
 
   if (isEditorMode && analysisResult) {
     return (
-      <>
+      <div className="min-h-screen w-full flex flex-col bg-background">
         <Navigation user={user} />
         <SidebarProvider defaultOpen={true}>
-          <div className="min-h-screen w-full flex flex-col bg-background">
-            {/* Main Layout with Sidebar */}
-            <div className="flex flex-1">
+          <div className="flex flex-1">
             {/* Sidebar */}
             <Sidebar className="border-r">
               <div className="p-4 border-b flex items-center justify-between">
@@ -2222,9 +2220,8 @@ const Index = () => {
           onOpenChange={setShowTemplateModal}
           onSelectTemplate={handleSelectTemplate}
         />
-        </div>
         </SidebarProvider>
-      </>
+      </div>
     );
   }
 
