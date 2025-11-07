@@ -184,8 +184,14 @@ const Index = () => {
     return () => subscription.unsubscribe();
   }, [navigate, searchParams]);
 
-  // Auto-hide header on scroll down, show on scroll up
+  // Auto-hide header on scroll down, show on scroll up (disabled in editor mode)
   useEffect(() => {
+    // Keep header always visible in editor mode
+    if (isEditorMode) {
+      setIsHeaderVisible(true);
+      return;
+    }
+
     let lastScrollY = window.scrollY;
     let ticking = false;
 
@@ -214,7 +220,7 @@ const Index = () => {
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [isEditorMode]);
 
   const loadExistingPage = async (pageId: string) => {
     setIsLoadingExistingPage(true);
@@ -2040,8 +2046,6 @@ const Index = () => {
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
 
               {/* Preview Area - Scrollable Content */}
               <div className="flex-1 overflow-y-auto overscroll-contain">
@@ -2052,6 +2056,8 @@ const Index = () => {
                   {renderTemplate()}
                 </div>
               </div>
+            </div>
+          </div>
             </div>
           </div>
         </SidebarProvider>
