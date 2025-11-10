@@ -4,9 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "@/hooks/use-toast";
-import { Save, Trash2, Plus, BookMarked } from "lucide-react";
+import { Save, Trash2, Plus, BookMarked, CheckSquare, Square } from "lucide-react";
 import { SidebarGroupContent } from "@/components/ui/sidebar";
 import { stripHtmlTags } from "@/lib/utils";
 
@@ -56,6 +59,7 @@ export function SnippetsSection({ sections, onLoadSnippet, currentPageTags = [] 
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [snippetName, setSnippetName] = useState("");
   const [snippetDescription, setSnippetDescription] = useState("");
+  const [selectedSectionIds, setSelectedSectionIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetchSnippets();
@@ -98,10 +102,10 @@ export function SnippetsSection({ sections, onLoadSnippet, currentPageTags = [] 
       return;
     }
 
-    if (sections.length === 0) {
+    if (selectedSectionIds.size === 0) {
       toast({
         title: "Error",
-        description: "No sections to save",
+        description: "Please select at least one section to save",
         variant: "destructive",
       });
       return;
@@ -112,8 +116,13 @@ export function SnippetsSection({ sections, onLoadSnippet, currentPageTags = [] 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
+      // Only save selected sections
+      const sectionsToSave = sections.filter(section => 
+        section.id && selectedSectionIds.has(section.id)
+      );
+
       // Strip HTML tags from content to ensure clean markdown storage
-      const cleanedSections = sections.map(section => ({
+      const cleanedSections = sectionsToSave.map(section => ({
         ...section,
         content: stripHtmlTags(section.content),
         heading: section.heading ? stripHtmlTags(section.heading) : section.heading,
@@ -131,11 +140,12 @@ export function SnippetsSection({ sections, onLoadSnippet, currentPageTags = [] 
 
       toast({
         title: "Success",
-        description: "Snippet saved successfully",
+        description: `Snippet saved with ${cleanedSections.length} section${cleanedSections.length !== 1 ? 's' : ''}`,
       });
 
       setSnippetName("");
       setSnippetDescription("");
+      setSelectedSectionIds(new Set());
       setSaveDialogOpen(false);
       fetchSnippets();
     } catch (error) {
@@ -148,6 +158,54 @@ export function SnippetsSection({ sections, onLoadSnippet, currentPageTags = [] 
     } finally {
       setLoading(false);
     }
+  };
+
+  const getSectionIcon = (type: string) => {
+    const icons: { [key: string]: string } = {
+      hero: "📰",
+      text: "📝",
+      image: "🖼️",
+      cta: "🔘",
+      benefits: "✅",
+      testimonial: "💬",
+      quote: "💭",
+      "facebook-testimonial": "👤",
+      "bullet-box": "📋",
+      "list-item": "📌",
+      "final-cta": "🎯",
+      update: "🔄"
+    };
+    return icons[type] || "📄";
+  };
+
+  const getSectionPreview = (section: Section) => {
+    const content = section.heading || section.content || "";
+    const stripped = stripHtmlTags(content);
+    return stripped.length > 50 ? stripped.substring(0, 50) + "..." : stripped;
+  };
+
+  const toggleSectionSelection = (sectionId: string) => {
+    const newSet = new Set(selectedSectionIds);
+    if (newSet.has(sectionId)) {
+      newSet.delete(sectionId);
+    } else {
+      newSet.add(sectionId);
+    }
+    setSelectedSectionIds(newSet);
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedSectionIds.size === sections.length) {
+      setSelectedSectionIds(new Set());
+    } else {
+      setSelectedSectionIds(new Set(sections.map(s => s.id!).filter(Boolean)));
+    }
+  };
+
+  const handleOpenSaveDialog = () => {
+    // Pre-select all sections when opening dialog
+    setSelectedSectionIds(new Set(sections.map(s => s.id!).filter(Boolean)));
+    setSaveDialogOpen(true);
   };
 
   const handleLoadSnippet = (snippet: Snippet) => {
@@ -196,14 +254,14 @@ export function SnippetsSection({ sections, onLoadSnippet, currentPageTags = [] 
     <>
       <SidebarGroupContent className="px-3 py-2 space-y-2">
         <Button
-          onClick={() => setSaveDialogOpen(true)}
+          onClick={handleOpenSaveDialog}
           variant="outline"
           size="sm"
           className="w-full justify-start gap-2 h-8 text-xs"
           disabled={sections.length === 0}
         >
           <Save className="h-3 w-3" />
-          Save Current Sections
+          Save Selected Sections
         </Button>
 
         {snippets.length === 0 ? (
@@ -272,16 +330,17 @@ export function SnippetsSection({ sections, onLoadSnippet, currentPageTags = [] 
       </SidebarGroupContent>
 
       <Dialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>Save Snippet</DialogTitle>
             <DialogDescription>
-              Save your current sections as a reusable snippet. You can load it later to quickly add these sections to any page.
+              Select which sections to save as a reusable snippet. You can load it later to quickly add these sections to any page.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
+          
+          <div className="space-y-4 flex-1 overflow-hidden flex flex-col">
             <div>
-              <Label htmlFor="snippet-name">Name</Label>
+              <Label htmlFor="snippet-name">Name <span className="text-destructive">*</span></Label>
               <Input
                 id="snippet-name"
                 placeholder="e.g., Testimonial Block, Benefit Section..."
@@ -290,6 +349,7 @@ export function SnippetsSection({ sections, onLoadSnippet, currentPageTags = [] 
                 maxLength={100}
               />
             </div>
+            
             <div>
               <Label htmlFor="snippet-description">Description (optional)</Label>
               <Textarea
@@ -298,19 +358,90 @@ export function SnippetsSection({ sections, onLoadSnippet, currentPageTags = [] 
                 value={snippetDescription}
                 onChange={(e) => setSnippetDescription(e.target.value)}
                 maxLength={500}
-                rows={3}
+                rows={2}
               />
             </div>
-            <div className="text-sm text-muted-foreground">
-              Saving {sections.length} section{sections.length !== 1 ? 's' : ''}
+
+            <div className="space-y-2 flex-1 overflow-hidden flex flex-col">
+              <div className="flex items-center justify-between">
+                <Label>Select Sections ({selectedSectionIds.size}/{sections.length})</Label>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={toggleSelectAll}
+                  className="h-8 text-xs"
+                >
+                  {selectedSectionIds.size === sections.length ? (
+                    <>
+                      <CheckSquare className="h-3 w-3 mr-1" />
+                      Deselect All
+                    </>
+                  ) : (
+                    <>
+                      <Square className="h-3 w-3 mr-1" />
+                      Select All
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              <ScrollArea className="flex-1 border rounded-md">
+                <div className="p-3 space-y-2">
+                  {sections.map((section, index) => {
+                    if (!section.id) return null;
+                    const isSelected = selectedSectionIds.has(section.id);
+                    
+                    return (
+                      <div
+                        key={section.id}
+                        className={`border rounded-lg p-3 cursor-pointer transition-all hover:border-primary ${
+                          isSelected ? 'border-primary bg-primary/5' : 'border-border'
+                        }`}
+                        onClick={() => toggleSectionSelection(section.id!)}
+                      >
+                        <div className="flex items-start gap-3">
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={() => toggleSectionSelection(section.id!)}
+                            onClick={(e) => e.stopPropagation()}
+                            className="mt-1"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-xl">{getSectionIcon(section.type)}</span>
+                              <Badge variant="secondary" className="text-xs">
+                                {section.type}
+                              </Badge>
+                              <span className="text-xs text-muted-foreground">
+                                Section {index + 1}
+                              </span>
+                            </div>
+                            <p className="text-sm text-foreground/80 line-clamp-2">
+                              {getSectionPreview(section)}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </ScrollArea>
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setSaveDialogOpen(false)}>
+
+          <DialogFooter className="flex-shrink-0">
+            <Button variant="outline" onClick={() => {
+              setSaveDialogOpen(false);
+              setSelectedSectionIds(new Set());
+            }}>
               Cancel
             </Button>
-            <Button onClick={handleSaveSnippet} disabled={loading}>
-              {loading ? "Saving..." : "Save Snippet"}
+            <Button 
+              onClick={handleSaveSnippet} 
+              disabled={loading || !snippetName.trim() || selectedSectionIds.size === 0}
+            >
+              {loading ? "Saving..." : `Save ${selectedSectionIds.size} Section${selectedSectionIds.size !== 1 ? 's' : ''}`}
             </Button>
           </DialogFooter>
         </DialogContent>
