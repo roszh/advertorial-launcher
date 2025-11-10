@@ -12,6 +12,7 @@ interface PresellSectionProps {
     heading?: string;
     imagePosition?: "left" | "right" | "full" | "none";
     style?: "normal" | "emphasized" | "callout";
+    imageLinksToUrl?: boolean;
     author?: string;
     authorRole?: string;
     authorAvatar?: string;
@@ -22,6 +23,7 @@ interface PresellSectionProps {
     updateDate?: string;
   };
   ctaText: string;
+  ctaUrl?: string;
   onCtaClick: (elementId: string) => void;
   elementId?: string;
   isEditing?: boolean;
@@ -41,7 +43,7 @@ const getImageForSection = (type: string) => {
   }
 };
 
-export const PresellSection = ({ section, ctaText, onCtaClick, elementId = "untracked", isEditing = false, onEdit }: PresellSectionProps) => {
+export const PresellSection = ({ section, ctaText, ctaUrl, onCtaClick, elementId = "untracked", isEditing = false, onEdit }: PresellSectionProps) => {
   const isHero = section.type === "hero";
   const isCta = section.type === "cta";
   const isQuote = section.type === "quote";
@@ -350,13 +352,25 @@ export const PresellSection = ({ section, ctaText, onCtaClick, elementId = "untr
             />
           </div>
           <div className={cn(section.imagePosition === "right" && "md:col-start-1 md:row-start-1")}>
-            <img
-              src={imageSrc}
-              alt={section.heading || "Section image"}
-              loading="lazy"
-              decoding="async"
-              className="w-full h-auto rounded-lg shadow-[var(--shadow-soft)]"
-            />
+            {section.imageLinksToUrl && ctaUrl ? (
+              <a href={ctaUrl} target="_blank" rel="noopener noreferrer" className="block">
+                <img
+                  src={imageSrc}
+                  alt={section.heading || "Section image"}
+                  loading="lazy"
+                  decoding="async"
+                  className="w-full h-auto rounded-lg shadow-[var(--shadow-soft)] hover:opacity-90 transition-opacity cursor-pointer"
+                />
+              </a>
+            ) : (
+              <img
+                src={imageSrc}
+                alt={section.heading || "Section image"}
+                loading="lazy"
+                decoding="async"
+                className="w-full h-auto rounded-lg shadow-[var(--shadow-soft)]"
+              />
+            )}
           </div>
         </div>
       </div>

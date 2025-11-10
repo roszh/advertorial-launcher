@@ -151,6 +151,7 @@ export const ListicleTemplate = ({
           <PresellSection
             section={section as any}
             ctaText={ctaText}
+            ctaUrl={ctaUrl}
             onCtaClick={() => {}}
             isEditing={false}
           />

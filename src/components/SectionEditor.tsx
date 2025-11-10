@@ -14,6 +14,7 @@ interface Section {
   style?: "normal" | "emphasized" | "callout";
   imageUrl?: string;
   imageAspectRatio?: "video" | "square";
+  imageLinksToUrl?: boolean;
   ctaText?: string;
   author?: string;
   authorRole?: string;
@@ -142,7 +143,21 @@ export const SectionEditor = ({
                   }
                 />
                 {editedSection.imageUrl && (
-                  <div className="mt-2">
+                  <div className="mt-2 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id="imageLinksToUrl"
+                        checked={editedSection.imageLinksToUrl || false}
+                        onChange={(e) =>
+                          setEditedSection({ ...editedSection, imageLinksToUrl: e.target.checked })
+                        }
+                        className="rounded border-input"
+                      />
+                      <label htmlFor="imageLinksToUrl" className="text-sm cursor-pointer">
+                        Link image to CTA URL
+                      </label>
+                    </div>
                     <Button
                       size="sm"
                       variant="outline"

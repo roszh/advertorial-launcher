@@ -16,6 +16,7 @@ interface Section {
   imagePosition?: "left" | "right" | "full" | "none";
   style?: "normal" | "emphasized" | "callout";
   imageUrl?: string;
+  imageLinksToUrl?: boolean;
   ctaText?: string;
   author?: string;
   authorRole?: string;
@@ -30,6 +31,7 @@ interface Section {
 interface MagazineTemplateProps {
   sections: Section[];
   ctaText: string;
+  ctaUrl?: string;
   onCtaClick: (elementId: string) => void;
   imageUrl?: string;
   isEditing?: boolean;
@@ -51,7 +53,8 @@ interface MagazineTemplateProps {
 
 export const MagazineTemplate = ({ 
   sections, 
-  ctaText, 
+  ctaText,
+  ctaUrl,
   onCtaClick, 
   imageUrl, 
   isEditing = false,
@@ -100,6 +103,7 @@ export const MagazineTemplate = ({
             <PresellSection
               section={section}
               ctaText={ctaText}
+              ctaUrl={ctaUrl}
               onCtaClick={onCtaClick}
               elementId={`section${actualIndex}`}
               isEditing={isEditing}

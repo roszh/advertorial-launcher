@@ -19,6 +19,7 @@ interface Section {
   content: string;
   imagePosition?: "left" | "right" | "full" | "none";
   style?: "normal" | "emphasized" | "callout";
+  imageLinksToUrl?: boolean;
   order?: number;
   number?: number;
   [key: string]: any;
@@ -482,6 +483,7 @@ export default function PublicPage() {
   const templateProps = {
     sections: pageData.content.sections,
     ctaText: pageData.cta_text,
+    ctaUrl: pageData.cta_url,
     onCtaClick: handleCtaClick,
     ctaVariant: (pageData.cta_style as any) || "ctaAmazon",
     imageUrl: pageData.image_url,

@@ -66,6 +66,7 @@ interface Section {
   style?: "normal" | "emphasized" | "callout";
   imageUrl?: string;
   imageAspectRatio?: "video" | "square";
+  imageLinksToUrl?: boolean;
   ctaText?: string;
   author?: string;
   authorRole?: string;
@@ -1218,6 +1219,7 @@ const Index = () => {
     const templateProps = {
       sections: analysisResult?.sections || [],
       ctaText: analysisResult?.cta.primary || "Get Started",
+      ctaUrl: ctaUrl,
       onCtaClick: handleCtaClick,
       ctaVariant: ctaStyle,
       imageUrl,
