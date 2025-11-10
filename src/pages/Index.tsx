@@ -32,6 +32,7 @@ import { SectionEditor } from "@/components/SectionEditor";
 import { StickyCtaButton } from "@/components/StickyCtaButton";
 import { HtmlEditor } from "@/components/HtmlEditor";
 import { SectionTemplateModal } from "@/components/SectionTemplateModal";
+import { SnippetsSection } from "@/components/SnippetsSection";
 import { toast } from "@/hooks/use-toast";
 import { stripHtmlTags, cn } from "@/lib/utils";
 import { 
@@ -54,7 +55,8 @@ import {
   FileText,
   Newspaper,
   BookOpen,
-  ListOrdered
+  ListOrdered,
+  BookMarked
 } from "lucide-react";
 
 interface Section {
@@ -156,6 +158,7 @@ const Index = () => {
   const [pageSettingsOpen, setPageSettingsOpen] = useState(true);
   const [ctaConfigOpen, setCtaConfigOpen] = useState(false);
   const [designOptionsOpen, setDesignOptionsOpen] = useState(false);
+  const [snippetsOpen, setSnippetsOpen] = useState(false);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -2029,6 +2032,37 @@ const Index = () => {
                           </div>
                         </div>
                       </SidebarGroupContent>
+                    </CollapsibleContent>
+                  </SidebarGroup>
+                </Collapsible>
+
+                {/* Snippets Section */}
+                <Collapsible open={snippetsOpen} onOpenChange={setSnippetsOpen}>
+                  <SidebarGroup>
+                    <CollapsibleTrigger className="w-full">
+                      <SidebarGroupLabel className="flex items-center justify-between cursor-pointer hover:bg-accent/50 px-3 py-2 rounded-md transition-colors">
+                        <div className="flex items-center gap-2">
+                          <BookMarked className="h-4 w-4" />
+                          <span>Snippets</span>
+                        </div>
+                        <ChevronDown className={cn("h-4 w-4 transition-transform", snippetsOpen && "rotate-180")} />
+                      </SidebarGroupLabel>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <SnippetsSection
+                        sections={analysisResult?.sections || []}
+                        onLoadSnippet={(snippetSections) => {
+                          if (!analysisResult) return;
+                          const sectionsWithIds = snippetSections.map((s, i) => 
+                            ensureSectionMetadata(s, analysisResult.sections.length + i)
+                          );
+                          setAnalysisResult({
+                            ...analysisResult,
+                            sections: [...analysisResult.sections, ...sectionsWithIds],
+                          });
+                          setHasUnsavedChanges(true);
+                        }}
+                      />
                     </CollapsibleContent>
                   </SidebarGroup>
                 </Collapsible>

@@ -327,6 +327,36 @@ export type Database = {
         }
         Relationships: []
       }
+      snippets: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          sections: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          sections: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          sections?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       tags: {
         Row: {
           color: string
