@@ -1,6 +1,7 @@
 import { cn, formatMarkdownText } from "@/lib/utils";
 import { Button } from "./ui/button";
 import { Edit2 } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar";
 import heroImage from "@/assets/hero-image.jpg";
 import successImage from "@/assets/success-image.jpg";
 import trustBg from "@/assets/trust-bg.jpg";
@@ -74,13 +75,15 @@ export const PresellSection = ({ section, ctaText, ctaUrl, onCtaClick, elementId
             </blockquote>
             <div className="flex items-center gap-4">
               {section.authorAvatar && (
-                <img 
-                  src={section.authorAvatar} 
-                  alt={section.author}
-                  loading="lazy"
-                  decoding="async"
-                  className="w-12 h-12 md:w-16 md:h-16 rounded-full object-cover"
-                />
+                <Avatar className="w-12 h-12 md:w-16 md:h-16">
+                  <AvatarImage 
+                    src={section.authorAvatar} 
+                    alt={section.author}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                  <AvatarFallback>{section.author?.charAt(0) || "?"}</AvatarFallback>
+                </Avatar>
               )}
               <div>
                 <p className="font-semibold text-base md:text-lg">{section.author}</p>
@@ -157,19 +160,17 @@ export const PresellSection = ({ section, ctaText, ctaUrl, onCtaClick, elementId
           >
             <div className="flex items-start gap-4">
               {/* Profile Photo */}
-              <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-gray-300 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                {section.authorAvatar ? (
-                  <img 
-                    src={section.authorAvatar} 
-                    alt={section.author} 
-                    loading="lazy"
-                    decoding="async"
-                    className="w-full h-full object-cover" 
-                  />
-                ) : (
-                  <span className="text-xl font-bold text-gray-600">{section.author?.charAt(0)}</span>
-                )}
-              </div>
+              <Avatar className="w-12 h-12 md:w-14 md:h-14 flex-shrink-0">
+                <AvatarImage 
+                  src={section.authorAvatar} 
+                  alt={section.author}
+                  loading="lazy"
+                  decoding="async"
+                />
+                <AvatarFallback className="bg-gray-300 text-gray-600 font-bold text-xl">
+                  {section.author?.charAt(0) || "?"}
+                </AvatarFallback>
+              </Avatar>
               
               {/* Content */}
               <div className="flex-1 min-w-0">
