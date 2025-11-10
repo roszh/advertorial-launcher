@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Textarea } from "./ui/textarea";
 import { Button } from "./ui/button";
 import { Check, X, Edit2, Bold, Italic, Trash2, Sparkles, Link as LinkIcon, Heading2 } from "lucide-react";
-import { cn, formatMarkdownText } from "@/lib/utils";
+import { cn, formatMarkdownText, stripHtmlTags } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "./ui/input";
@@ -48,13 +48,19 @@ export const RichTextEditor = ({
     }
   };
 
+  // Strip HTML when entering edit mode
   useEffect(() => {
-    if (isEditing && textareaRef.current) {
-      textareaRef.current.focus();
-      textareaRef.current.setSelectionRange(editValue.length, editValue.length);
-      adjustTextareaHeight();
+    if (isEditing) {
+      const cleanValue = stripHtmlTags(value);
+      setEditValue(cleanValue);
+      
+      if (textareaRef.current) {
+        textareaRef.current.focus();
+        textareaRef.current.setSelectionRange(cleanValue.length, cleanValue.length);
+        adjustTextareaHeight();
+      }
     }
-  }, [isEditing]);
+  }, [isEditing, value]);
 
   const handleSave = () => {
     if (editValue.trim()) {

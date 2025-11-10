@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
@@ -52,6 +52,15 @@ export const SectionEditor = ({
   userId,
 }: SectionEditorProps) => {
   const [editedSection, setEditedSection] = useState<Section>(section);
+
+  // Strip HTML tags when section changes to ensure clean editing
+  useEffect(() => {
+    setEditedSection({
+      ...section,
+      content: stripHtmlTags(section.content),
+      heading: section.heading ? stripHtmlTags(section.heading) : section.heading,
+    });
+  }, [section]);
 
   const handleSave = () => {
     // Strip HTML tags to ensure clean markdown storage
