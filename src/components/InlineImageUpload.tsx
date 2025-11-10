@@ -15,6 +15,7 @@ interface InlineImageUploadProps {
   aspectRatio?: "video" | "square" | "wide";
   onAspectRatioChange?: (ratio: "video" | "square") => void;
   showAspectRatioSelector?: boolean;
+  pageId?: string; // Optional: to track which page the image was uploaded from
 }
 
 export const InlineImageUpload = ({ 
@@ -24,7 +25,8 @@ export const InlineImageUpload = ({
   className,
   aspectRatio = "video",
   onAspectRatioChange,
-  showAspectRatioSelector = false
+  showAspectRatioSelector = false,
+  pageId
 }: InlineImageUploadProps) => {
   const [uploading, setUploading] = useState(false);
   const [imageUrl, setImageUrl] = useState(currentImageUrl || "");
@@ -119,14 +121,15 @@ export const InlineImageUpload = ({
       setImageUrl(finalUrl);
       onImageUploaded(finalUrl);
       
-      // Save to image library
+      // Save to image library with page_id
       const { error: libraryError } = await supabase
         .from('image_library')
         .insert({
           user_id: userId,
           filename: file.name,
           image_url: finalUrl,
-          file_size: file.size
+          file_size: file.size,
+          page_id: pageId || null // Associate with page if pageId is provided
         });
 
       if (libraryError) {

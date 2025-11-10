@@ -9,9 +9,10 @@ interface ImageUploadProps {
   currentImageUrl?: string;
   onImageUploaded: (url: string) => void;
   userId: string;
+  pageId?: string; // Optional: to track which page the image was uploaded from
 }
 
-export const ImageUpload = ({ currentImageUrl, onImageUploaded, userId }: ImageUploadProps) => {
+export const ImageUpload = ({ currentImageUrl, onImageUploaded, userId, pageId }: ImageUploadProps) => {
   const [uploading, setUploading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(currentImageUrl || null);
 
@@ -110,7 +111,8 @@ export const ImageUpload = ({ currentImageUrl, onImageUploaded, userId }: ImageU
           user_id: userId,
           filename: file.name,
           image_url: finalImageUrl,
-          file_size: file.size
+          file_size: file.size,
+          page_id: pageId || null // Associate with page if pageId is provided
         });
 
       if (libraryError) {

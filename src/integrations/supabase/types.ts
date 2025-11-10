@@ -21,6 +21,7 @@ export type Database = {
           filename: string
           id: string
           image_url: string
+          page_id: string | null
           user_id: string
         }
         Insert: {
@@ -29,6 +30,7 @@ export type Database = {
           filename: string
           id?: string
           image_url: string
+          page_id?: string | null
           user_id: string
         }
         Update: {
@@ -37,9 +39,32 @@ export type Database = {
           filename?: string
           id?: string
           image_url?: string
+          page_id?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "image_library_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "page_analytics_summary"
+            referencedColumns: ["page_id"]
+          },
+          {
+            foreignKeyName: "image_library_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "pages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "image_library_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "published_pages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       page_analytics: {
         Row: {

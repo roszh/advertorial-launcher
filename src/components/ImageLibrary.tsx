@@ -3,7 +3,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
-import { Loader2, Upload, Trash2, Check } from "lucide-react";
+import { Badge } from "./ui/badge";
+import { Loader2, Upload, Trash2, Check, Filter } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { compressImage } from "@/lib/utils";
 import {
@@ -16,6 +17,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+
+interface Tag {
+  id: string;
+  name: string;
+  color: string;
+}
 
 interface ImageLibraryProps {
   userId: string;
@@ -32,12 +39,58 @@ export const ImageLibrary = ({
 }: ImageLibraryProps) => {
   const [uploading, setUploading] = useState(false);
   const [imageToDelete, setImageToDelete] = useState<string | null>(null);
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+  const [showFilters, setShowFilters] = useState(false);
   const queryClient = useQueryClient();
 
-  // Fetch images from library
-  const { data: images, isLoading } = useQuery({
-    queryKey: ['image-library', userId],
+  // Fetch available tags
+  const { data: tags } = useQuery({
+    queryKey: ["tags", userId],
     queryFn: async () => {
+      const { data, error } = await supabase
+        .from("tags")
+        .select("*")
+        .eq("user_id", userId)
+        .order("name");
+      
+      if (error) throw error;
+      return data as Tag[];
+    },
+  });
+
+  // Fetch images from library with tag filtering
+  const { data: images, isLoading } = useQuery({
+    queryKey: ['image-library', userId, selectedTagIds],
+    queryFn: async () => {
+      // If tags are selected, filter by page tags
+      if (selectedTagIds.length > 0) {
+        // Get all page IDs that have any of the selected tags
+        const { data: pageIds, error: pageError } = await supabase
+          .from("page_tags")
+          .select("page_id")
+          .in("tag_id", selectedTagIds);
+
+        if (pageError) throw pageError;
+        
+        const uniquePageIds = [...new Set(pageIds?.map(pt => pt.page_id) || [])];
+        
+        if (uniquePageIds.length === 0) {
+          return []; // No pages with selected tags
+        }
+
+        // Get images from those pages
+        const { data, error } = await supabase
+          .from('image_library')
+          .select('*')
+          .eq('user_id', userId)
+          .in('page_id', uniquePageIds)
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        return data;
+      }
+
+      // No filter - get all images
       const { data, error } = await supabase
         .from('image_library')
         .select('*')
@@ -68,7 +121,7 @@ export const ImageLibrary = ({
         .from('page-images')
         .getPublicUrl(fileName);
 
-      // Save to image library
+      // Save to image library (without page_id when uploading from library page)
       const { error: dbError } = await supabase
         .from('image_library')
         .insert({
@@ -76,6 +129,7 @@ export const ImageLibrary = ({
           image_url: publicUrl,
           filename: file.name,
           file_size: file.size,
+          page_id: null // Images uploaded from library page are not associated with a specific page
         });
 
       if (dbError) throw dbError;
@@ -83,7 +137,7 @@ export const ImageLibrary = ({
       return publicUrl;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['image-library', userId] });
+      queryClient.invalidateQueries({ queryKey: ['image-library'] });
       toast({ title: "Image added to library!" });
     },
     onError: (error: any) => {
@@ -119,7 +173,7 @@ export const ImageLibrary = ({
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['image-library', userId] });
+      queryClient.invalidateQueries({ queryKey: ['image-library'] });
       toast({ title: "Image deleted from library" });
       setImageToDelete(null);
     },
@@ -155,6 +209,14 @@ export const ImageLibrary = ({
     }
   };
 
+  const toggleTag = (tagId: string) => {
+    setSelectedTagIds(prev =>
+      prev.includes(tagId)
+        ? prev.filter(id => id !== tagId)
+        : [...prev, tagId]
+    );
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-12">
@@ -172,7 +234,22 @@ export const ImageLibrary = ({
             {images?.length || 0} images • Upload once, reuse everywhere
           </p>
         </div>
-        <div>
+        <div className="flex items-center gap-2">
+          {tags && tags.length > 0 && (
+            <Button
+              onClick={() => setShowFilters(!showFilters)}
+              variant="outline"
+              size="sm"
+            >
+              <Filter className="mr-2 h-4 w-4" />
+              Filter
+              {selectedTagIds.length > 0 && (
+                <Badge variant="secondary" className="ml-2">
+                  {selectedTagIds.length}
+                </Badge>
+              )}
+            </Button>
+          )}
           <input
             type="file"
             accept="image/jpeg,image/jpg,image/png,image/webp"
@@ -192,12 +269,44 @@ export const ImageLibrary = ({
             ) : (
               <>
                 <Upload className="mr-2 h-4 w-4" />
-                Upload Image
+                Upload
               </>
             )}
           </Button>
         </div>
       </div>
+
+      {showFilters && tags && tags.length > 0 && (
+        <div className="p-4 border rounded-lg bg-muted/50">
+          <p className="text-sm font-medium mb-2">Filter by page tags:</p>
+          <div className="flex flex-wrap gap-2">
+            {tags.map(tag => (
+              <Badge
+                key={tag.id}
+                onClick={() => toggleTag(tag.id)}
+                style={{ 
+                  backgroundColor: selectedTagIds.includes(tag.id) ? tag.color : undefined,
+                  cursor: "pointer"
+                }}
+                variant={selectedTagIds.includes(tag.id) ? "default" : "outline"}
+                className="transition-all hover:scale-105"
+              >
+                {tag.name}
+              </Badge>
+            ))}
+          </div>
+          {selectedTagIds.length > 0 && (
+            <Button
+              onClick={() => setSelectedTagIds([])}
+              variant="ghost"
+              size="sm"
+              className="mt-2"
+            >
+              Clear filters
+            </Button>
+          )}
+        </div>
+      )}
 
       {images && images.length > 0 ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -251,14 +360,28 @@ export const ImageLibrary = ({
       ) : (
         <div className="text-center py-12 border-2 border-dashed rounded-lg">
           <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-          <p className="text-muted-foreground mb-4">No images in your library yet</p>
-          <Button
-            variant="outline"
-            onClick={() => document.getElementById('library-upload')?.click()}
-            disabled={uploading}
-          >
-            Upload Your First Image
-          </Button>
+          <p className="text-muted-foreground mb-4">
+            {selectedTagIds.length > 0 
+              ? "No images found with the selected tags" 
+              : "No images in your library yet"
+            }
+          </p>
+          {selectedTagIds.length > 0 ? (
+            <Button
+              variant="outline"
+              onClick={() => setSelectedTagIds([])}
+            >
+              Clear filters
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              onClick={() => document.getElementById('library-upload')?.click()}
+              disabled={uploading}
+            >
+              Upload Your First Image
+            </Button>
+          )}
         </div>
       )}
 
