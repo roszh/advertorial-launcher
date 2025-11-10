@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "./ui/button";
-import { Trash2, AlertCircle, Copy, Plus, Type, Image as ImageIcon, MousePointerClick, Quote, MessageSquare, List, Bell } from "lucide-react";
+import { Trash2, AlertCircle, Copy, Plus, Type, Image as ImageIcon, MousePointerClick, Quote, MessageSquare, List, Bell, Edit2 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuLabel } from "./ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
@@ -9,6 +9,7 @@ interface SectionControlsProps {
   onAddSectionBelow: (type: string) => void;
   onDeleteSection: () => void;
   onCloneSection?: () => void;
+  onOpenEditor?: () => void;
   className?: string;
   onDeleteHover?: (isHovering: boolean) => void;
 }
@@ -18,6 +19,7 @@ export const SectionControls = ({
   onAddSectionBelow,
   onDeleteSection,
   onCloneSection,
+  onOpenEditor,
   className,
   onDeleteHover
 }: SectionControlsProps) => {
@@ -95,6 +97,18 @@ export const SectionControls = ({
           </DropdownMenuContent>
         </DropdownMenu>
         
+        {onOpenEditor && (
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={onOpenEditor}
+            title="Open advanced editor"
+            className="hover-scale"
+          >
+            <Edit2 className="h-4 w-4 mr-1" />
+            Edit
+          </Button>
+        )}
         {onCloneSection && (
           <Button
             size="sm"

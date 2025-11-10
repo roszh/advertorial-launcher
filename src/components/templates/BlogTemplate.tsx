@@ -263,6 +263,7 @@ export const BlogTemplate = ({
           {isEditing && onAddSection && onDeleteSection && (
             <SectionControls
               index={actualIndex}
+              onOpenEditor={() => onEditSection?.(actualIndex)}
               onAddSectionBelow={(type) => {
                 if (type === "text" || type === "image" || type === "complete-section") {
                   onAddSection(actualIndex, type);
