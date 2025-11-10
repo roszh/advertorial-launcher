@@ -10,8 +10,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "@/hooks/use-toast";
-import { Edit, Trash2, Copy, Search, Filter, ArrowUp, ArrowDown, FileText, BookMarked } from "lucide-react";
+import { Edit, Trash2, Copy, Search, Filter, ArrowUp, ArrowDown, FileText, BookMarked, Loader2 } from "lucide-react";
 import { SnippetEditor } from "@/components/SnippetEditor";
 
 interface Tag {
@@ -44,6 +45,8 @@ export default function Snippets() {
   const [editingSnippet, setEditingSnippet] = useState<Snippet | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [snippetToDelete, setSnippetToDelete] = useState<Snippet | null>(null);
+  const [cloning, setCloning] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -98,10 +101,13 @@ export default function Snippets() {
   const handleDelete = async () => {
     if (!snippetToDelete) return;
 
+    setDeleting(snippetToDelete.id);
     const { error } = await supabase
       .from("snippets")
       .delete()
       .eq("id", snippetToDelete.id);
+
+    setDeleting(null);
 
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -114,6 +120,7 @@ export default function Snippets() {
   };
 
   const handleClone = async (snippet: Snippet) => {
+    setCloning(snippet.id);
     const { data, error } = await supabase
       .from("snippets")
       .insert({
@@ -124,6 +131,8 @@ export default function Snippets() {
         tags: snippet.tags as any
       })
       .select();
+
+    setCloning(null);
 
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -169,16 +178,20 @@ export default function Snippets() {
   });
 
   const getSectionCount = (sections: any): number => {
+    if (!sections) return 0;
+    if (Array.isArray(sections)) return sections.length;
     try {
-      return Array.isArray(sections) ? sections.length : 0;
+      const parsed = JSON.parse(sections);
+      return Array.isArray(parsed) ? parsed.length : 0;
     } catch {
       return 0;
     }
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navigation user={user} />
+    <TooltipProvider>
+      <div className="min-h-screen bg-background">
+        <Navigation user={user} />
       
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8 flex flex-col gap-4">
@@ -258,6 +271,12 @@ export default function Snippets() {
               {sortOrder === "asc" ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
             </Button>
           </div>
+          
+          {(searchQuery || selectedTags.length > 0) && (
+            <div className="text-sm text-muted-foreground">
+              Showing {sortedSnippets.length} of {snippets.length} snippets
+            </div>
+          )}
         </div>
 
         {loading ? (
@@ -307,38 +326,68 @@ export default function Snippets() {
                   </div>
                   
                   <div className="flex gap-2 pt-2">
-                    <Button
-                      size="sm"
-                      variant="default"
-                      className="flex-1"
-                      onClick={() => handleUseInPage(snippet)}
-                    >
-                      Use in Page
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setEditingSnippet(snippet)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleClone(snippet)}
-                    >
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        setSnippetToDelete(snippet);
-                        setDeleteDialogOpen(true);
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          size="sm"
+                          variant="default"
+                          className="flex-1"
+                          onClick={() => handleUseInPage(snippet)}
+                        >
+                          Use in Page
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Load snippet sections into page editor</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setEditingSnippet(snippet)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Edit snippet details and sections</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleClone(snippet)}
+                          disabled={cloning === snippet.id}
+                        >
+                          {cloning === snippet.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Copy className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Create a copy of this snippet</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setSnippetToDelete(snippet);
+                            setDeleteDialogOpen(true);
+                          }}
+                          disabled={deleting === snippet.id}
+                        >
+                          {deleting === snippet.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Delete this snippet permanently</TooltipContent>
+                    </Tooltip>
                   </div>
                 </CardContent>
               </Card>
@@ -376,6 +425,7 @@ export default function Snippets() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+      </div>
+    </TooltipProvider>
   );
 }

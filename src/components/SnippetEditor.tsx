@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -8,10 +8,13 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "./ui/sheet";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Checkbox } from "./ui/checkbox";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "./ui/alert-dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
+import { SectionTemplateModal } from "./SectionTemplateModal";
 import { toast } from "@/hooks/use-toast";
-import { Save, X, GripVertical, Edit2, Trash2, Plus, Tag as TagIcon } from "lucide-react";
+import { Save, X, GripVertical, Edit2, Trash2, Plus, Tag as TagIcon, Loader2 } from "lucide-react";
 import { DraggableSections } from "./DraggableSections";
 import { SectionEditor } from "./SectionEditor";
+import { cn } from "@/lib/utils";
 
 interface Tag {
   id: string;
@@ -55,6 +58,28 @@ export function SnippetEditor({ snippet, availableTags, onClose, onSave, userId 
   const [editingSectionIndex, setEditingSectionIndex] = useState<number | null>(null);
   const [deletingSectionIndex, setDeleteingSectionIndex] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
+  const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
+  const [showAddSectionModal, setShowAddSectionModal] = useState(false);
+  
+  // Store initial values to detect changes
+  const initialValuesRef = useRef({
+    name: snippet.name,
+    description: snippet.description || "",
+    sections: JSON.stringify(snippet.sections || []),
+    tags: JSON.stringify(snippet.tags?.map(t => t.id) || [])
+  });
+
+  // Track if values have changed from initial state
+  useEffect(() => {
+    const hasChanges = 
+      name !== initialValuesRef.current.name ||
+      description !== initialValuesRef.current.description ||
+      JSON.stringify(sections) !== initialValuesRef.current.sections ||
+      JSON.stringify(selectedTags) !== initialValuesRef.current.tags;
+    
+    setIsDirty(hasChanges);
+  }, [name, description, sections, selectedTags]);
 
   const handleSave = async () => {
     if (!name.trim()) {
@@ -130,12 +155,36 @@ export function SnippetEditor({ snippet, availableTags, onClose, onSave, userId 
 
   const getSectionPreview = (section: Section) => {
     const content = section.heading || section.content || "";
-    return content.length > 60 ? content.substring(0, 60) + "..." : content;
+    // Better truncation with word boundaries
+    if (content.length <= 80) return content;
+    const truncated = content.substring(0, 80);
+    const lastSpace = truncated.lastIndexOf(' ');
+    return (lastSpace > 60 ? truncated.substring(0, lastSpace) : truncated) + "...";
+  };
+
+  const handleAddSection = (templateType: string) => {
+    const newSection: Section = {
+      id: crypto.randomUUID(),
+      type: templateType,
+      content: "",
+      heading: "",
+    };
+    setSections([...sections, newSection]);
+    setShowAddSectionModal(false);
+    toast({ title: "Section added", description: "Edit the section to add your content" });
+  };
+
+  const handleCloseAttempt = () => {
+    if (isDirty) {
+      setShowUnsavedDialog(true);
+    } else {
+      onClose();
+    }
   };
 
   return (
-    <>
-      <Sheet open={true} onOpenChange={onClose}>
+    <TooltipProvider>
+      <Sheet open={true} onOpenChange={handleCloseAttempt}>
         <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto">
           <SheetHeader>
             <SheetTitle>Edit Snippet</SheetTitle>
@@ -145,12 +194,21 @@ export function SnippetEditor({ snippet, availableTags, onClose, onSave, userId 
             {/* Metadata Section */}
             <div className="space-y-4">
               <div>
-                <label className="text-sm font-medium mb-2 block">Snippet Name</label>
+                <label className="text-sm font-medium mb-2 block">
+                  Snippet Name <span className="text-destructive">*</span>
+                </label>
                 <Input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Enter snippet name"
+                  className={cn(!name.trim() && "border-destructive")}
                 />
+                {!name.trim() && (
+                  <p className="text-xs text-destructive mt-1">Name is required</p>
+                )}
+                <p className="text-xs text-muted-foreground mt-1">
+                  {name.length}/100 characters
+                </p>
               </div>
 
               <div>
@@ -211,61 +269,106 @@ export function SnippetEditor({ snippet, availableTags, onClose, onSave, userId 
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <label className="text-sm font-medium">Sections ({sections.length})</label>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setShowAddSectionModal(true)}
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      Add Section
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Add a new section to this snippet</TooltipContent>
+                </Tooltip>
               </div>
 
               {sections.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  No sections in this snippet
+                <div className="text-center py-8 border-2 border-dashed rounded-lg">
+                  <p className="text-muted-foreground mb-4">No sections in this snippet</p>
+                  <Button onClick={() => setShowAddSectionModal(true)}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Your First Section
+                  </Button>
                 </div>
               ) : (
-                <div className="space-y-2">
-                  {sections.map((section, index) => (
-                    <div
-                      key={section.id}
-                      className="bg-muted/50 rounded-lg p-4 space-y-2 border"
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="text-2xl">{getSectionIcon(section.type)}</div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="text-xs font-medium uppercase text-muted-foreground">
-                              {section.type}
-                            </span>
+                <DraggableSections
+                  items={sections.map(section => ({
+                    id: section.id,
+                    content: (
+                      <div className="bg-muted/50 rounded-lg p-4 space-y-2 border">
+                        <div className="flex items-start gap-3">
+                          <div className="text-2xl">{getSectionIcon(section.type)}</div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <Badge variant="secondary" className="text-xs font-medium uppercase">
+                                {section.type}
+                              </Badge>
+                            </div>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <p className="text-sm text-foreground/80 line-clamp-2 cursor-help">
+                                  {getSectionPreview(section)}
+                                </p>
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-sm">
+                                <p className="text-xs">{section.heading || section.content || "No content"}</p>
+                              </TooltipContent>
+                            </Tooltip>
                           </div>
-                          <p className="text-sm text-foreground/80 truncate">
-                            {getSectionPreview(section)}
-                          </p>
-                        </div>
-                        <div className="flex gap-1">
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => setEditingSectionIndex(index)}
-                          >
-                            <Edit2 className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => setDeleteingSectionIndex(index)}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
+                          <div className="flex gap-1">
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  onClick={() => setEditingSectionIndex(sections.findIndex(s => s.id === section.id))}
+                                >
+                                  <Edit2 className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Edit section details</TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  onClick={() => setDeleteingSectionIndex(sections.findIndex(s => s.id === section.id))}
+                                >
+                                  <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Remove this section</TooltipContent>
+                            </Tooltip>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    )
+                  }))}
+                  onReorder={handleReorder}
+                  isEditing={true}
+                />
               )}
             </div>
 
             {/* Action Buttons */}
             <div className="flex gap-2 pt-4 border-t">
-              <Button onClick={handleSave} disabled={saving} className="flex-1">
-                <Save className="mr-2 h-4 w-4" />
-                {saving ? "Saving..." : "Save Changes"}
+              <Button onClick={handleSave} disabled={saving || !name.trim()} className="flex-1">
+                {saving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="mr-2 h-4 w-4" />
+                    Save Changes
+                  </>
+                )}
               </Button>
-              <Button onClick={onClose} variant="outline">
+              <Button onClick={handleCloseAttempt} variant="outline">
                 <X className="mr-2 h-4 w-4" />
                 Cancel
               </Button>
@@ -331,6 +434,31 @@ export function SnippetEditor({ snippet, availableTags, onClose, onSave, userId 
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+
+      {/* Unsaved Changes Warning */}
+      <AlertDialog open={showUnsavedDialog} onOpenChange={setShowUnsavedDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have unsaved changes. Are you sure you want to close without saving?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Continue Editing</AlertDialogCancel>
+            <AlertDialogAction onClick={onClose} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Discard Changes
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Add Section Template Modal */}
+      <SectionTemplateModal
+        open={showAddSectionModal}
+        onOpenChange={setShowAddSectionModal}
+        onSelectTemplate={handleAddSection}
+      />
+    </TooltipProvider>
   );
 }

@@ -188,6 +188,48 @@ const Index = () => {
     return () => subscription.unsubscribe();
   }, [navigate, searchParams]);
 
+  // Load snippet from sessionStorage (from "Use in Page" feature)
+  useEffect(() => {
+    const loadSnippetData = sessionStorage.getItem('loadSnippet');
+    if (loadSnippetData) {
+      try {
+        const snippet = JSON.parse(loadSnippetData);
+        const sectionsWithMetadata = snippet.sections.map((s: Section, i: number) => ensureSectionMetadata(s, i));
+        
+        setAnalysisResult({
+          layout: "default",
+          sections: sectionsWithMetadata,
+          cta: { primary: "Get Started" }
+        });
+        setIsEditorMode(true);
+        
+        // Apply snippet tags if available
+        if (snippet.tags && Array.isArray(snippet.tags)) {
+          setSelectedTags(snippet.tags.map((t: any) => t.id));
+        }
+        
+        // Set page title from snippet name
+        setPageTitle(snippet.name);
+        
+        // Clear sessionStorage to prevent re-loading on refresh
+        sessionStorage.removeItem('loadSnippet');
+        
+        toast({ 
+          title: "Snippet loaded successfully", 
+          description: `${sectionsWithMetadata.length} sections loaded from "${snippet.name}"` 
+        });
+      } catch (error) {
+        console.error("Error loading snippet:", error);
+        toast({ 
+          title: "Error loading snippet", 
+          description: "Failed to parse snippet data", 
+          variant: "destructive" 
+        });
+        sessionStorage.removeItem('loadSnippet');
+      }
+    }
+  }, []);
+
   // Auto-hide header on scroll down, show on scroll up (disabled in editor mode)
   useEffect(() => {
     // Keep header always visible in editor mode
