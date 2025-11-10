@@ -334,6 +334,7 @@ export type Database = {
           id: string
           name: string
           sections: Json
+          tags: Json | null
           updated_at: string
           user_id: string
         }
@@ -343,6 +344,7 @@ export type Database = {
           id?: string
           name: string
           sections: Json
+          tags?: Json | null
           updated_at?: string
           user_id: string
         }
@@ -352,6 +354,7 @@ export type Database = {
           id?: string
           name?: string
           sections?: Json
+          tags?: Json | null
           updated_at?: string
           user_id?: string
         }

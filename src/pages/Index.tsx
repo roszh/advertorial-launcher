@@ -2051,6 +2051,7 @@ const Index = () => {
                     <CollapsibleContent>
                       <SnippetsSection
                         sections={analysisResult?.sections || []}
+                        currentPageTags={availableTags.filter(t => selectedTags.includes(t.id))}
                         onLoadSnippet={(snippetSections) => {
                           if (!analysisResult) return;
                           const sectionsWithIds = snippetSections.map((s, i) => 

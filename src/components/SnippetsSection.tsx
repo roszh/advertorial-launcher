@@ -40,15 +40,17 @@ interface Snippet {
   name: string;
   description: string | null;
   sections: Section[];
+  tags?: Array<{id: string, name: string, color: string}>;
   created_at: string;
 }
 
 interface SnippetsSectionProps {
   sections: Section[];
   onLoadSnippet: (sections: Section[]) => void;
+  currentPageTags?: Array<{id: string, name: string, color: string}>;
 }
 
-export function SnippetsSection({ sections, onLoadSnippet }: SnippetsSectionProps) {
+export function SnippetsSection({ sections, onLoadSnippet, currentPageTags = [] }: SnippetsSectionProps) {
   const [snippets, setSnippets] = useState<Snippet[]>([]);
   const [loading, setLoading] = useState(false);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
@@ -73,7 +75,8 @@ export function SnippetsSection({ sections, onLoadSnippet }: SnippetsSectionProp
       if (error) throw error;
       setSnippets((data || []).map(item => ({
         ...item,
-        sections: item.sections as unknown as Section[]
+        sections: item.sections as unknown as Section[],
+        tags: item.tags as unknown as Array<{id: string, name: string, color: string}> | undefined
       })));
     } catch (error) {
       console.error("Error fetching snippets:", error);
@@ -121,6 +124,7 @@ export function SnippetsSection({ sections, onLoadSnippet }: SnippetsSectionProp
         name: snippetName.trim(),
         description: snippetDescription.trim() || null,
         sections: cleanedSections as any,
+        tags: currentPageTags as any, // Store tags from current page
       }]);
 
       if (error) throw error;
@@ -222,6 +226,22 @@ export function SnippetsSection({ sections, onLoadSnippet }: SnippetsSectionProp
                       <p className="text-xs text-muted-foreground truncate">
                         {snippet.description}
                       </p>
+                    )}
+                    {snippet.tags && snippet.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {snippet.tags.slice(0, 2).map((tag) => (
+                          <span 
+                            key={tag.id} 
+                            className="text-xs px-1.5 py-0.5 rounded text-white"
+                            style={{ backgroundColor: tag.color }}
+                          >
+                            {tag.name}
+                          </span>
+                        ))}
+                        {snippet.tags.length > 2 && (
+                          <span className="text-xs text-muted-foreground">+{snippet.tags.length - 2}</span>
+                        )}
+                      </div>
                     )}
                     <p className="text-xs text-muted-foreground mt-1">
                       {snippet.sections.length} section{snippet.sections.length !== 1 ? 's' : ''}
