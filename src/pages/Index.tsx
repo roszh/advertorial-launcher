@@ -1002,6 +1002,23 @@ const Index = () => {
       const baseSlug = pageSlug || generateSlug(pageTitle, !editId);
       const slug = await ensureUniqueSlug(baseSlug, editId || undefined);
       
+      // Fetch current page status to preserve published state
+      let currentPageStatus: "draft" | "published" = "draft";
+      let currentPublishedAt: string | null = null;
+      
+      if (editId) {
+        const { data: currentPage } = await supabase
+          .from("pages")
+          .select("status, published_at")
+          .eq("id", editId)
+          .single();
+        
+        if (currentPage) {
+          currentPageStatus = currentPage.status as "draft" | "published";
+          currentPublishedAt = currentPage.published_at;
+        }
+      }
+      
       // Use the latest imageUrl from state
       const currentImageUrl = imageUrl;
       
@@ -1009,7 +1026,7 @@ const Index = () => {
         user_id: user.id,
         title: pageTitle,
         slug: slug,
-        status: "draft" as const,
+        status: currentPageStatus, // Preserve current status to prevent unpublishing
         template: selectedTemplate,
         cta_style: ctaStyle,
         sticky_cta_threshold: stickyCtaThreshold,
@@ -1019,7 +1036,7 @@ const Index = () => {
         cta_text: analysisResult?.cta.primary || "Get Started",
         cta_url: ctaUrl,
         image_url: currentImageUrl,
-        published_at: null,
+        published_at: currentPublishedAt, // Preserve published_at timestamp
         tracking_script_set_id: selectedCountrySetupId || null
       };
 
@@ -1071,7 +1088,9 @@ const Index = () => {
       
       toast({ 
         title: "Autosaved", 
-        description: "Your changes have been saved automatically.",
+        description: currentPageStatus === "published" 
+          ? "Your published page has been updated automatically." 
+          : "Your draft has been saved automatically.",
         duration: 2000
       });
     } catch (error: any) {
