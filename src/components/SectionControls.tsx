@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Button } from "./ui/button";
-import { Trash2, AlertCircle, Copy, Plus, Type, Image as ImageIcon, MousePointerClick, Quote, MessageSquare, List, Bell, Edit2 } from "lucide-react";
+import { Trash2, AlertCircle, Copy, Plus, Type, Image as ImageIcon, MousePointerClick, Quote, MessageSquare, List, Bell, Edit2, CheckSquare } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuLabel } from "./ui/dropdown-menu";
+import { Checkbox } from "./ui/checkbox";
 import { cn } from "@/lib/utils";
 
 interface SectionControlsProps {
@@ -12,6 +13,9 @@ interface SectionControlsProps {
   onOpenEditor?: () => void;
   className?: string;
   onDeleteHover?: (isHovering: boolean) => void;
+  multiSelectMode?: boolean;
+  isSelected?: boolean;
+  onToggleSelect?: () => void;
 }
 
 export const SectionControls = ({
@@ -21,7 +25,10 @@ export const SectionControls = ({
   onCloneSection,
   onOpenEditor,
   className,
-  onDeleteHover
+  onDeleteHover,
+  multiSelectMode = false,
+  isSelected = false,
+  onToggleSelect
 }: SectionControlsProps) => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
@@ -38,9 +45,19 @@ export const SectionControls = ({
   return (
     <div className={cn(
       "flex items-center justify-center gap-2 py-4 opacity-0 group-hover:opacity-100 transition-all duration-300",
+      multiSelectMode && "opacity-100",
       className
     )}>
       <div className="flex gap-1 bg-background border rounded-lg shadow-lg p-1 animate-fade-in z-50">
+        {multiSelectMode && onToggleSelect && (
+          <div className="flex items-center px-2 border-r border-border">
+            <Checkbox
+              checked={isSelected}
+              onCheckedChange={onToggleSelect}
+              className="h-5 w-5"
+            />
+          </div>
+        )}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button

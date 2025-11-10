@@ -35,6 +35,8 @@ import { SectionTemplateModal } from "@/components/SectionTemplateModal";
 import { SnippetsSection } from "@/components/SnippetsSection";
 import { toast } from "@/hooks/use-toast";
 import { stripHtmlTags, cn } from "@/lib/utils";
+import { MultiSelectToolbar } from "@/components/MultiSelectToolbar";
+import { MultiSectionSnippetDialog } from "@/components/MultiSectionSnippetDialog";
 import { 
   Loader2, 
   Save, 
@@ -56,7 +58,8 @@ import {
   Newspaper,
   BookOpen,
   ListOrdered,
-  BookMarked
+  BookMarked,
+  CheckSquare
 } from "lucide-react";
 
 interface Section {
@@ -159,6 +162,9 @@ const Index = () => {
   const [ctaConfigOpen, setCtaConfigOpen] = useState(false);
   const [designOptionsOpen, setDesignOptionsOpen] = useState(false);
   const [snippetsOpen, setSnippetsOpen] = useState(false);
+  const [multiSelectMode, setMultiSelectMode] = useState(false);
+  const [selectedSections, setSelectedSections] = useState<number[]>([]);
+  const [showMultiSnippetDialog, setShowMultiSnippetDialog] = useState(false);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -1282,6 +1288,24 @@ const Index = () => {
       onEditSection: setEditingSectionIndex,
       onEditSectionById: handleEditSectionById,
       onImageUpload: handleImageUpload,
+      multiSelectMode,
+      selectedSections,
+      onToggleMultiSelect: () => {
+        setMultiSelectMode(!multiSelectMode);
+        setSelectedSections([]);
+      },
+      onToggleSectionSelect: (index: number) => {
+        setSelectedSections(prev => 
+          prev.includes(index) 
+            ? prev.filter(i => i !== index)
+            : [...prev, index].sort((a, b) => a - b)
+        );
+      },
+      onSaveSelectedToSnippet: () => {
+        if (selectedSections.length > 0) {
+          setShowMultiSnippetDialog(true);
+        }
+      },
     };
 
     // For Listicle template, we need different prop mapping
@@ -2261,12 +2285,44 @@ const Index = () => {
                 }}>
                   {renderTemplate()}
                 </div>
+                
+                {/* Multi-Select Toolbar */}
+                {multiSelectMode && (
+                  <MultiSelectToolbar
+                    selectedCount={selectedSections.length}
+                    onSaveToSnippet={() => {
+                      if (selectedSections.length > 0) {
+                        setShowMultiSnippetDialog(true);
+                      }
+                    }}
+                    onCancel={() => {
+                      setMultiSelectMode(false);
+                      setSelectedSections([]);
+                    }}
+                  />
+                )}
               </div>
             </div>
           </div>
             </div>
           </div>
         </SidebarProvider>
+
+        {/* Multi-Section Snippet Dialog */}
+        {analysisResult && (
+          <MultiSectionSnippetDialog
+            open={showMultiSnippetDialog}
+            onOpenChange={(open) => {
+              setShowMultiSnippetDialog(open);
+              if (!open) {
+                setMultiSelectMode(false);
+                setSelectedSections([]);
+              }
+            }}
+            sections={selectedSections.map(idx => analysisResult.sections[idx]).filter(Boolean)}
+            userId={user?.id || ""}
+          />
+        )}
 
         {/* Dialogs and Modals */}
         {showHtmlEditor && (

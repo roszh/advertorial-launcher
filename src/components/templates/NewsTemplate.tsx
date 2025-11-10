@@ -49,6 +49,11 @@ interface NewsTemplateProps {
   onEditSection?: (index: number) => void;
   onEditSectionById?: (id: string) => void;
   onImageUpload?: (url: string) => void;
+  multiSelectMode?: boolean;
+  selectedSections?: number[];
+  onToggleMultiSelect?: () => void;
+  onToggleSectionSelect?: (index: number) => void;
+  onSaveSelectedToSnippet?: () => void;
 }
 
 export const NewsTemplate = ({ 
@@ -71,7 +76,12 @@ export const NewsTemplate = ({
   onReorderSections,
   onEditSection,
   onEditSectionById,
-  onImageUpload
+  onImageUpload,
+  multiSelectMode = false,
+  selectedSections = [],
+  onToggleMultiSelect,
+  onToggleSectionSelect,
+  onSaveSelectedToSnippet
 }: NewsTemplateProps) => {
   const heroSection = sections[0];
   const bodySections = sections.slice(1);
@@ -323,6 +333,9 @@ export const NewsTemplate = ({
                 }, 100);
               }}
               onDeleteHover={(isHovering) => setDeletingIndex(isHovering ? actualIndex : null)}
+              multiSelectMode={multiSelectMode}
+              isSelected={selectedSections.includes(actualIndex)}
+              onToggleSelect={() => onToggleSectionSelect?.(actualIndex)}
             />
           )}
         </div>
