@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { toast } from "@/hooks/use-toast";
 import { Save, Trash2, Plus, BookMarked } from "lucide-react";
 import { SidebarGroupContent } from "@/components/ui/sidebar";
+import { stripHtmlTags } from "@/lib/utils";
 
 interface Section {
   id?: string;
@@ -108,11 +109,18 @@ export function SnippetsSection({ sections, onLoadSnippet }: SnippetsSectionProp
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
+      // Strip HTML tags from content to ensure clean markdown storage
+      const cleanedSections = sections.map(section => ({
+        ...section,
+        content: stripHtmlTags(section.content),
+        heading: section.heading ? stripHtmlTags(section.heading) : section.heading,
+      }));
+
       const { error } = await supabase.from("snippets").insert([{
         user_id: user.id,
         name: snippetName.trim(),
         description: snippetDescription.trim() || null,
-        sections: sections as any,
+        sections: cleanedSections as any,
       }]);
 
       if (error) throw error;
@@ -139,7 +147,14 @@ export function SnippetsSection({ sections, onLoadSnippet }: SnippetsSectionProp
   };
 
   const handleLoadSnippet = (snippet: Snippet) => {
-    onLoadSnippet(snippet.sections);
+    // Ensure content is clean when loading from snippets
+    const cleanedSections = snippet.sections.map(section => ({
+      ...section,
+      content: stripHtmlTags(section.content),
+      heading: section.heading ? stripHtmlTags(section.heading) : section.heading,
+    }));
+    
+    onLoadSnippet(cleanedSections);
     toast({
       title: "Success",
       description: `Loaded "${snippet.name}" snippet`,

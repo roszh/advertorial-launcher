@@ -4,7 +4,7 @@ import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
 import { Save, X, Trash2, ArrowUp, ArrowDown } from "lucide-react";
 import { InlineImageUpload } from "./InlineImageUpload";
-import { cn } from "@/lib/utils";
+import { cn, stripHtmlTags } from "@/lib/utils";
 
 interface Section {
   type: "hero" | "text" | "image" | "cta" | "benefits" | "testimonial" | "quote" | "facebook-testimonial" | "bullet-box" | "list-item" | "final-cta" | "update";
@@ -54,7 +54,13 @@ export const SectionEditor = ({
   const [editedSection, setEditedSection] = useState<Section>(section);
 
   const handleSave = () => {
-    onSave(editedSection);
+    // Strip HTML tags to ensure clean markdown storage
+    const cleanedSection = {
+      ...editedSection,
+      content: stripHtmlTags(editedSection.content),
+      heading: editedSection.heading ? stripHtmlTags(editedSection.heading) : editedSection.heading,
+    };
+    onSave(cleanedSection);
   };
 
   return (
