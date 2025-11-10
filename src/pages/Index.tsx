@@ -83,6 +83,7 @@ interface Section {
   buttonText?: string;
   buttonUrl?: string;
   updateDate?: string;
+  verifiedText?: string;
   order?: number;
   number?: number;
 }
@@ -1358,6 +1359,7 @@ const Index = () => {
                     content: "Share your experience here...",
                     author: "User Name",
                     authorAvatar: "",
+                    verifiedText: "Verified Purchase",
                     timestamp: "2 days ago",
                     reactions: 0,
                     style: "normal",
@@ -1626,6 +1628,7 @@ const Index = () => {
           content: "Share your experience here...",
           author: "User Name",
           authorAvatar: "",
+          verifiedText: "Verified Purchase",
           timestamp: "2 days ago",
           reactions: 0,
           style: "normal",

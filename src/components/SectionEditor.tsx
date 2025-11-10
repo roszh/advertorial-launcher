@@ -33,6 +33,7 @@ interface Section {
   buttonText?: string;
   buttonUrl?: string;
   updateDate?: string;
+  verifiedText?: string;
   order?: number;
   number?: number;
 }
@@ -254,7 +255,7 @@ export const SectionEditor = ({
           />
         </div>
 
-        {section.imagePosition && (
+        {section.imagePosition && section.type !== "facebook-testimonial" && (
           <>
             <div>
               <label className="text-sm font-medium mb-2 block">Image Position</label>
@@ -367,29 +368,41 @@ export const SectionEditor = ({
         )}
 
         {section.type === "facebook-testimonial" && (
-          <div>
-            <label className="text-sm font-medium mb-2 block">Profile Photo</label>
-            <InlineImageUpload
-              currentImageUrl={editedSection.authorAvatar || ""}
-              onImageUploaded={(url) =>
-                setEditedSection({ ...editedSection, authorAvatar: url })
-              }
-              userId={userId}
-              aspectRatio="square"
-              className="max-w-[200px]"
-            />
-            {editedSection.authorAvatar && (
-              <div className="mt-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setEditedSection({ ...editedSection, authorAvatar: "" })}
-                >
-                  Remove Photo
-                </Button>
-              </div>
-            )}
-          </div>
+          <>
+            <div>
+              <label className="text-sm font-medium mb-2 block">Profile Photo</label>
+              <InlineImageUpload
+                currentImageUrl={editedSection.authorAvatar || ""}
+                onImageUploaded={(url) =>
+                  setEditedSection({ ...editedSection, authorAvatar: url })
+                }
+                userId={userId}
+                aspectRatio="square"
+                className="max-w-[200px]"
+              />
+              {editedSection.authorAvatar && (
+                <div className="mt-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setEditedSection({ ...editedSection, authorAvatar: "" })}
+                  >
+                    Remove Photo
+                  </Button>
+                </div>
+              )}
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-2 block">Verified Badge Text</label>
+              <Input
+                value={editedSection.verifiedText || ""}
+                onChange={(e) =>
+                  setEditedSection({ ...editedSection, verifiedText: e.target.value })
+                }
+                placeholder="Verified Purchase"
+              />
+            </div>
+          </>
         )}
 
         {section.timestamp !== undefined && (

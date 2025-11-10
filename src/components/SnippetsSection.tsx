@@ -34,6 +34,7 @@ interface Section {
   buttonText?: string;
   buttonUrl?: string;
   updateDate?: string;
+  verifiedText?: string;
   order?: number;
   number?: number;
 }

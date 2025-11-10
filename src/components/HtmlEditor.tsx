@@ -21,6 +21,7 @@ export interface Section {
   buttonText?: string;
   buttonUrl?: string;
   updateDate?: string;
+  verifiedText?: string;
 }
 
 interface HtmlEditorProps {

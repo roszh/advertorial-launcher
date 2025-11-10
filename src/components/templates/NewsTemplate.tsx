@@ -26,6 +26,7 @@ interface Section {
   items?: string[];
   boxColor?: "green" | "blue" | "purple" | "yellow";
   updateDate?: string;
+  verifiedText?: string;
 }
 
 interface NewsTemplateProps {
@@ -294,6 +295,7 @@ export const NewsTemplate = ({
                     content: "Share your experience here...",
                     author: "User Name",
                     authorAvatar: "",
+                    verifiedText: "Verified Purchase",
                     timestamp: "2 days ago",
                     reactions: 0,
                     style: "normal"
