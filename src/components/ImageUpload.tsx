@@ -64,6 +64,8 @@ export const ImageUpload = ({ currentImageUrl, onImageUploaded, userId }: ImageU
         }
       );
 
+      let finalImageUrl = publicUrl;
+
       if (response.ok) {
         const { optimizedUrl } = await response.json();
         
@@ -84,12 +86,14 @@ export const ImageUpload = ({ currentImageUrl, onImageUploaded, userId }: ImageU
             .from('page-images')
             .getPublicUrl(optimizedFileName);
 
+          finalImageUrl = finalUrl;
           setPreviewUrl(finalUrl);
           onImageUploaded(finalUrl);
           
           // Delete the original unoptimized image
           await supabase.storage.from('page-images').remove([fileName]);
         } else {
+          finalImageUrl = optimizedUrl;
           setPreviewUrl(optimizedUrl);
           onImageUploaded(optimizedUrl);
         }
@@ -97,6 +101,20 @@ export const ImageUpload = ({ currentImageUrl, onImageUploaded, userId }: ImageU
         // If optimization fails, use the original
         setPreviewUrl(publicUrl);
         onImageUploaded(publicUrl);
+      }
+
+      // Save to image library
+      const { error: libraryError } = await supabase
+        .from('image_library')
+        .insert({
+          user_id: userId,
+          filename: file.name,
+          image_url: finalImageUrl,
+          file_size: file.size
+        });
+
+      if (libraryError) {
+        console.error("Error saving to library:", libraryError);
       }
 
       toast({ title: "Image uploaded successfully!" });

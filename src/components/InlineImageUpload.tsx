@@ -118,6 +118,21 @@ export const InlineImageUpload = ({
 
       setImageUrl(finalUrl);
       onImageUploaded(finalUrl);
+      
+      // Save to image library
+      const { error: libraryError } = await supabase
+        .from('image_library')
+        .insert({
+          user_id: userId,
+          filename: file.name,
+          image_url: finalUrl,
+          file_size: file.size
+        });
+
+      if (libraryError) {
+        console.error("Error saving to library:", libraryError);
+      }
+      
       toast({ title: "Image uploaded and optimized!" });
     } catch (error: any) {
       console.error("Upload error:", error);
