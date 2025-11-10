@@ -1,12 +1,19 @@
 import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
-import { Save, X, Trash2, ArrowUp, ArrowDown } from "lucide-react";
+import { Label } from "./ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "./ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
+import { toast } from "@/hooks/use-toast";
+import { Save, X, Trash2, ArrowUp, ArrowDown, BookMarked, Loader2 } from "lucide-react";
 import { InlineImageUpload } from "./InlineImageUpload";
 import { cn, stripHtmlTags } from "@/lib/utils";
 
 interface Section {
+  id?: string;
   type: "hero" | "text" | "image" | "cta" | "benefits" | "testimonial" | "quote" | "facebook-testimonial" | "bullet-box" | "list-item" | "final-cta" | "update";
   content: string;
   heading?: string;
@@ -26,6 +33,15 @@ interface Section {
   buttonText?: string;
   buttonUrl?: string;
   updateDate?: string;
+  order?: number;
+  number?: number;
+}
+
+interface Snippet {
+  id: string;
+  name: string;
+  description: string | null;
+  sections: Section[];
 }
 
 interface SectionEditorProps {
@@ -52,6 +68,13 @@ export const SectionEditor = ({
   userId,
 }: SectionEditorProps) => {
   const [editedSection, setEditedSection] = useState<Section>(section);
+  const [snippetDialogOpen, setSnippetDialogOpen] = useState(false);
+  const [saveMode, setSaveMode] = useState<"new" | "existing">("new");
+  const [newSnippetName, setNewSnippetName] = useState("");
+  const [newSnippetDescription, setNewSnippetDescription] = useState("");
+  const [selectedSnippetId, setSelectedSnippetId] = useState("");
+  const [existingSnippets, setExistingSnippets] = useState<Snippet[]>([]);
+  const [savingSnippet, setSavingSnippet] = useState(false);
 
   // Strip HTML tags when section changes to ensure clean editing
   useEffect(() => {
@@ -62,6 +85,31 @@ export const SectionEditor = ({
     });
   }, [section]);
 
+  // Fetch existing snippets when dialog opens
+  useEffect(() => {
+    if (snippetDialogOpen) {
+      fetchExistingSnippets();
+    }
+  }, [snippetDialogOpen]);
+
+  const fetchExistingSnippets = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("snippets")
+        .select("id, name, description, sections")
+        .eq("user_id", userId)
+        .order("updated_at", { ascending: false });
+
+      if (error) throw error;
+      setExistingSnippets((data || []).map(item => ({
+        ...item,
+        sections: item.sections as unknown as Section[]
+      })));
+    } catch (error) {
+      console.error("Error fetching snippets:", error);
+    }
+  };
+
   const handleSave = () => {
     // Strip HTML tags to ensure clean markdown storage
     const cleanedSection = {
@@ -70,6 +118,91 @@ export const SectionEditor = ({
       heading: editedSection.heading ? stripHtmlTags(editedSection.heading) : editedSection.heading,
     };
     onSave(cleanedSection);
+  };
+
+  const handleSaveToSnippet = async () => {
+    if (saveMode === "new" && !newSnippetName.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a snippet name",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (saveMode === "existing" && !selectedSnippetId) {
+      toast({
+        title: "Error",
+        description: "Please select a snippet",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSavingSnippet(true);
+    try {
+      // Clean the section before saving
+      const cleanedSection = {
+        ...editedSection,
+        id: editedSection.id || crypto.randomUUID(),
+        content: stripHtmlTags(editedSection.content),
+        heading: editedSection.heading ? stripHtmlTags(editedSection.heading) : editedSection.heading,
+      };
+
+      if (saveMode === "new") {
+        // Create new snippet with this section
+        const { error } = await supabase.from("snippets").insert([{
+          user_id: userId,
+          name: newSnippetName.trim(),
+          description: newSnippetDescription.trim() || null,
+          sections: [cleanedSection] as any,
+        }]);
+
+        if (error) throw error;
+
+        toast({
+          title: "Success",
+          description: `Section saved to new snippet "${newSnippetName}"`,
+        });
+      } else {
+        // Add to existing snippet
+        const existingSnippet = existingSnippets.find(s => s.id === selectedSnippetId);
+        if (!existingSnippet) throw new Error("Snippet not found");
+
+        const updatedSections = [...existingSnippet.sections, cleanedSection];
+
+        const { error } = await supabase
+          .from("snippets")
+          .update({
+            sections: updatedSections as any,
+            updated_at: new Date().toISOString()
+          })
+          .eq("id", selectedSnippetId);
+
+        if (error) throw error;
+
+        toast({
+          title: "Success",
+          description: `Section added to "${existingSnippet.name}"`,
+        });
+      }
+
+      // Reset form
+      setSnippetDialogOpen(false);
+      setNewSnippetName("");
+      setNewSnippetDescription("");
+      setSelectedSnippetId("");
+      setSaveMode("new");
+    } catch (error) {
+      console.error("Error saving to snippet:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save section to snippet",
+        variant: "destructive",
+      });
+    } finally {
+      setSavingSnippet(false);
+    }
   };
 
   return (
@@ -356,11 +489,134 @@ export const SectionEditor = ({
           <Save className="mr-2 h-4 w-4" />
           Save Changes
         </Button>
+        <Button variant="secondary" onClick={() => setSnippetDialogOpen(true)}>
+          <BookMarked className="mr-2 h-4 w-4" />
+          Add to Snippets
+        </Button>
         <Button variant="outline" onClick={onCancel}>
           <X className="mr-2 h-4 w-4" />
           Cancel
         </Button>
       </div>
+
+      {/* Add to Snippets Dialog */}
+      <Dialog open={snippetDialogOpen} onOpenChange={setSnippetDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Add Section to Snippets</DialogTitle>
+            <DialogDescription>
+              Save this section to a snippet for quick reuse across your pages.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <RadioGroup value={saveMode} onValueChange={(v) => setSaveMode(v as "new" | "existing")}>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="new" id="new" />
+                <Label htmlFor="new" className="cursor-pointer">Create New Snippet</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="existing" id="existing" />
+                <Label htmlFor="existing" className="cursor-pointer">Add to Existing Snippet</Label>
+              </div>
+            </RadioGroup>
+
+            {saveMode === "new" ? (
+              <div className="space-y-3">
+                <div>
+                  <Label htmlFor="new-snippet-name">
+                    Snippet Name <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="new-snippet-name"
+                    placeholder="e.g., Hero Section, Testimonial Block..."
+                    value={newSnippetName}
+                    onChange={(e) => setNewSnippetName(e.target.value)}
+                    maxLength={100}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="new-snippet-desc">Description (optional)</Label>
+                  <Textarea
+                    id="new-snippet-desc"
+                    placeholder="What's this snippet for?"
+                    value={newSnippetDescription}
+                    onChange={(e) => setNewSnippetDescription(e.target.value)}
+                    maxLength={500}
+                    rows={2}
+                  />
+                </div>
+              </div>
+            ) : (
+              <div>
+                <Label htmlFor="existing-snippet">
+                  Select Snippet <span className="text-destructive">*</span>
+                </Label>
+                {existingSnippets.length === 0 ? (
+                  <p className="text-sm text-muted-foreground mt-2 p-3 border rounded-md">
+                    No snippets found. Create a new snippet to get started.
+                  </p>
+                ) : (
+                  <Select value={selectedSnippetId} onValueChange={setSelectedSnippetId}>
+                    <SelectTrigger id="existing-snippet">
+                      <SelectValue placeholder="Choose a snippet..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {existingSnippets.map((snippet) => (
+                        <SelectItem key={snippet.id} value={snippet.id}>
+                          {snippet.name} ({snippet.sections.length} section{snippet.sections.length !== 1 ? 's' : ''})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+            )}
+
+            <div className="bg-muted/50 p-3 rounded-md border text-sm">
+              <p className="font-medium mb-1">Section Preview:</p>
+              <p className="text-muted-foreground">
+                <span className="font-medium">{section.type}</span>
+                {section.heading && ` - ${section.heading.substring(0, 50)}${section.heading.length > 50 ? '...' : ''}`}
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setSnippetDialogOpen(false);
+                setNewSnippetName("");
+                setNewSnippetDescription("");
+                setSelectedSnippetId("");
+              }}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleSaveToSnippet} 
+              disabled={
+                savingSnippet || 
+                (saveMode === "new" && !newSnippetName.trim()) ||
+                (saveMode === "existing" && (!selectedSnippetId || existingSnippets.length === 0))
+              }
+            >
+              {savingSnippet ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <BookMarked className="mr-2 h-4 w-4" />
+                  {saveMode === "new" ? "Create Snippet" : "Add to Snippet"}
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
