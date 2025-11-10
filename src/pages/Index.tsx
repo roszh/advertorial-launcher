@@ -2164,6 +2164,20 @@ const Index = () => {
                 
                 <div className="flex gap-2 items-center">
                   <Button 
+                    onClick={() => {
+                      setMultiSelectMode(!multiSelectMode);
+                      if (multiSelectMode) {
+                        setSelectedSections([]);
+                      }
+                    }}
+                    variant={multiSelectMode ? "default" : "outline"} 
+                    size="sm" 
+                    className="h-8 px-3 text-xs"
+                  >
+                    <CheckSquare className="mr-1 h-3 w-3" />
+                    Multi-Select
+                  </Button>
+                  <Button 
                     onClick={() => setShowHtmlEditor(true)} 
                     variant="outline" 
                     size="sm" 
