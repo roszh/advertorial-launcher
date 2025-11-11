@@ -72,27 +72,45 @@ export type Database = {
           element_id: string | null
           event_type: string
           id: string
+          landing_page_url: string | null
           page_id: string
           referrer: string | null
           user_agent: string | null
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          utm_term: string | null
         }
         Insert: {
           created_at?: string | null
           element_id?: string | null
           event_type: string
           id?: string
+          landing_page_url?: string | null
           page_id: string
           referrer?: string | null
           user_agent?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
         }
         Update: {
           created_at?: string | null
           element_id?: string | null
           event_type?: string
           id?: string
+          landing_page_url?: string | null
           page_id?: string
           referrer?: string | null
           user_agent?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
         }
         Relationships: [
           {
@@ -125,11 +143,17 @@ export type Database = {
           created_at: string | null
           first_seen: string | null
           id: string
+          landing_page_url: string | null
           last_seen: string | null
           page_id: string
           referrer: string | null
           session_id: string
           user_agent: string | null
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          utm_term: string | null
         }
         Insert: {
           city?: string | null
@@ -137,11 +161,17 @@ export type Database = {
           created_at?: string | null
           first_seen?: string | null
           id?: string
+          landing_page_url?: string | null
           last_seen?: string | null
           page_id: string
           referrer?: string | null
           session_id: string
           user_agent?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
         }
         Update: {
           city?: string | null
@@ -149,11 +179,17 @@ export type Database = {
           created_at?: string | null
           first_seen?: string | null
           id?: string
+          landing_page_url?: string | null
           last_seen?: string | null
           page_id?: string
           referrer?: string | null
           session_id?: string
           user_agent?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
         }
         Relationships: [
           {

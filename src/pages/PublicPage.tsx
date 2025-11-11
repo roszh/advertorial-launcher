@@ -165,6 +165,17 @@ export default function PublicPage() {
   useEffect(() => {
     if (!pageData?.id) return;
     
+    // Extract UTM parameters from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const utmData = {
+      utm_source: urlParams.get('utm_source'),
+      utm_medium: urlParams.get('utm_medium'),
+      utm_campaign: urlParams.get('utm_campaign'),
+      utm_term: urlParams.get('utm_term'),
+      utm_content: urlParams.get('utm_content'),
+      landing_page_url: window.location.href
+    };
+    
     // Fire and forget - track asynchronously without blocking
     (async () => {
       try {
@@ -172,7 +183,13 @@ export default function PublicPage() {
           page_id: pageData.id,
           event_type: "view",
           user_agent: navigator.userAgent,
-          referrer: document.referrer || null
+          referrer: document.referrer || null,
+          utm_source: utmData.utm_source,
+          utm_medium: utmData.utm_medium,
+          utm_campaign: utmData.utm_campaign,
+          utm_term: utmData.utm_term,
+          utm_content: utmData.utm_content,
+          landing_page_url: utmData.landing_page_url
         });
       } catch (error) {
         console.error("Error tracking view:", error);
@@ -463,14 +480,31 @@ export default function PublicPage() {
   const handleCtaClick = async (elementId: string = "untracked") => {
     if (!pageData?.cta_url || !pageData?.id) return;
     
-    // Track the click with element_id
+    // Extract UTM parameters from URL for click attribution
+    const urlParams = new URLSearchParams(window.location.search);
+    const utmData = {
+      utm_source: urlParams.get('utm_source'),
+      utm_medium: urlParams.get('utm_medium'),
+      utm_campaign: urlParams.get('utm_campaign'),
+      utm_term: urlParams.get('utm_term'),
+      utm_content: urlParams.get('utm_content'),
+      landing_page_url: window.location.href
+    };
+    
+    // Track the click with element_id and UTM parameters
     try {
       await supabase.from("page_analytics").insert({
         page_id: pageData.id,
         event_type: "click",
         element_id: elementId,
         user_agent: navigator.userAgent,
-        referrer: document.referrer || null
+        referrer: document.referrer || null,
+        utm_source: utmData.utm_source,
+        utm_medium: utmData.utm_medium,
+        utm_campaign: utmData.utm_campaign,
+        utm_term: utmData.utm_term,
+        utm_content: utmData.utm_content,
+        landing_page_url: utmData.landing_page_url
       });
     } catch (error) {
       console.error("Error tracking click:", error);

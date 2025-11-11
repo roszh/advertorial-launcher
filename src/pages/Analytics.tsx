@@ -43,6 +43,15 @@ interface BrowserStats {
   percentage: number;
 }
 
+interface UtmStats {
+  utm_source: string | null;
+  utm_medium: string | null;
+  utm_campaign: string | null;
+  views: number;
+  clicks: number;
+  ctr: number;
+}
+
 export default function Analytics() {
   const navigate = useNavigate();
   const { pageId } = useParams();
@@ -59,6 +68,7 @@ export default function Analytics() {
   const [trafficSources, setTrafficSources] = useState<TrafficSource[]>([]);
   const [deviceStats, setDeviceStats] = useState<DeviceStats[]>([]);
   const [browserStats, setBrowserStats] = useState<BrowserStats[]>([]);
+  const [utmStats, setUtmStats] = useState<UtmStats[]>([]);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -298,6 +308,45 @@ export default function Analytics() {
       setBrowserStats(browsers);
     }
 
+    // Fetch UTM attribution data
+    const { data: utmAnalytics } = await supabase
+      .from("page_analytics")
+      .select("utm_source, utm_medium, utm_campaign, event_type")
+      .eq("page_id", pageId)
+      .not("utm_source", "is", null);
+
+    if (utmAnalytics && utmAnalytics.length > 0) {
+      const utmGroups: { [key: string]: { views: number; clicks: number } } = {};
+      
+      utmAnalytics.forEach(event => {
+        const key = `${event.utm_source || 'unknown'}|${event.utm_medium || 'unknown'}|${event.utm_campaign || 'unknown'}`;
+        if (!utmGroups[key]) {
+          utmGroups[key] = { views: 0, clicks: 0 };
+        }
+        if (event.event_type === 'view') {
+          utmGroups[key].views++;
+        } else if (event.event_type === 'click') {
+          utmGroups[key].clicks++;
+        }
+      });
+      
+      const utmStatsArray = Object.entries(utmGroups)
+        .map(([key, data]) => {
+          const [utm_source, utm_medium, utm_campaign] = key.split('|');
+          return {
+            utm_source: utm_source === 'unknown' ? null : utm_source,
+            utm_medium: utm_medium === 'unknown' ? null : utm_medium,
+            utm_campaign: utm_campaign === 'unknown' ? null : utm_campaign,
+            views: data.views,
+            clicks: data.clicks,
+            ctr: data.views > 0 ? (data.clicks / data.views) * 100 : 0
+          };
+        })
+        .sort((a, b) => b.views - a.views);
+      
+      setUtmStats(utmStatsArray);
+    }
+
     setLoading(false);
   };
 
@@ -396,6 +445,48 @@ export default function Analytics() {
                 )}
               </CardContent>
             </Card>
+
+            {/* UTM Campaign Attribution */}
+            {utmStats.length > 0 && (
+              <Card className="mb-6">
+                <CardHeader>
+                  <CardTitle>Campaign Attribution (UTM Tracking)</CardTitle>
+                  <CardDescription>Performance by marketing source, medium, and campaign</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="text-left py-2 px-2 text-sm font-medium">Source</th>
+                          <th className="text-left py-2 px-2 text-sm font-medium">Medium</th>
+                          <th className="text-left py-2 px-2 text-sm font-medium">Campaign</th>
+                          <th className="text-right py-2 px-2 text-sm font-medium">Views</th>
+                          <th className="text-right py-2 px-2 text-sm font-medium">Clicks</th>
+                          <th className="text-right py-2 px-2 text-sm font-medium">CTR</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {utmStats.map((stat, idx) => (
+                          <tr key={idx} className="border-b last:border-0">
+                            <td className="py-3 px-2 text-sm">
+                              <Badge variant="outline">{stat.utm_source || '-'}</Badge>
+                            </td>
+                            <td className="py-3 px-2 text-sm">{stat.utm_medium || '-'}</td>
+                            <td className="py-3 px-2 text-sm font-medium">{stat.utm_campaign || '-'}</td>
+                            <td className="py-3 px-2 text-sm text-right">{stat.views}</td>
+                            <td className="py-3 px-2 text-sm text-right">{stat.clicks}</td>
+                            <td className="py-3 px-2 text-sm text-right">
+                              <span className="font-semibold text-primary">{stat.ctr.toFixed(2)}%</span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Device & Browser Stats */}
             <div className="grid gap-4 md:grid-cols-2 mb-6">
