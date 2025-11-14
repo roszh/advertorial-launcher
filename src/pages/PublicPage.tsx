@@ -173,14 +173,14 @@ export default function PublicPage() {
   useEffect(() => {
     if (!pageData?.id) return;
 
+    const utmData = getUtm();
+    const sessionId = getOrCreateSessionId();
+
     const trackPageView = async () => {
       try {
-        // Get UTM data with fallback priority: URL -> Referrer -> Stored
-        const utmData = getUtm();
-        const sessionId = getOrCreateSessionId();
-
-        console.debug('[Tracking] Page view - UTM source:', utmData.source);
-        console.debug('[Tracking] Page view - UTM data:', {
+        console.log('[Tracking] Tracking page view for page:', pageData.id);
+        console.debug('[Tracking] UTM source:', utmData.source);
+        console.debug('[Tracking] UTM data:', {
           source: utmData.utm_source,
           medium: utmData.utm_medium,
           campaign: utmData.utm_campaign,
@@ -201,49 +201,77 @@ export default function PublicPage() {
 
         // Insert page_sessions row only once per session per page
         if (!isSessionRecorded(pageData.id)) {
-          await supabase.from("page_sessions").insert({
+          const { error: sessionError } = await supabase.from("page_sessions").insert({
             page_id: pageData.id,
             session_id: sessionId,
-            landing_page_url: utmData.landing_page_url,
             user_agent: navigator.userAgent,
             referrer: document.referrer || null,
+            landing_page_url: utmData.landing_page_url,
             utm_source: utmData.utm_source,
             utm_medium: utmData.utm_medium,
             utm_campaign: utmData.utm_campaign,
             utm_term: utmData.utm_term,
             utm_content: utmData.utm_content,
+            first_seen: new Date().toISOString(),
+            last_seen: new Date().toISOString(),
           });
-          markSessionRecorded(pageData.id);
-          console.debug('[Tracking] Session recorded for page:', pageData.id);
+          
+          if (sessionError) {
+            console.error('[Tracking] Error creating session:', sessionError);
+          } else {
+            console.log('[Tracking] ✓ Session created');
+            markSessionRecorded(pageData.id);
+          }
+        } else {
+          console.log('[Tracking] Session already recorded for this page');
         }
 
-        // Always track page view event
-        await supabase.from("page_analytics").insert({
+        // Track page view
+        const { error: viewError } = await supabase.from("page_analytics").insert({
           page_id: pageData.id,
           event_type: "view",
           user_agent: navigator.userAgent,
           referrer: document.referrer || null,
+          landing_page_url: utmData.landing_page_url,
           utm_source: utmData.utm_source,
           utm_medium: utmData.utm_medium,
           utm_campaign: utmData.utm_campaign,
           utm_term: utmData.utm_term,
           utm_content: utmData.utm_content,
-          landing_page_url: utmData.landing_page_url,
-          scroll_depth: 0,
         });
 
-        console.log("Page view tracked for country setup:", pageData.countrySetupName);
+        if (viewError) {
+          console.error('[Tracking] Error tracking page view:', viewError);
+        } else {
+          console.log('[Tracking] ✓ Page view tracked');
+        }
       } catch (error) {
-        console.error("Error tracking page view:", error);
+        console.error("[Tracking] Error in trackPageView:", error);
       }
     };
 
     trackPageView();
 
+    // Update last_seen every 10 seconds to track session duration
+    const sessionUpdateInterval = setInterval(async () => {
+      try {
+        const { error } = await supabase
+          .from("page_sessions")
+          .update({ last_seen: new Date().toISOString() })
+          .eq("page_id", pageData.id)
+          .eq("session_id", sessionId);
+        
+        if (error) {
+          console.error('[Tracking] Error updating session:', error);
+        }
+      } catch (error) {
+        console.error('[Tracking] Error in session update:', error);
+      }
+    }, 10000); // Update every 10 seconds
+
     // Track scroll depth milestones
     const scrollMilestones = [25, 50, 75, 100];
     const reachedMilestones = new Set<number>();
-    const utmData = getUtm();
 
     const handleScroll = () => {
       const windowHeight = window.innerHeight;
@@ -251,9 +279,12 @@ export default function PublicPage() {
       const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
       const scrollPercentage = ((scrollTop + windowHeight) / documentHeight) * 100;
 
+      console.debug(`[Tracking] Scroll: ${scrollPercentage.toFixed(1)}%`);
+
       scrollMilestones.forEach(milestone => {
         if (scrollPercentage >= milestone && !reachedMilestones.has(milestone)) {
           reachedMilestones.add(milestone);
+          console.log(`[Tracking] Reached scroll milestone: ${milestone}%`);
           
           supabase.from("page_analytics").insert({
             page_id: pageData.id,
@@ -269,21 +300,25 @@ export default function PublicPage() {
             landing_page_url: utmData.landing_page_url,
           }).then(({ error }) => {
             if (error) {
-              console.error(`[Tracking] Error tracking scroll ${milestone}%:`, error);
+              console.error(`[Tracking] ✗ Error tracking scroll ${milestone}%:`, error);
             } else {
-              console.debug(`[Tracking] Scroll milestone ${milestone}% tracked`);
+              console.log(`[Tracking] ✓ Scroll ${milestone}% tracked`);
             }
           });
         }
       });
     };
 
+    // Initial scroll check (in case page loads scrolled)
+    handleScroll();
+
     window.addEventListener('scroll', handleScroll);
     
     return () => {
       window.removeEventListener('scroll', handleScroll);
+      clearInterval(sessionUpdateInterval);
     };
-  }, [pageData?.id, pageData?.countrySetupName]);
+  }, [pageData?.id]);
 
   // Robust tracking script injection with idempotency guards and retry logic
   useEffect(() => {
