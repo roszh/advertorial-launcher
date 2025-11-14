@@ -449,8 +449,8 @@ export default function Funnel() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Click-through Quality</span>
-                  <Badge variant={funnelData.ctr >= 5 ? "default" : funnelData.ctr >= 2 ? "secondary" : "destructive"}>
-                    {funnelData.ctr >= 5 ? "Excellent" : funnelData.ctr >= 2 ? "Good" : "Needs Work"}
+                  <Badge variant={funnelData.ctr >= 30 ? "default" : funnelData.ctr >= 20 ? "secondary" : "destructive"}>
+                    {funnelData.ctr >= 30 ? "Excellent" : funnelData.ctr >= 20 ? "Average" : "Needs Improvement"}
                   </Badge>
                 </div>
                 <div className="flex items-center justify-between">
