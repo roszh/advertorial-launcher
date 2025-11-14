@@ -5,6 +5,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { StickyCtaButton } from "@/components/StickyCtaButton";
 import { HeroSkeleton } from "@/components/HeroSkeleton";
 import { LazySection } from "@/components/LazySection";
+import { 
+  getUtm, 
+  writeStoredUtm, 
+  getOrCreateSessionId, 
+  isSessionRecorded, 
+  markSessionRecorded,
+  appendUtmToUrl 
+} from "@/lib/utm";
 
 // Code-split template imports for better performance
 const MagazineTemplate = lazy(() => import("@/components/templates/MagazineTemplate").then(m => ({ default: m.MagazineTemplate })));
@@ -161,24 +169,55 @@ export default function PublicPage() {
     }
   }, [pageData?.countrySetupName]);
 
-  // Track page view (non-blocking - happens in background after render)
+  // Track page view and session with robust UTM capture
   useEffect(() => {
     if (!pageData?.id) return;
-    
-    // Extract UTM parameters from URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const utmData = {
-      utm_source: urlParams.get('utm_source'),
-      utm_medium: urlParams.get('utm_medium'),
-      utm_campaign: urlParams.get('utm_campaign'),
-      utm_term: urlParams.get('utm_term'),
-      utm_content: urlParams.get('utm_content'),
-      landing_page_url: window.location.href
-    };
-    
-    // Fire and forget - track asynchronously without blocking
-    (async () => {
+
+    const trackPageView = async () => {
       try {
+        // Get UTM data with fallback priority: URL -> Referrer -> Stored
+        const utmData = getUtm();
+        const sessionId = getOrCreateSessionId();
+
+        console.debug('[Tracking] Page view - UTM source:', utmData.source);
+        console.debug('[Tracking] Page view - UTM data:', {
+          source: utmData.utm_source,
+          medium: utmData.utm_medium,
+          campaign: utmData.utm_campaign,
+          landing_url: utmData.landing_page_url,
+        });
+
+        // Store first-touch UTMs if from URL or referrer
+        if (utmData.source === 'url' || utmData.source === 'referrer') {
+          writeStoredUtm({
+            utm_source: utmData.utm_source,
+            utm_medium: utmData.utm_medium,
+            utm_campaign: utmData.utm_campaign,
+            utm_term: utmData.utm_term,
+            utm_content: utmData.utm_content,
+            landing_page_url: utmData.landing_page_url,
+          });
+        }
+
+        // Insert page_sessions row only once per session per page
+        if (!isSessionRecorded(pageData.id)) {
+          await supabase.from("page_sessions").insert({
+            page_id: pageData.id,
+            session_id: sessionId,
+            landing_page_url: utmData.landing_page_url,
+            user_agent: navigator.userAgent,
+            referrer: document.referrer || null,
+            utm_source: utmData.utm_source,
+            utm_medium: utmData.utm_medium,
+            utm_campaign: utmData.utm_campaign,
+            utm_term: utmData.utm_term,
+            utm_content: utmData.utm_content,
+          });
+          markSessionRecorded(pageData.id);
+          console.debug('[Tracking] Session recorded for page:', pageData.id);
+        }
+
+        // Always track page view event
         await supabase.from("page_analytics").insert({
           page_id: pageData.id,
           event_type: "view",
@@ -189,13 +228,17 @@ export default function PublicPage() {
           utm_campaign: utmData.utm_campaign,
           utm_term: utmData.utm_term,
           utm_content: utmData.utm_content,
-          landing_page_url: utmData.landing_page_url
+          landing_page_url: utmData.landing_page_url,
         });
+
+        console.log("Page view tracked for country setup:", pageData.countrySetupName);
       } catch (error) {
-        console.error("Error tracking view:", error);
+        console.error("Error tracking page view:", error);
       }
-    })();
-  }, [pageData?.id]);
+    };
+
+    trackPageView();
+  }, [pageData?.id, pageData?.countrySetupName]);
 
   // Robust tracking script injection with idempotency guards and retry logic
   useEffect(() => {
@@ -479,20 +522,19 @@ export default function PublicPage() {
 
   const handleCtaClick = async (elementId: string = "untracked") => {
     if (!pageData?.cta_url || !pageData?.id) return;
-    
-    // Extract UTM parameters from URL for click attribution
-    const urlParams = new URLSearchParams(window.location.search);
-    const utmData = {
-      utm_source: urlParams.get('utm_source'),
-      utm_medium: urlParams.get('utm_medium'),
-      utm_campaign: urlParams.get('utm_campaign'),
-      utm_term: urlParams.get('utm_term'),
-      utm_content: urlParams.get('utm_content'),
-      landing_page_url: window.location.href
-    };
-    
-    // Track the click with element_id and UTM parameters
+
     try {
+      // Get UTM data with fallback priority
+      const utmData = getUtm();
+
+      console.debug('[Tracking] CTA click - UTM source:', utmData.source);
+      console.debug('[Tracking] CTA click - UTM data:', {
+        source: utmData.utm_source,
+        medium: utmData.utm_medium,
+        campaign: utmData.utm_campaign,
+      });
+
+      // Track click event with UTM data
       await supabase.from("page_analytics").insert({
         page_id: pageData.id,
         event_type: "click",
@@ -504,14 +546,30 @@ export default function PublicPage() {
         utm_campaign: utmData.utm_campaign,
         utm_term: utmData.utm_term,
         utm_content: utmData.utm_content,
-        landing_page_url: utmData.landing_page_url
+        landing_page_url: utmData.landing_page_url,
       });
+
+      // Append UTM parameters to outbound URL if missing
+      const normalizedUrl = normalizeUrl(pageData.cta_url);
+      const urlWithUtm = appendUtmToUrl(normalizedUrl, {
+        utm_source: utmData.utm_source,
+        utm_medium: utmData.utm_medium,
+        utm_campaign: utmData.utm_campaign,
+        utm_term: utmData.utm_term,
+        utm_content: utmData.utm_content,
+      });
+
+      if (urlWithUtm !== normalizedUrl) {
+        console.debug('[Tracking] UTMs appended to outbound CTA URL');
+      }
+
+      window.location.href = urlWithUtm;
     } catch (error) {
-      console.error("Error tracking click:", error);
+      console.error("Error tracking CTA click:", error);
+      // Still navigate even if tracking fails
+      const url = normalizeUrl(pageData.cta_url);
+      window.location.href = url;
     }
-    
-    const normalizedUrl = normalizeUrl(pageData.cta_url);
-    window.location.href = normalizedUrl;
   };
 
   const templateProps = {

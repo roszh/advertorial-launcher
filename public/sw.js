@@ -1,4 +1,4 @@
-const CACHE_NAME = 'advertorial-v1';
+const CACHE_NAME = 'advertorial-v2';
 const RUNTIME_CACHE = 'runtime-cache-v1';
 
 // Assets to cache on install
