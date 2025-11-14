@@ -111,7 +111,7 @@ export default function Funnel() {
       const { data: analyticsData, error } = await supabase
         .from("page_analytics")
         .select("event_type, scroll_depth")
-        .eq("page_id", selectedPageId);
+        .eq("page_id", selectedPageId) as any; // Type assertion until types regenerate
 
       if (error) throw error;
 
