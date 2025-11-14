@@ -2,7 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { FileText, LayoutDashboard, Settings, LogOut, PlusCircle, BookMarked } from "lucide-react";
+import { FileText, LayoutDashboard, Settings, LogOut, PlusCircle, BookMarked, TrendingDown } from "lucide-react";
 
 interface NavigationProps {
   user: any;
@@ -54,6 +54,16 @@ export function Navigation({ user }: NavigationProps) {
             >
               <BookMarked className="mr-1.5 h-3.5 w-3.5" />
               <span className="hidden sm:inline ios-callout">Snippets</span>
+            </Button>
+          </Link>
+          <Link to="/funnel">
+            <Button 
+              variant={location.pathname === "/funnel" ? "default" : "ghost"} 
+              size="sm"
+              className="h-8 px-3 rounded-ios transition-all active:scale-95"
+            >
+              <TrendingDown className="mr-1.5 h-3.5 w-3.5" />
+              <span className="hidden sm:inline ios-callout">Funnel</span>
             </Button>
           </Link>
           <Link to="/settings">

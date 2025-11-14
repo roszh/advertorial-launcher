@@ -229,6 +229,7 @@ export default function PublicPage() {
           utm_term: utmData.utm_term,
           utm_content: utmData.utm_content,
           landing_page_url: utmData.landing_page_url,
+          scroll_depth: 0,
         });
 
         console.log("Page view tracked for country setup:", pageData.countrySetupName);
@@ -238,6 +239,50 @@ export default function PublicPage() {
     };
 
     trackPageView();
+
+    // Track scroll depth milestones
+    const scrollMilestones = [25, 50, 75, 100];
+    const reachedMilestones = new Set<number>();
+    const utmData = getUtm();
+
+    const handleScroll = () => {
+      const windowHeight = window.innerHeight;
+      const documentHeight = document.documentElement.scrollHeight;
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      const scrollPercentage = ((scrollTop + windowHeight) / documentHeight) * 100;
+
+      scrollMilestones.forEach(milestone => {
+        if (scrollPercentage >= milestone && !reachedMilestones.has(milestone)) {
+          reachedMilestones.add(milestone);
+          
+          supabase.from("page_analytics").insert({
+            page_id: pageData.id,
+            event_type: "scroll",
+            scroll_depth: milestone,
+            user_agent: navigator.userAgent,
+            referrer: document.referrer || null,
+            utm_source: utmData.utm_source,
+            utm_medium: utmData.utm_medium,
+            utm_campaign: utmData.utm_campaign,
+            utm_term: utmData.utm_term,
+            utm_content: utmData.utm_content,
+            landing_page_url: utmData.landing_page_url,
+          }).then(({ error }) => {
+            if (error) {
+              console.error(`[Tracking] Error tracking scroll ${milestone}%:`, error);
+            } else {
+              console.debug(`[Tracking] Scroll milestone ${milestone}% tracked`);
+            }
+          });
+        }
+      });
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
   }, [pageData?.id, pageData?.countrySetupName]);
 
   // Robust tracking script injection with idempotency guards and retry logic
