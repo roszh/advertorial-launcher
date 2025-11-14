@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { ArrowLeft, TrendingUp, Eye, MousePointer, Globe, Smartphone, Monitor, Tablet } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import AlertsPanel from "@/components/AlertsPanel";
+import AlertSettings from "@/components/AlertSettings";
 
 interface AnalyticsSummary {
   total_views: number;
@@ -69,6 +71,7 @@ export default function Analytics() {
   const [deviceStats, setDeviceStats] = useState<DeviceStats[]>([]);
   const [browserStats, setBrowserStats] = useState<BrowserStats[]>([]);
   const [utmStats, setUtmStats] = useState<UtmStats[]>([]);
+  const [missingUtmCount, setMissingUtmCount] = useState(0);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -347,6 +350,18 @@ export default function Analytics() {
       setUtmStats(utmStatsArray);
     }
 
+    // Count views with missing UTM parameters
+    const { count: missingUtmViews } = await supabase
+      .from("page_analytics")
+      .select("*", { count: 'exact', head: true })
+      .eq("page_id", pageId)
+      .eq("event_type", "view")
+      .is("utm_source", null)
+      .is("utm_medium", null)
+      .is("utm_campaign", null);
+
+    setMissingUtmCount(missingUtmViews || 0);
+
     setLoading(false);
   };
 
@@ -416,6 +431,15 @@ export default function Analytics() {
                   <p className="text-xs text-muted-foreground">Clicks / Views</p>
                 </CardContent>
               </Card>
+            </div>
+
+            {/* Active Alerts */}
+            <div className="mb-6">
+              <AlertsPanel 
+                pageId={pageId!} 
+                summary={summary} 
+                missingUtmCount={missingUtmCount}
+              />
             </div>
 
             {/* Traffic Sources */}
@@ -611,6 +635,11 @@ export default function Analytics() {
                 )}
               </CardContent>
             </Card>
+
+            {/* Alert Settings */}
+            <div className="mt-6">
+              <AlertSettings pageId={pageId!} userId={user?.id} />
+            </div>
           </>
         )}
       </div>
