@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Navigation } from "@/components/Navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Eye, TrendingDown, MousePointer, ArrowRight } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Eye, TrendingDown, MousePointer, ArrowRight, Clock, Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface FunnelData {
@@ -14,6 +15,8 @@ interface FunnelData {
   scroll75: number;
   scroll100: number;
   clicks: number;
+  ctr: number;
+  avgStayDuration: number;
 }
 
 interface Page {
@@ -25,7 +28,9 @@ export default function Funnel() {
   const navigate = useNavigate();
   const [user, setUser] = useState<any>(null);
   const [pages, setPages] = useState<Page[]>([]);
+  const [filteredPages, setFilteredPages] = useState<Page[]>([]);
   const [selectedPageId, setSelectedPageId] = useState<string>("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [funnelData, setFunnelData] = useState<FunnelData>({
     views: 0,
     scroll25: 0,
@@ -33,6 +38,8 @@ export default function Funnel() {
     scroll75: 0,
     scroll100: 0,
     clicks: 0,
+    ctr: 0,
+    avgStayDuration: 0,
   });
   const [loading, setLoading] = useState(true);
 
@@ -69,6 +76,7 @@ export default function Funnel() {
       
       if (data && data.length > 0) {
         setPages(data);
+        setFilteredPages(data);
         setSelectedPageId(data[0].id);
       }
     } catch (error) {
@@ -77,6 +85,17 @@ export default function Funnel() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (searchQuery.trim() === "") {
+      setFilteredPages(pages);
+    } else {
+      const filtered = pages.filter(page =>
+        page.title.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      setFilteredPages(filtered);
+    }
+  }, [searchQuery, pages]);
 
   useEffect(() => {
     if (selectedPageId) {
@@ -104,6 +123,32 @@ export default function Funnel() {
       const scroll100 = analyticsData?.filter(e => e.event_type === 'scroll' && e.scroll_depth === 100).length || 0;
       const clicks = analyticsData?.filter(e => e.event_type === 'click').length || 0;
 
+      // Calculate CTR
+      const ctr = views > 0 ? (clicks / views) * 100 : 0;
+
+      // Fetch session data for stay duration
+      const { data: sessionData } = await supabase
+        .from("page_sessions")
+        .select("first_seen, last_seen")
+        .eq("page_id", selectedPageId);
+
+      // Calculate average stay duration in seconds
+      let avgStayDuration = 0;
+      if (sessionData && sessionData.length > 0) {
+        const durations = sessionData
+          .filter(s => s.first_seen && s.last_seen)
+          .map(s => {
+            const first = new Date(s.first_seen).getTime();
+            const last = new Date(s.last_seen).getTime();
+            return (last - first) / 1000; // Convert to seconds
+          })
+          .filter(d => d > 0 && d < 3600); // Filter out invalid durations (0 or > 1 hour)
+
+        if (durations.length > 0) {
+          avgStayDuration = durations.reduce((a, b) => a + b, 0) / durations.length;
+        }
+      }
+
       setFunnelData({
         views,
         scroll25,
@@ -111,6 +156,8 @@ export default function Funnel() {
         scroll75,
         scroll100,
         clicks,
+        ctr,
+        avgStayDuration,
       });
     } catch (error) {
       console.error("Error fetching funnel data:", error);
@@ -238,114 +285,162 @@ export default function Funnel() {
     );
   }
 
+  const formatDuration = (seconds: number): string => {
+    if (seconds < 60) return `${Math.round(seconds)}s`;
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = Math.round(seconds % 60);
+    return `${minutes}m ${remainingSeconds}s`;
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Navigation user={user} />
-      <div className="container mx-auto px-4 md:px-5 py-6 md:py-8 max-w-4xl">
+      <div className="container mx-auto px-4 md:px-5 py-6 md:py-8 max-w-7xl">
         <div className="mb-8">
-          <h1 className="ios-large-title mb-1">Conversion Funnel</h1>
+          <h1 className="ios-large-title mb-1">Funnel Analytics</h1>
           <p className="ios-body text-muted-foreground">
             Track user journey from page view to conversion
           </p>
         </div>
 
-        {/* Page Selector */}
+        {/* Top Metrics Row */}
+        <div className="grid gap-4 md:grid-cols-4 mb-8">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Total Views</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-2">
+                <Eye className="h-4 w-4 text-primary" />
+                <div className="text-2xl font-bold">{funnelData.views}</div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Total Clicks</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-2">
+                <MousePointer className="h-4 w-4 text-primary" />
+                <div className="text-2xl font-bold">{funnelData.clicks}</div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Page CTR</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-2">
+                <TrendingDown className="h-4 w-4 text-primary" />
+                <div className="text-2xl font-bold">{funnelData.ctr.toFixed(2)}%</div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Avg Stay Duration</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-primary" />
+                <div className="text-2xl font-bold">{formatDuration(funnelData.avgStayDuration)}</div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Page Selector with Search */}
         <Card className="mb-8">
           <CardHeader>
             <CardTitle className="text-base">Select Page</CardTitle>
             <CardDescription>Choose a page to analyze its conversion funnel</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search pages..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
             <Select value={selectedPageId} onValueChange={setSelectedPageId}>
               <SelectTrigger>
                 <SelectValue placeholder="Select a page" />
               </SelectTrigger>
               <SelectContent>
-                {pages.map((page) => (
-                  <SelectItem key={page.id} value={page.id}>
-                    {page.title}
-                  </SelectItem>
-                ))}
+                {filteredPages.length === 0 ? (
+                  <div className="px-2 py-4 text-center text-sm text-muted-foreground">
+                    No pages found
+                  </div>
+                ) : (
+                  filteredPages.map((page) => (
+                    <SelectItem key={page.id} value={page.id}>
+                      {page.title}
+                    </SelectItem>
+                  ))
+                )}
               </SelectContent>
             </Select>
           </CardContent>
         </Card>
 
-        {/* Funnel Visualization */}
-        <div className="space-y-0">
-          <FunnelStage
-            title="Page View"
-            count={funnelData.views}
-            previousCount={funnelData.views}
-            icon={Eye}
-          />
-          
-          <FunnelStage
-            title="Scrolled 25%"
-            count={funnelData.scroll25}
-            previousCount={funnelData.views}
-            icon={TrendingDown}
-          />
-          
-          <FunnelStage
-            title="Scrolled 50%"
-            count={funnelData.scroll50}
-            previousCount={funnelData.scroll25 || funnelData.views}
-            icon={TrendingDown}
-          />
-          
-          <FunnelStage
-            title="Scrolled 75%"
-            count={funnelData.scroll75}
-            previousCount={funnelData.scroll50 || funnelData.views}
-            icon={TrendingDown}
-          />
-          
-          <FunnelStage
-            title="Scrolled 100%"
-            count={funnelData.scroll100}
-            previousCount={funnelData.scroll75 || funnelData.views}
-            icon={TrendingDown}
-          />
-          
-          <FunnelStage
-            title="CTA Click"
-            count={funnelData.clicks}
-            previousCount={funnelData.views}
-            icon={MousePointer}
-            isLast={true}
-          />
-        </div>
+        {/* Funnel Visualization - Two Columns */}
+        <div className="grid md:grid-cols-2 gap-4">
+          <div className="space-y-0">
+            <FunnelStage
+              title="Page View"
+              count={funnelData.views}
+              previousCount={funnelData.views}
+              icon={Eye}
+            />
+            
+            <FunnelStage
+              title="Scrolled 25%"
+              count={funnelData.scroll25}
+              previousCount={funnelData.views}
+              icon={TrendingDown}
+            />
+            
+            <FunnelStage
+              title="Scrolled 50%"
+              count={funnelData.scroll50}
+              previousCount={funnelData.scroll25 || funnelData.views}
+              icon={TrendingDown}
+              isLast={true}
+            />
+          </div>
 
-        {/* Summary Stats */}
-        <Card className="mt-8">
-          <CardHeader>
-            <CardTitle>Funnel Summary</CardTitle>
-            <CardDescription>Overall conversion metrics</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">Overall Conversion Rate</p>
-                <p className="text-2xl font-bold">
-                  {calculateConversionRate(funnelData.clicks, funnelData.views).toFixed(2)}%
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  From view to click
-                </p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">Completion Rate</p>
-                <p className="text-2xl font-bold">
-                  {calculateConversionRate(funnelData.scroll100, funnelData.views).toFixed(2)}%
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Scrolled to bottom
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+          <div className="space-y-0">
+            <FunnelStage
+              title="Scrolled 75%"
+              count={funnelData.scroll75}
+              previousCount={funnelData.scroll50 || funnelData.views}
+              icon={TrendingDown}
+            />
+            
+            <FunnelStage
+              title="Scrolled 100%"
+              count={funnelData.scroll100}
+              previousCount={funnelData.scroll75 || funnelData.views}
+              icon={TrendingDown}
+            />
+            
+            <FunnelStage
+              title="CTA Click"
+              count={funnelData.clicks}
+              previousCount={funnelData.views}
+              icon={MousePointer}
+              isLast={true}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );
