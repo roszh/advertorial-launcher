@@ -296,66 +296,15 @@ export default function Funnel() {
     <div className="min-h-screen bg-background">
       <Navigation user={user} />
       <div className="container mx-auto px-4 md:px-5 py-6 md:py-8 max-w-7xl">
-        <div className="mb-8">
+        <div className="mb-6">
           <h1 className="ios-large-title mb-1">Funnel Analytics</h1>
           <p className="ios-body text-muted-foreground">
             Track user journey from page view to conversion
           </p>
         </div>
 
-        {/* Top Metrics Row */}
-        <div className="grid gap-4 md:grid-cols-4 mb-8">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Total Views</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2">
-                <Eye className="h-4 w-4 text-primary" />
-                <div className="text-2xl font-bold">{funnelData.views}</div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Total Clicks</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2">
-                <MousePointer className="h-4 w-4 text-primary" />
-                <div className="text-2xl font-bold">{funnelData.clicks}</div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Page CTR</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2">
-                <TrendingDown className="h-4 w-4 text-primary" />
-                <div className="text-2xl font-bold">{funnelData.ctr.toFixed(2)}%</div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Avg Stay Duration</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-primary" />
-                <div className="text-2xl font-bold">{formatDuration(funnelData.avgStayDuration)}</div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Page Selector with Search */}
-        <Card className="mb-8">
+        {/* Page Selector with Search - Moved to Top */}
+        <Card className="mb-6">
           <CardHeader>
             <CardTitle className="text-base">Select Page</CardTitle>
             <CardDescription>Choose a page to analyze its conversion funnel</CardDescription>
@@ -390,6 +339,130 @@ export default function Funnel() {
             </Select>
           </CardContent>
         </Card>
+
+        {/* Key Performance Metrics */}
+        <div className="grid gap-4 md:grid-cols-4 mb-6">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Total Views</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-2">
+                <Eye className="h-4 w-4 text-primary" />
+                <div className="text-2xl font-bold">{funnelData.views}</div>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">Unique page impressions</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Total Clicks</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-2">
+                <MousePointer className="h-4 w-4 text-primary" />
+                <div className="text-2xl font-bold">{funnelData.clicks}</div>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">CTA button interactions</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Conversion Rate</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-2">
+                <TrendingDown className="h-4 w-4 text-primary" />
+                <div className="text-2xl font-bold">{funnelData.ctr.toFixed(2)}%</div>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">View to click ratio</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Avg Time on Page</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-primary" />
+                <div className="text-2xl font-bold">{formatDuration(funnelData.avgStayDuration)}</div>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">User engagement time</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Engagement Insights */}
+        <div className="grid gap-4 md:grid-cols-3 mb-6">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm">Scroll Completion Rate</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Reached 50%</span>
+                  <span className="font-medium">
+                    {funnelData.views > 0 ? ((funnelData.scroll50 / funnelData.views) * 100).toFixed(1) : 0}%
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Reached 100%</span>
+                  <span className="font-medium">
+                    {funnelData.views > 0 ? ((funnelData.scroll100 / funnelData.views) * 100).toFixed(1) : 0}%
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm">Drop-off Analysis</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Early Exit (0-25%)</span>
+                  <span className="font-medium text-destructive">
+                    {funnelData.views > 0 ? (((funnelData.views - funnelData.scroll25) / funnelData.views) * 100).toFixed(1) : 0}%
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Mid Exit (25-75%)</span>
+                  <span className="font-medium text-destructive">
+                    {funnelData.scroll25 > 0 ? (((funnelData.scroll25 - funnelData.scroll75) / funnelData.scroll25) * 100).toFixed(1) : 0}%
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm">Engagement Quality</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Click-through Quality</span>
+                  <Badge variant={funnelData.ctr >= 5 ? "default" : funnelData.ctr >= 2 ? "secondary" : "destructive"}>
+                    {funnelData.ctr >= 5 ? "Excellent" : funnelData.ctr >= 2 ? "Good" : "Needs Work"}
+                  </Badge>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Avg Engagement</span>
+                  <Badge variant={funnelData.avgStayDuration >= 60 ? "default" : funnelData.avgStayDuration >= 30 ? "secondary" : "destructive"}>
+                    {funnelData.avgStayDuration >= 60 ? "High" : funnelData.avgStayDuration >= 30 ? "Medium" : "Low"}
+                  </Badge>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Funnel Visualization - Two Columns */}
         <div className="grid md:grid-cols-2 gap-4">
