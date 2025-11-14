@@ -5,8 +5,9 @@ import { Navigation } from "@/components/Navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Eye, TrendingDown, MousePointer, ArrowRight, Clock, Search } from "lucide-react";
+import { Eye, TrendingDown, MousePointer, ArrowRight, Clock, Search, Calendar } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { startOfDay, endOfDay, subDays, format } from "date-fns";
 
 interface FunnelData {
   views: number;
@@ -24,6 +25,8 @@ interface Page {
   title: string;
 }
 
+type DateRange = "today" | "yesterday" | "last7days" | "last14days" | "last30days" | "last90days" | "alltime";
+
 export default function Funnel() {
   const navigate = useNavigate();
   const [user, setUser] = useState<any>(null);
@@ -31,6 +34,7 @@ export default function Funnel() {
   const [filteredPages, setFilteredPages] = useState<Page[]>([]);
   const [selectedPageId, setSelectedPageId] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [dateRange, setDateRange] = useState<DateRange>("last7days");
   const [funnelData, setFunnelData] = useState<FunnelData>({
     views: 0,
     scroll25: 0,
@@ -101,17 +105,50 @@ export default function Funnel() {
     if (selectedPageId) {
       fetchFunnelData();
     }
-  }, [selectedPageId]);
+  }, [selectedPageId, dateRange]);
+
+  const getDateRangeFilter = () => {
+    const now = new Date();
+    switch (dateRange) {
+      case "today":
+        return { start: startOfDay(now), end: endOfDay(now) };
+      case "yesterday":
+        const yesterday = subDays(now, 1);
+        return { start: startOfDay(yesterday), end: endOfDay(yesterday) };
+      case "last7days":
+        return { start: startOfDay(subDays(now, 7)), end: endOfDay(now) };
+      case "last14days":
+        return { start: startOfDay(subDays(now, 14)), end: endOfDay(now) };
+      case "last30days":
+        return { start: startOfDay(subDays(now, 30)), end: endOfDay(now) };
+      case "last90days":
+        return { start: startOfDay(subDays(now, 90)), end: endOfDay(now) };
+      case "alltime":
+        return null;
+      default:
+        return { start: startOfDay(subDays(now, 7)), end: endOfDay(now) };
+    }
+  };
 
   const fetchFunnelData = async () => {
     if (!selectedPageId) return;
 
     try {
-      // Fetch all analytics data for the page
-      const { data: analyticsData, error } = await supabase
+      const dateFilter = getDateRangeFilter();
+      
+      // Build analytics query with date filter
+      let analyticsQuery = supabase
         .from("page_analytics")
-        .select("event_type, scroll_depth")
-        .eq("page_id", selectedPageId) as any; // Type assertion until types regenerate
+        .select("event_type, scroll_depth, created_at")
+        .eq("page_id", selectedPageId);
+
+      if (dateFilter) {
+        analyticsQuery = analyticsQuery
+          .gte("created_at", dateFilter.start.toISOString())
+          .lte("created_at", dateFilter.end.toISOString());
+      }
+
+      const { data: analyticsData, error } = await analyticsQuery as any;
 
       if (error) throw error;
 
@@ -126,11 +163,19 @@ export default function Funnel() {
       // Calculate CTR
       const ctr = views > 0 ? (clicks / views) * 100 : 0;
 
-      // Fetch session data for stay duration
-      const { data: sessionData } = await supabase
+      // Build session query with date filter
+      let sessionQuery = supabase
         .from("page_sessions")
-        .select("first_seen, last_seen")
+        .select("first_seen, last_seen, created_at")
         .eq("page_id", selectedPageId);
+
+      if (dateFilter) {
+        sessionQuery = sessionQuery
+          .gte("created_at", dateFilter.start.toISOString())
+          .lte("created_at", dateFilter.end.toISOString());
+      }
+
+      const { data: sessionData } = await sessionQuery;
 
       // Calculate average stay duration in seconds
       let avgStayDuration = 0;
@@ -296,11 +341,31 @@ export default function Funnel() {
     <div className="min-h-screen bg-background">
       <Navigation user={user} />
       <div className="container mx-auto px-4 md:px-5 py-6 md:py-8 max-w-7xl">
-        <div className="mb-6">
-          <h1 className="ios-large-title mb-1">Funnel Analytics</h1>
-          <p className="ios-body text-muted-foreground">
-            Track user journey from page view to conversion
-          </p>
+        <div className="mb-6 flex items-start justify-between flex-wrap gap-4">
+          <div>
+            <h1 className="ios-large-title mb-1">Funnel Analytics</h1>
+            <p className="ios-body text-muted-foreground">
+              Track user journey from page view to conversion
+            </p>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <Select value={dateRange} onValueChange={(value: DateRange) => setDateRange(value)}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Select date range" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="today">Today</SelectItem>
+                <SelectItem value="yesterday">Yesterday</SelectItem>
+                <SelectItem value="last7days">Last 7 days</SelectItem>
+                <SelectItem value="last14days">Last 14 days</SelectItem>
+                <SelectItem value="last30days">Last 30 days</SelectItem>
+                <SelectItem value="last90days">Last 90 days</SelectItem>
+                <SelectItem value="alltime">All time</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {/* Page Selector with Search - Moved to Top */}
