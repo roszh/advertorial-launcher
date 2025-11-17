@@ -14,6 +14,99 @@ export type Database = {
   }
   public: {
     Tables: {
+      alert_configs: {
+        Row: {
+          alert_type: string
+          created_at: string
+          id: string
+          is_enabled: boolean
+          page_id: string | null
+          threshold_value: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          alert_type: string
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          page_id?: string | null
+          threshold_value?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          page_id?: string | null
+          threshold_value?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alert_configs_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "page_analytics_summary"
+            referencedColumns: ["page_id"]
+          },
+          {
+            foreignKeyName: "alert_configs_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "pages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alert_configs_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "published_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alert_history: {
+        Row: {
+          alert_config_id: string | null
+          alert_type: string
+          id: string
+          message: string
+          metric_value: number | null
+          page_id: string
+          triggered_at: string
+        }
+        Insert: {
+          alert_config_id?: string | null
+          alert_type: string
+          id?: string
+          message: string
+          metric_value?: number | null
+          page_id: string
+          triggered_at?: string
+        }
+        Update: {
+          alert_config_id?: string | null
+          alert_type?: string
+          id?: string
+          message?: string
+          metric_value?: number | null
+          page_id?: string
+          triggered_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alert_history_alert_config_id_fkey"
+            columns: ["alert_config_id"]
+            isOneToOne: false
+            referencedRelation: "alert_configs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       image_library: {
         Row: {
           created_at: string
@@ -75,6 +168,8 @@ export type Database = {
           landing_page_url: string | null
           page_id: string
           referrer: string | null
+          scroll_depth: number | null
+          session_id: string | null
           user_agent: string | null
           utm_campaign: string | null
           utm_content: string | null
@@ -90,6 +185,8 @@ export type Database = {
           landing_page_url?: string | null
           page_id: string
           referrer?: string | null
+          scroll_depth?: number | null
+          session_id?: string | null
           user_agent?: string | null
           utm_campaign?: string | null
           utm_content?: string | null
@@ -105,6 +202,8 @@ export type Database = {
           landing_page_url?: string | null
           page_id?: string
           referrer?: string | null
+          scroll_depth?: number | null
+          session_id?: string | null
           user_agent?: string | null
           utm_campaign?: string | null
           utm_content?: string | null

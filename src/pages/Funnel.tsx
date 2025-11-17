@@ -136,37 +136,10 @@ export default function Funnel() {
     try {
       const dateFilter = getDateRangeFilter();
       
-      // Build analytics query with date filter
-      let analyticsQuery = supabase
-        .from("page_analytics")
-        .select("event_type, scroll_depth, created_at")
-        .eq("page_id", selectedPageId);
-
-      if (dateFilter) {
-        analyticsQuery = analyticsQuery
-          .gte("created_at", dateFilter.start.toISOString())
-          .lte("created_at", dateFilter.end.toISOString());
-      }
-
-      const { data: analyticsData, error } = await analyticsQuery as any;
-
-      if (error) throw error;
-
-      // Calculate funnel metrics
-      const views = analyticsData?.filter(e => e.event_type === 'view').length || 0;
-      const scroll25 = analyticsData?.filter(e => e.event_type === 'scroll' && e.scroll_depth === 25).length || 0;
-      const scroll50 = analyticsData?.filter(e => e.event_type === 'scroll' && e.scroll_depth === 50).length || 0;
-      const scroll75 = analyticsData?.filter(e => e.event_type === 'scroll' && e.scroll_depth === 75).length || 0;
-      const scroll100 = analyticsData?.filter(e => e.event_type === 'scroll' && e.scroll_depth === 100).length || 0;
-      const clicks = analyticsData?.filter(e => e.event_type === 'click').length || 0;
-
-      // Calculate CTR
-      const ctr = views > 0 ? (clicks / views) * 100 : 0;
-
-      // Build session query with date filter
+      // Build session query with date filter - use sessions for unique visitors
       let sessionQuery = supabase
         .from("page_sessions")
-        .select("first_seen, last_seen, created_at")
+        .select("session_id, first_seen, last_seen, created_at")
         .eq("page_id", selectedPageId);
 
       if (dateFilter) {
@@ -175,7 +148,12 @@ export default function Funnel() {
           .lte("created_at", dateFilter.end.toISOString());
       }
 
-      const { data: sessionData } = await sessionQuery;
+      const { data: sessionData, error: sessionError } = await sessionQuery;
+
+      if (sessionError) throw sessionError;
+
+      // Calculate unique visitors (sessions)
+      const uniqueVisitors = sessionData?.length || 0;
 
       // Calculate average stay duration in seconds
       let avgStayDuration = 0;
@@ -194,13 +172,63 @@ export default function Funnel() {
         }
       }
 
+      // Build analytics query with date filter for session-based metrics
+      let analyticsQuery = supabase
+        .from("page_analytics")
+        .select("event_type, scroll_depth, session_id, created_at")
+        .eq("page_id", selectedPageId);
+
+      if (dateFilter) {
+        analyticsQuery = analyticsQuery
+          .gte("created_at", dateFilter.start.toISOString())
+          .lte("created_at", dateFilter.end.toISOString());
+      }
+
+      const { data: analyticsData, error: analyticsError } = await analyticsQuery;
+
+      if (analyticsError) throw analyticsError;
+
+      // Calculate session-based metrics (count unique sessions that reached each milestone)
+      const sessionsWithClicks = new Set(
+        analyticsData?.filter(e => e.event_type === 'click').map(e => e.session_id)
+      ).size;
+
+      const sessionsReaching25 = new Set(
+        analyticsData?.filter(e => e.event_type === 'scroll' && e.scroll_depth === 25).map(e => e.session_id)
+      ).size;
+
+      const sessionsReaching50 = new Set(
+        analyticsData?.filter(e => e.event_type === 'scroll' && e.scroll_depth === 50).map(e => e.session_id)
+      ).size;
+
+      const sessionsReaching75 = new Set(
+        analyticsData?.filter(e => e.event_type === 'scroll' && e.scroll_depth === 75).map(e => e.session_id)
+      ).size;
+
+      const sessionsReaching100 = new Set(
+        analyticsData?.filter(e => e.event_type === 'scroll' && e.scroll_depth === 100).map(e => e.session_id)
+      ).size;
+
+      // Calculate CTR based on unique sessions
+      const ctr = uniqueVisitors > 0 ? (sessionsWithClicks / uniqueVisitors) * 100 : 0;
+
+      console.log('[Funnel] Session-based metrics:', {
+        uniqueVisitors,
+        sessionsWithClicks,
+        ctr: ctr.toFixed(2) + '%',
+        scroll25: sessionsReaching25,
+        scroll50: sessionsReaching50,
+        scroll75: sessionsReaching75,
+        scroll100: sessionsReaching100,
+      });
+
       setFunnelData({
-        views,
-        scroll25,
-        scroll50,
-        scroll75,
-        scroll100,
-        clicks,
+        views: uniqueVisitors,
+        scroll25: sessionsReaching25,
+        scroll50: sessionsReaching50,
+        scroll75: sessionsReaching75,
+        scroll100: sessionsReaching100,
+        clicks: sessionsWithClicks,
         ctr,
         avgStayDuration,
       });
