@@ -23,6 +23,7 @@ interface FunnelData {
 interface Page {
   id: string;
   title: string;
+  slug: string;
 }
 
 type DateRange = "today" | "yesterday" | "last7days" | "last14days" | "last30days" | "last90days" | "alltime";
@@ -72,7 +73,7 @@ export default function Funnel() {
     try {
       const { data, error } = await supabase
         .from("pages")
-        .select("id, title")
+        .select("id, title, slug")
         .eq("status", "published")
         .order("created_at", { ascending: false });
 
@@ -94,8 +95,10 @@ export default function Funnel() {
     if (searchQuery.trim() === "") {
       setFilteredPages(pages);
     } else {
+      const query = searchQuery.toLowerCase();
       const filtered = pages.filter(page =>
-        page.title.toLowerCase().includes(searchQuery.toLowerCase())
+        page.title.toLowerCase().includes(query) ||
+        page.slug.toLowerCase().includes(query)
       );
       setFilteredPages(filtered);
     }
@@ -406,7 +409,7 @@ export default function Funnel() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search pages..."
+                placeholder="Search by title or slug..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9"
@@ -416,15 +419,18 @@ export default function Funnel() {
               <SelectTrigger>
                 <SelectValue placeholder="Select a page" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-background z-50">
                 {filteredPages.length === 0 ? (
                   <div className="px-2 py-4 text-center text-sm text-muted-foreground">
-                    No pages found
+                    No pages found matching "{searchQuery}"
                   </div>
                 ) : (
                   filteredPages.map((page) => (
                     <SelectItem key={page.id} value={page.id}>
-                      {page.title}
+                      <div className="flex flex-col">
+                        <span className="font-medium">{page.title}</span>
+                        <span className="text-xs text-muted-foreground">/{page.slug}</span>
+                      </div>
                     </SelectItem>
                   ))
                 )}
