@@ -1,4 +1,4 @@
-import { useEffect, useState, Suspense, lazy } from "react";
+import { useEffect, useState, useRef, Suspense, lazy } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -51,6 +51,7 @@ interface PageData {
 
 export default function PublicPage() {
   const { slug } = useParams();
+  const hasTrackedView = useRef(false);
 
   // Normalize section to ensure required fields exist (for backwards compatibility)
   const normalizeSection = (section: any, index: number): Section => ({
@@ -226,24 +227,30 @@ export default function PublicPage() {
           console.log('[Tracking] Session already recorded for this page');
         }
 
-        // Track page view
-        const { error: viewError } = await supabase.from("page_analytics").insert({
-          page_id: pageData.id,
-          event_type: "view",
-          user_agent: navigator.userAgent,
-          referrer: document.referrer || null,
-          landing_page_url: utmData.landing_page_url,
-          utm_source: utmData.utm_source,
-          utm_medium: utmData.utm_medium,
-          utm_campaign: utmData.utm_campaign,
-          utm_term: utmData.utm_term,
-          utm_content: utmData.utm_content,
-        });
+        // Track page view only once per page load
+        if (!hasTrackedView.current) {
+          const { error: viewError } = await supabase.from("page_analytics").insert({
+            page_id: pageData.id,
+            event_type: "view",
+            session_id: sessionId,
+            user_agent: navigator.userAgent,
+            referrer: document.referrer || null,
+            landing_page_url: utmData.landing_page_url,
+            utm_source: utmData.utm_source,
+            utm_medium: utmData.utm_medium,
+            utm_campaign: utmData.utm_campaign,
+            utm_term: utmData.utm_term,
+            utm_content: utmData.utm_content,
+          });
 
-        if (viewError) {
-          console.error('[Tracking] Error tracking page view:', viewError);
+          if (viewError) {
+            console.error('[Tracking] Error tracking page view:', viewError);
+          } else {
+            console.log('[Tracking] ✓ Page view tracked');
+            hasTrackedView.current = true;
+          }
         } else {
-          console.log('[Tracking] ✓ Page view tracked');
+          console.log('[Tracking] View already tracked for this page load');
         }
       } catch (error) {
         console.error("[Tracking] Error in trackPageView:", error);
@@ -285,11 +292,12 @@ export default function PublicPage() {
         if (scrollPercentage >= milestone && !reachedMilestones.has(milestone)) {
           reachedMilestones.add(milestone);
           console.log(`[Tracking] Reached scroll milestone: ${milestone}%`);
-          
+          const sessionId = getOrCreateSessionId();
           supabase.from("page_analytics").insert({
             page_id: pageData.id,
             event_type: "scroll",
             scroll_depth: milestone,
+            session_id: sessionId,
             user_agent: navigator.userAgent,
             referrer: document.referrer || null,
             utm_source: utmData.utm_source,
@@ -313,6 +321,9 @@ export default function PublicPage() {
     handleScroll();
 
     window.addEventListener('scroll', handleScroll);
+    
+    // Reset view tracking ref when page changes
+    hasTrackedView.current = false;
     
     return () => {
       window.removeEventListener('scroll', handleScroll);
@@ -614,11 +625,13 @@ export default function PublicPage() {
         campaign: utmData.utm_campaign,
       });
 
-      // Track click event with UTM data
+      // Track click event with UTM data and session ID
+      const sessionId = getOrCreateSessionId();
       await supabase.from("page_analytics").insert({
         page_id: pageData.id,
         event_type: "click",
         element_id: elementId,
+        session_id: sessionId,
         user_agent: navigator.userAgent,
         referrer: document.referrer || null,
         utm_source: utmData.utm_source,
