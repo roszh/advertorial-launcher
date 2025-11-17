@@ -107,6 +107,30 @@ export type Database = {
           },
         ]
       }
+      analytics_duplication_analysis: {
+        Row: {
+          duplication_factor: number | null
+          estimated_unique_sessions: number | null
+          event_type: string | null
+          page_id: string | null
+          total_events: number | null
+        }
+        Insert: {
+          duplication_factor?: number | null
+          estimated_unique_sessions?: number | null
+          event_type?: string | null
+          page_id?: string | null
+          total_events?: number | null
+        }
+        Update: {
+          duplication_factor?: number | null
+          estimated_unique_sessions?: number | null
+          event_type?: string | null
+          page_id?: string | null
+          total_events?: number | null
+        }
+        Relationships: []
+      }
       image_library: {
         Row: {
           created_at: string
@@ -234,6 +258,60 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      page_analytics_backup: {
+        Row: {
+          created_at: string | null
+          element_id: string | null
+          event_type: string | null
+          id: string | null
+          landing_page_url: string | null
+          page_id: string | null
+          referrer: string | null
+          scroll_depth: number | null
+          session_id: string | null
+          user_agent: string | null
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          utm_term: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          element_id?: string | null
+          event_type?: string | null
+          id?: string | null
+          landing_page_url?: string | null
+          page_id?: string | null
+          referrer?: string | null
+          scroll_depth?: number | null
+          session_id?: string | null
+          user_agent?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          element_id?: string | null
+          event_type?: string | null
+          id?: string | null
+          landing_page_url?: string | null
+          page_id?: string | null
+          referrer?: string | null
+          scroll_depth?: number | null
+          session_id?: string | null
+          user_agent?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+        }
+        Relationships: []
       }
       page_sessions: {
         Row: {
