@@ -5,8 +5,12 @@ import { Navigation } from "@/components/Navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
-import { ArrowLeft, TrendingUp, Eye, MousePointer, Globe, Smartphone, Monitor, Tablet } from "lucide-react";
+import { ArrowLeft, TrendingUp, Eye, MousePointer, Globe, Smartphone, Monitor, Tablet, Calendar } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { format, subDays } from "date-fns";
 // import AlertsPanel from "@/components/AlertsPanel";
 // import AlertSettings from "@/components/AlertSettings";
 
@@ -71,6 +75,9 @@ export default function Analytics() {
   const [deviceStats, setDeviceStats] = useState<DeviceStats[]>([]);
   const [browserStats, setBrowserStats] = useState<BrowserStats[]>([]);
   const [utmStats, setUtmStats] = useState<UtmStats[]>([]);
+  const [dateRange, setDateRange] = useState<"7d" | "30d" | "90d" | "all" | "custom">("30d");
+  const [customStartDate, setCustomStartDate] = useState<Date | undefined>(undefined);
+  const [customEndDate, setCustomEndDate] = useState<Date | undefined>(undefined);
   // const [missingUtmCount, setMissingUtmCount] = useState(0);
 
   useEffect(() => {
@@ -93,6 +100,39 @@ export default function Analytics() {
 
     return () => subscription.unsubscribe();
   }, [navigate, pageId]);
+
+  useEffect(() => {
+    if (user) {
+      fetchAnalytics();
+    }
+  }, [dateRange, customStartDate, customEndDate]);
+
+  const getDateFilter = () => {
+    const now = new Date();
+    let startDate: Date | null = null;
+
+    switch (dateRange) {
+      case "7d":
+        startDate = subDays(now, 7);
+        break;
+      case "30d":
+        startDate = subDays(now, 30);
+        break;
+      case "90d":
+        startDate = subDays(now, 90);
+        break;
+      case "custom":
+        if (customStartDate) {
+          startDate = customStartDate;
+        }
+        break;
+      case "all":
+      default:
+        return null;
+    }
+
+    return startDate;
+  };
 
   const parseReferrer = (referrer: string | null): string => {
     if (!referrer) return "Direct";
@@ -170,31 +210,62 @@ export default function Analytics() {
 
     setPageTitle(pageData.title);
 
-    // Fetch summary from view
-    const { data: summaryData, error: summaryError } = await supabase
-      .from("page_analytics_summary")
-      .select("*")
+    // Get date filter
+    const startDate = getDateFilter();
+    const endDate = dateRange === "custom" && customEndDate ? customEndDate : new Date();
+
+    // Build query with date filter
+    const applyDateFilter = (query: any) => {
+      let q = query;
+      if (startDate) {
+        q = q.gte("created_at", startDate.toISOString());
+      }
+      if (dateRange === "custom" && customEndDate) {
+        q = q.lte("created_at", endDate.toISOString());
+      }
+      return q;
+    };
+
+    // Fetch summary with date filter
+    let viewsQuery = supabase
+      .from("page_analytics")
+      .select("id", { count: "exact", head: true })
       .eq("page_id", pageId)
-      .maybeSingle();
+      .eq("event_type", "view");
+    
+    let clicksQuery = supabase
+      .from("page_analytics")
+      .select("id", { count: "exact", head: true })
+      .eq("page_id", pageId)
+      .eq("event_type", "click");
 
-    if (!summaryError && summaryData) {
-      setSummary({
-        total_views: summaryData.total_views || 0,
-        total_clicks: summaryData.total_clicks || 0,
-        ctr_percentage: summaryData.ctr_percentage || 0
-      });
-    }
+    viewsQuery = applyDateFilter(viewsQuery);
+    clicksQuery = applyDateFilter(clicksQuery);
 
-    // Fetch daily stats for last 30 days
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const [{ count: viewCount }, { count: clickCount }] = await Promise.all([
+      viewsQuery,
+      clicksQuery
+    ]);
 
-    const { data: analyticsData, error: analyticsError } = await supabase
+    const totalViews = viewCount || 0;
+    const totalClicks = clickCount || 0;
+    const ctrPercentage = totalViews > 0 ? (totalClicks / totalViews) * 100 : 0;
+
+    setSummary({
+      total_views: totalViews,
+      total_clicks: totalClicks,
+      ctr_percentage: ctrPercentage
+    });
+
+    // Fetch daily stats with date filter
+    let analyticsQuery = supabase
       .from("page_analytics")
       .select("event_type, created_at")
       .eq("page_id", pageId)
-      .gte("created_at", thirtyDaysAgo.toISOString())
       .order("created_at", { ascending: true });
+
+    analyticsQuery = applyDateFilter(analyticsQuery);
+    const { data: analyticsData, error: analyticsError } = await analyticsQuery;
 
     if (!analyticsError && analyticsData) {
       // Group by date
@@ -221,12 +292,15 @@ export default function Analytics() {
       setDailyStats(dailyStatsArray);
     }
 
-    // Fetch clicks by element
-    const { data: elementData, error: elementError } = await supabase
+    // Fetch clicks by element with date filter
+    let elementQuery = supabase
       .from("page_analytics")
       .select("element_id")
       .eq("page_id", pageId)
       .eq("event_type", "click");
+
+    elementQuery = applyDateFilter(elementQuery);
+    const { data: elementData, error: elementError } = await elementQuery;
 
     if (!elementError && elementData) {
       const elementCounts: { [key: string]: number } = {};
@@ -246,12 +320,15 @@ export default function Analytics() {
       setElementStats(elementStatsArray);
     }
 
-    // Fetch traffic sources
-    const { data: analyticsWithReferrer } = await supabase
+    // Fetch traffic sources with date filter
+    let trafficQuery = supabase
       .from("page_analytics")
       .select("referrer")
       .eq("page_id", pageId)
       .eq("event_type", "view");
+
+    trafficQuery = applyDateFilter(trafficQuery);
+    const { data: analyticsWithReferrer } = await trafficQuery;
 
     if (analyticsWithReferrer) {
       const sourceCounts: { [key: string]: number } = {};
@@ -273,12 +350,15 @@ export default function Analytics() {
       setTrafficSources(sources);
     }
 
-    // Fetch device and browser stats
-    const { data: analyticsWithUA } = await supabase
+    // Fetch device and browser stats with date filter
+    let deviceUAQuery = supabase
       .from("page_analytics")
       .select("user_agent")
       .eq("page_id", pageId)
       .eq("event_type", "view");
+
+    deviceUAQuery = applyDateFilter(deviceUAQuery);
+    const { data: analyticsWithUA } = await deviceUAQuery;
 
     if (analyticsWithUA) {
       const deviceCounts: { [key: string]: number } = {};
@@ -311,12 +391,15 @@ export default function Analytics() {
       setBrowserStats(browsers);
     }
 
-    // Fetch UTM attribution data
-    const { data: utmAnalytics } = await supabase
+    // Fetch UTM attribution data with date filter
+    let utmAnalyticsQuery = supabase
       .from("page_analytics")
       .select("utm_source, utm_medium, utm_campaign, event_type")
       .eq("page_id", pageId)
       .not("utm_source", "is", null);
+
+    utmAnalyticsQuery = applyDateFilter(utmAnalyticsQuery);
+    const { data: utmAnalytics } = await utmAnalyticsQuery;
 
     if (utmAnalytics && utmAnalytics.length > 0) {
       const utmGroups: { [key: string]: { views: number; clicks: number } } = {};
@@ -387,10 +470,67 @@ export default function Analytics() {
           </Button>
         </div>
 
-        {/* iOS Large Title with Subtitle */}
-        <div className="mb-8">
-          <h1 className="ios-large-title mb-1">Analytics</h1>
-          <p className="ios-body text-muted-foreground">{pageTitle}</p>
+        {/* iOS Large Title with Date Range */}
+        <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4 mb-8">
+          <div>
+            <h1 className="ios-large-title mb-1">Analytics</h1>
+            <p className="ios-body text-muted-foreground">{pageTitle}</p>
+          </div>
+
+          {/* Date Range Selector */}
+          <div className="flex items-center gap-3">
+            <Select value={dateRange} onValueChange={(value: any) => setDateRange(value)}>
+              <SelectTrigger className="w-[180px] rounded-ios">
+                <Calendar className="h-4 w-4 mr-2" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="7d">Last 7 days</SelectItem>
+                <SelectItem value="30d">Last 30 days</SelectItem>
+                <SelectItem value="90d">Last 90 days</SelectItem>
+                <SelectItem value="all">All time</SelectItem>
+                <SelectItem value="custom">Custom range</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {dateRange === "custom" && (
+              <div className="flex items-center gap-2">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-[140px] justify-start text-left font-normal rounded-ios ios-footnote">
+                      {customStartDate ? format(customStartDate, "PP") : "Start date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <CalendarComponent
+                      mode="single"
+                      selected={customStartDate}
+                      onSelect={setCustomStartDate}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+
+                <span className="text-muted-foreground ios-caption">to</span>
+
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-[140px] justify-start text-left font-normal rounded-ios ios-footnote">
+                      {customEndDate ? format(customEndDate, "PP") : "End date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <CalendarComponent
+                      mode="single"
+                      selected={customEndDate}
+                      onSelect={setCustomEndDate}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            )}
+          </div>
         </div>
 
         {loading ? (
