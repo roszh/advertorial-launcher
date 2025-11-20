@@ -15,9 +15,33 @@ export function stripHtmlTags(text: string): string {
 export function formatMarkdownText(markdownValue: string): string {
   if (!markdownValue) return "";
   
-  // Start from original string so we preserve any existing HTML
+  // Check if content already has HTML block tags
+  const hasBlockHtml = /<(p|div|h[1-6]|ul|ol|li|br)\b[^>]*>/i.test(markdownValue);
+  
   let formatted = markdownValue;
   
+  // If content has HTML block tags, clean it up and preserve structure
+  if (hasBlockHtml) {
+    // Remove excessive whitespace between HTML tags
+    formatted = formatted.replace(/>\s+</g, '><');
+    
+    // Convert markdown links even in HTML context
+    formatted = formatted.replace(
+      /\[(.+?)\]\((.+?)\)/g,
+      '<a href="$2" class="text-primary underline hover:no-underline" target="_blank" rel="noopener noreferrer">$1</a>'
+    );
+    
+    // Convert markdown bold/italic only if not already in HTML tags
+    formatted = formatted.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    formatted = formatted.replace(/__(.+?)__/g, '<strong>$1</strong>');
+    formatted = formatted.replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, '$1<em>$2</em>');
+    formatted = formatted.replace(/(^|[^_])_([^_\n]+)_(?!_)/g, '$1<em>$2</em>');
+    
+    // Don't add <br> tags if HTML already has block structure
+    return formatted;
+  }
+  
+  // For plain text/markdown content (no HTML blocks)
   // Subheadline: ## text (convert to h2 tag for semantic HTML)
   formatted = formatted.replace(
     /^##\s+(.+)$/gm,
@@ -35,12 +59,10 @@ export function formatMarkdownText(markdownValue: string): string {
   formatted = formatted.replace(/__(.+?)__/g, '<strong>$1</strong>');
   
   // Italic (lookbehind-free): *text* or _text_, not part of bold
-  // Match a single * or _ that is not preceded by the same char, and not followed by same char
-  // Avoid spanning across newlines
   formatted = formatted.replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, '$1<em>$2</em>');
   formatted = formatted.replace(/(^|[^_])_([^_\n]+)_(?!_)/g, '$1<em>$2</em>');
   
-  // Line breaks: \n to <br>
+  // Line breaks: \n to <br> (only for non-HTML content)
   formatted = formatted.replace(/\n/g, '<br>');
   
   return formatted;
