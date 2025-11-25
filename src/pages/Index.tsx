@@ -37,6 +37,9 @@ import { toast } from "@/hooks/use-toast";
 import { stripHtmlTags, cn } from "@/lib/utils";
 import { MultiSelectToolbar } from "@/components/MultiSelectToolbar";
 import { MultiSectionSnippetDialog } from "@/components/MultiSectionSnippetDialog";
+import { TranslateDialog } from "@/components/TranslateDialog";
+import { SectionTranslateDialog } from "@/components/SectionTranslateDialog";
+import { ProofreadSuggestionsDialog } from "@/components/ProofreadSuggestionsDialog";
 import { 
   Loader2, 
   Save, 
@@ -59,7 +62,9 @@ import {
   BookOpen,
   ListOrdered,
   BookMarked,
-  CheckSquare
+  CheckSquare,
+  Languages,
+  SpellCheck
 } from "lucide-react";
 
 interface Section {
@@ -166,6 +171,10 @@ const Index = () => {
   const [multiSelectMode, setMultiSelectMode] = useState(false);
   const [selectedSections, setSelectedSections] = useState<number[]>([]);
   const [showMultiSnippetDialog, setShowMultiSnippetDialog] = useState(false);
+  const [showTranslateDialog, setShowTranslateDialog] = useState(false);
+  const [showSectionTranslateDialog, setShowSectionTranslateDialog] = useState(false);
+  const [sectionToTranslate, setSectionToTranslate] = useState<number | null>(null);
+  const [showProofreadDialog, setShowProofreadDialog] = useState(false);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -1308,6 +1317,10 @@ const Index = () => {
       onEditSection: setEditingSectionIndex,
       onEditSectionById: handleEditSectionById,
       onImageUpload: handleImageUpload,
+      onTranslateSection: (index: number) => {
+        setSectionToTranslate(index);
+        setShowSectionTranslateDialog(true);
+      },
       multiSelectMode,
       selectedSections,
       onToggleMultiSelect: () => {
@@ -1825,6 +1838,182 @@ const Index = () => {
     }
   };
 
+  const handleTranslatePage = async (targetLanguage: string, model: string, createCopy: boolean) => {
+    if (!analysisResult || !user) return;
+    
+    setIsAnalyzing(true);
+    try {
+      const response = await supabase.functions.invoke('translate-page', {
+        body: { 
+          sections: analysisResult.sections, 
+          targetLanguage, 
+          model 
+        }
+      });
+
+      if (response.error) throw new Error(response.error.message);
+      
+      const languageNames: Record<string, string> = {
+        fr: "French", it: "Italian", nl: "Dutch", de: "German",
+        ro: "Romanian", cs: "Czech", pl: "Polish", hu: "Hungarian"
+      };
+      const langName = languageNames[targetLanguage] || targetLanguage;
+
+      if (createCopy) {
+        // Create a new page with translated content
+        const newSlug = await ensureUniqueSlug(`${pageSlug}-${targetLanguage}`);
+        const newTitle = `${pageTitle} (${langName})`;
+        
+        const { data: newPage, error } = await supabase
+          .from("pages")
+          .insert([{
+            user_id: user.id,
+            title: newTitle,
+            slug: newSlug,
+            status: "draft",
+            template: selectedTemplate,
+            cta_style: ctaStyle,
+            sticky_cta_threshold: stickyCtaThreshold,
+            subtitle: subtitle,
+            headline: headline,
+            content: { sections: response.data.sections },
+            cta_text: analysisResult.cta.primary,
+            cta_url: ctaUrl,
+            image_url: imageUrl,
+            tracking_script_set_id: selectedCountrySetupId || null
+          }])
+          .select()
+          .single();
+        
+        if (error) throw error;
+        
+        toast({ 
+          title: "Translated copy created!", 
+          description: `New page: ${newTitle}. Refresh to edit it.`
+        });
+      } else {
+        // Replace current page content
+        setAnalysisResult({
+          ...analysisResult,
+          sections: response.data.sections
+        });
+        setHasUnsavedChanges(true);
+        toast({ title: `Page translated to ${langName}` });
+      }
+    } catch (error) {
+      console.error("Translation error:", error);
+      toast({ 
+        title: "Error", 
+        description: error instanceof Error ? error.message : "Failed to translate page", 
+        variant: "destructive" 
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const handleTranslateSection = async (sectionIndex: number, targetLanguage: string, model: string) => {
+    if (!analysisResult) return;
+    
+    const section = analysisResult.sections[sectionIndex];
+    if (!section) return;
+
+    setIsAnalyzing(true);
+    try {
+      const response = await supabase.functions.invoke('translate-section', {
+        body: { 
+          section, 
+          targetLanguage, 
+          model 
+        }
+      });
+
+      if (response.error) throw new Error(response.error.message);
+      
+      const newSections = [...analysisResult.sections];
+      newSections[sectionIndex] = response.data.section;
+      
+      setAnalysisResult({
+        ...analysisResult,
+        sections: newSections
+      });
+      setHasUnsavedChanges(true);
+      
+      const languageNames: Record<string, string> = {
+        fr: "French", it: "Italian", nl: "Dutch", de: "German",
+        ro: "Romanian", cs: "Czech", pl: "Polish", hu: "Hungarian"
+      };
+      toast({ title: `Section translated to ${languageNames[targetLanguage]}` });
+    } catch (error) {
+      console.error("Translation error:", error);
+      toast({ 
+        title: "Error", 
+        description: error instanceof Error ? error.message : "Failed to translate section", 
+        variant: "destructive" 
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const handleProofreadGenerate = async (model: string) => {
+    if (!analysisResult) return [];
+    
+    try {
+      const response = await supabase.functions.invoke('proofread-suggestions', {
+        body: { 
+          sections: analysisResult.sections, 
+          model 
+        }
+      });
+
+      if (response.error) throw new Error(response.error.message);
+      
+      return response.data.suggestions || [];
+    } catch (error) {
+      console.error("Proofread error:", error);
+      toast({ 
+        title: "Error", 
+        description: error instanceof Error ? error.message : "Failed to generate suggestions", 
+        variant: "destructive" 
+      });
+      return [];
+    }
+  };
+
+  const handleApplyProofreadSuggestions = (suggestions: Array<{
+    sectionIndex: number;
+    field: string;
+    original: string;
+    suggested: string;
+    reason: string;
+  }>) => {
+    if (!analysisResult) return;
+    
+    const newSections = [...analysisResult.sections];
+    
+    suggestions.forEach(suggestion => {
+      const section = newSections[suggestion.sectionIndex];
+      if (!section) return;
+      
+      // Apply the suggestion to the specific field
+      if (suggestion.field in section) {
+        (section as any)[suggestion.field] = suggestion.suggested;
+      }
+    });
+    
+    setAnalysisResult({
+      ...analysisResult,
+      sections: newSections
+    });
+    setHasUnsavedChanges(true);
+    
+    toast({ 
+      title: "Proofreading applied", 
+      description: `${suggestions.length} improvement${suggestions.length !== 1 ? 's' : ''} applied` 
+    });
+  };
+
   if (isLoadingExistingPage) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -2186,6 +2375,26 @@ const Index = () => {
                 
                 <div className="flex gap-2 items-center">
                   <Button 
+                    onClick={() => setShowTranslateDialog(true)} 
+                    variant="outline" 
+                    size="sm" 
+                    className="h-8 px-3 text-xs"
+                    disabled={isAnalyzing}
+                  >
+                    <Languages className="mr-1 h-3 w-3" />
+                    Translate
+                  </Button>
+                  <Button 
+                    onClick={() => setShowProofreadDialog(true)} 
+                    variant="outline" 
+                    size="sm" 
+                    className="h-8 px-3 text-xs"
+                    disabled={isAnalyzing}
+                  >
+                    <SpellCheck className="mr-1 h-3 w-3" />
+                    Proofread
+                  </Button>
+                  <Button 
                     onClick={() => {
                       setMultiSelectMode(!multiSelectMode);
                       if (multiSelectMode) {
@@ -2534,6 +2743,27 @@ const Index = () => {
           open={showTemplateModal}
           onOpenChange={setShowTemplateModal}
           onSelectTemplate={handleSelectTemplate}
+        />
+
+        {/* Translation Dialogs */}
+        <TranslateDialog
+          open={showTranslateDialog}
+          onOpenChange={setShowTranslateDialog}
+          onTranslate={handleTranslatePage}
+        />
+
+        <SectionTranslateDialog
+          open={showSectionTranslateDialog}
+          onOpenChange={setShowSectionTranslateDialog}
+          sectionIndex={sectionToTranslate}
+          onTranslate={handleTranslateSection}
+        />
+
+        <ProofreadSuggestionsDialog
+          open={showProofreadDialog}
+          onOpenChange={setShowProofreadDialog}
+          onGenerate={handleProofreadGenerate}
+          onApply={handleApplyProofreadSuggestions}
         />
       </div>
     );

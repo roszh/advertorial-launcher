@@ -1,1 +1,19 @@
 project_id = "guhoubrjccpyetlvyfuu"
+
+[functions.analyze-text]
+verify_jwt = false
+
+[functions.optimize-image]
+verify_jwt = false
+
+[functions.optimize-paragraph]
+verify_jwt = false
+
+[functions.translate-page]
+verify_jwt = false
+
+[functions.translate-section]
+verify_jwt = false
+
+[functions.proofread-suggestions]
+verify_jwt = false
