@@ -77,12 +77,18 @@ Return the translated sections as a JSON array.`;
     }
 
     const data = await response.json();
-    const translatedText = data.choices[0].message.content;
+    let translatedText = data.choices[0].message.content;
+    
+    // Extract JSON from markdown code blocks if present
+    const jsonMatch = translatedText.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
+    if (jsonMatch) {
+      translatedText = jsonMatch[1];
+    }
     
     // Parse the JSON response
     let translatedSections;
     try {
-      translatedSections = JSON.parse(translatedText);
+      translatedSections = JSON.parse(translatedText.trim());
     } catch (e) {
       console.error("Failed to parse AI response:", translatedText);
       return new Response(JSON.stringify({ error: "Invalid AI response format" }), {

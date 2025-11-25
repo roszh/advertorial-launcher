@@ -78,12 +78,18 @@ Return ONLY valid JSON, no explanations outside the JSON structure.`;
     }
 
     const data = await response.json();
-    const suggestionsText = data.choices[0].message.content;
+    let suggestionsText = data.choices[0].message.content;
+    
+    // Extract JSON from markdown code blocks if present
+    const jsonMatch = suggestionsText.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
+    if (jsonMatch) {
+      suggestionsText = jsonMatch[1];
+    }
     
     // Parse the JSON response
     let result;
     try {
-      result = JSON.parse(suggestionsText);
+      result = JSON.parse(suggestionsText.trim());
     } catch (e) {
       console.error("Failed to parse AI response:", suggestionsText);
       return new Response(JSON.stringify({ error: "Invalid AI response format" }), {
