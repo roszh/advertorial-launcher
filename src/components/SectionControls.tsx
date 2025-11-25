@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "./ui/button";
-import { Trash2, AlertCircle, Copy, Plus, Type, Image as ImageIcon, MousePointerClick, Quote, MessageSquare, List, Bell, Edit2, CheckSquare } from "lucide-react";
+import { Trash2, AlertCircle, Copy, Plus, Type, Image as ImageIcon, MousePointerClick, Quote, MessageSquare, List, Bell, Edit2, CheckSquare, Languages } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuLabel } from "./ui/dropdown-menu";
 import { Checkbox } from "./ui/checkbox";
 import { cn } from "@/lib/utils";
@@ -11,6 +11,7 @@ interface SectionControlsProps {
   onDeleteSection: () => void;
   onCloneSection?: () => void;
   onOpenEditor?: () => void;
+  onTranslateSection?: (index: number) => void;
   className?: string;
   onDeleteHover?: (isHovering: boolean) => void;
   multiSelectMode?: boolean;
@@ -24,6 +25,7 @@ export const SectionControls = ({
   onDeleteSection,
   onCloneSection,
   onOpenEditor,
+  onTranslateSection,
   className,
   onDeleteHover,
   multiSelectMode = false,
@@ -136,6 +138,18 @@ export const SectionControls = ({
           >
             <Copy className="h-4 w-4 mr-1" />
             Clone
+          </Button>
+        )}
+        {onTranslateSection && (
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => onTranslateSection(index)}
+            title="Translate section"
+            className="hover-scale"
+          >
+            <Languages className="h-4 w-4 mr-1" />
+            Translate
           </Button>
         )}
         {index > 0 && ( // Don't allow deleting the hero section
