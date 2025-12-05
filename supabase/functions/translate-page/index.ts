@@ -40,62 +40,79 @@ CRITICAL RULES:
 
 Return the translated sections as a JSON array.`;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: JSON.stringify(sections) }
-        ],
-      }),
-    });
+    // Translate sections in batches to avoid timeout
+    const BATCH_SIZE = 5;
+    const translatedSections: any[] = [];
+    
+    for (let i = 0; i < sections.length; i += BATCH_SIZE) {
+      const batch = sections.slice(i, i + BATCH_SIZE);
+      console.log(`Translating batch ${Math.floor(i / BATCH_SIZE) + 1} of ${Math.ceil(sections.length / BATCH_SIZE)}`);
+      
+      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: JSON.stringify(batch) }
+          ],
+        }),
+      });
 
-    if (!response.ok) {
-      if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limits exceeded, please try again later." }), {
-          status: 429,
+      if (!response.ok) {
+        if (response.status === 429) {
+          return new Response(JSON.stringify({ error: "Rate limits exceeded, please try again later." }), {
+            status: 429,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        if (response.status === 402) {
+          return new Response(JSON.stringify({ error: "Payment required, please add credits to your Lovable workspace." }), {
+            status: 402,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const errorText = await response.text();
+        console.error("AI gateway error:", response.status, errorText);
+        return new Response(JSON.stringify({ error: "AI gateway error" }), {
+          status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "Payment required, please add credits to your Lovable workspace." }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+
+      const data = await response.json();
+      let translatedText = data.choices[0].message.content;
+      
+      // Extract JSON from markdown code blocks if present
+      const jsonMatch = translatedText.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
+      if (jsonMatch) {
+        translatedText = jsonMatch[1];
       }
-      const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
-      return new Response(JSON.stringify({ error: "AI gateway error" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      
+      // Parse the JSON response
+      let batchTranslated;
+      try {
+        batchTranslated = JSON.parse(translatedText.trim());
+      } catch (e) {
+        console.error("Failed to parse AI response for batch:", translatedText);
+        // If parsing fails, use original sections for this batch
+        batchTranslated = batch;
+      }
+      
+      // Ensure we got an array
+      if (Array.isArray(batchTranslated)) {
+        translatedSections.push(...batchTranslated);
+      } else {
+        // If single object returned, wrap in array
+        translatedSections.push(batchTranslated);
+      }
     }
 
-    const data = await response.json();
-    let translatedText = data.choices[0].message.content;
-    
-    // Extract JSON from markdown code blocks if present
-    const jsonMatch = translatedText.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
-    if (jsonMatch) {
-      translatedText = jsonMatch[1];
-    }
-    
-    // Parse the JSON response
-    let translatedSections;
-    try {
-      translatedSections = JSON.parse(translatedText.trim());
-    } catch (e) {
-      console.error("Failed to parse AI response:", translatedText);
-      return new Response(JSON.stringify({ error: "Invalid AI response format" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    console.log(`Successfully translated ${translatedSections.length} sections`);
 
     return new Response(JSON.stringify({ sections: translatedSections }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
