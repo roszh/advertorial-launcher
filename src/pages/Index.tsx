@@ -37,7 +37,7 @@ import { toast } from "@/hooks/use-toast";
 import { stripHtmlTags, cn } from "@/lib/utils";
 import { MultiSelectToolbar } from "@/components/MultiSelectToolbar";
 import { MultiSectionSnippetDialog } from "@/components/MultiSectionSnippetDialog";
-import { TranslateDialog } from "@/components/TranslateDialog";
+import { TranslateDialog, TranslationProgress } from "@/components/TranslateDialog";
 import { SectionTranslateDialog } from "@/components/SectionTranslateDialog";
 import { ProofreadSuggestionsDialog } from "@/components/ProofreadSuggestionsDialog";
 import { 
@@ -175,6 +175,7 @@ const Index = () => {
   const [showSectionTranslateDialog, setShowSectionTranslateDialog] = useState(false);
   const [sectionToTranslate, setSectionToTranslate] = useState<number | null>(null);
   const [showProofreadDialog, setShowProofreadDialog] = useState(false);
+  const [translationProgress, setTranslationProgress] = useState<TranslationProgress | null>(null);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -1842,17 +1843,72 @@ const Index = () => {
     if (!analysisResult || !user) return;
     
     setIsAnalyzing(true);
+    setTranslationProgress(null);
+    
     try {
-      const response = await supabase.functions.invoke('translate-page', {
-        body: { 
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      
+      const response = await fetch(`${supabaseUrl}/functions/v1/translate-page`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseKey}`,
+          'apikey': supabaseKey
+        },
+        body: JSON.stringify({ 
           sections: analysisResult.sections, 
           targetLanguage, 
           model 
-        }
+        })
       });
 
-      if (response.error) throw new Error(response.error.message);
-      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error("No response body");
+
+      const decoder = new TextDecoder();
+      let translatedSections: Section[] | null = null;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const text = decoder.decode(value, { stream: true });
+        const lines = text.split('\n\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const jsonStr = line.slice(6);
+            try {
+              const data = JSON.parse(jsonStr);
+              
+              if (data.type === 'progress') {
+                setTranslationProgress({
+                  currentBatch: data.currentBatch,
+                  totalBatches: data.totalBatches,
+                  sectionsTranslated: data.sectionsTranslated,
+                  totalSections: data.totalSections
+                });
+              } else if (data.type === 'complete') {
+                translatedSections = data.sections;
+              } else if (data.type === 'error') {
+                throw new Error(data.error);
+              }
+            } catch (e) {
+              // Ignore parse errors for incomplete chunks
+            }
+          }
+        }
+      }
+
+      if (!translatedSections) {
+        throw new Error("No translated sections received");
+      }
+
       const languageNames: Record<string, string> = {
         fr: "French", it: "Italian", nl: "Dutch", de: "German",
         ro: "Romanian", cs: "Czech", pl: "Polish", hu: "Hungarian"
@@ -1860,11 +1916,10 @@ const Index = () => {
       const langName = languageNames[targetLanguage] || targetLanguage;
 
       if (createCopy) {
-        // Create a new page with translated content
         const newSlug = await ensureUniqueSlug(`${pageSlug}-${targetLanguage}`);
         const newTitle = `${pageTitle} (${langName})`;
         
-        const { data: newPage, error } = await supabase
+        const { error } = await supabase
           .from("pages")
           .insert([{
             user_id: user.id,
@@ -1876,7 +1931,7 @@ const Index = () => {
             sticky_cta_threshold: stickyCtaThreshold,
             subtitle: subtitle,
             headline: headline,
-            content: { sections: response.data.sections },
+            content: { sections: translatedSections as unknown as any[] },
             cta_text: analysisResult.cta.primary,
             cta_url: ctaUrl,
             image_url: imageUrl,
@@ -1892,10 +1947,9 @@ const Index = () => {
           description: `New page: ${newTitle}. Refresh to edit it.`
         });
       } else {
-        // Replace current page content
         setAnalysisResult({
           ...analysisResult,
-          sections: response.data.sections
+          sections: translatedSections
         });
         setHasUnsavedChanges(true);
         toast({ title: `Page translated to ${langName}` });
@@ -1909,6 +1963,7 @@ const Index = () => {
       });
     } finally {
       setIsAnalyzing(false);
+      setTranslationProgress(null);
     }
   };
 
@@ -2750,6 +2805,7 @@ const Index = () => {
           open={showTranslateDialog}
           onOpenChange={setShowTranslateDialog}
           onTranslate={handleTranslatePage}
+          progress={translationProgress}
         />
 
         <SectionTranslateDialog

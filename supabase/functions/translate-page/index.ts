@@ -42,80 +42,109 @@ Return the translated sections as a JSON array.`;
 
     // Translate sections in batches to avoid timeout
     const BATCH_SIZE = 5;
+    const totalBatches = Math.ceil(sections.length / BATCH_SIZE);
     const translatedSections: any[] = [];
     
-    for (let i = 0; i < sections.length; i += BATCH_SIZE) {
-      const batch = sections.slice(i, i + BATCH_SIZE);
-      console.log(`Translating batch ${Math.floor(i / BATCH_SIZE) + 1} of ${Math.ceil(sections.length / BATCH_SIZE)}`);
-      
-      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model,
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: JSON.stringify(batch) }
-          ],
-        }),
-      });
-
-      if (!response.ok) {
-        if (response.status === 429) {
-          return new Response(JSON.stringify({ error: "Rate limits exceeded, please try again later." }), {
-            status: 429,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
+    // Create a readable stream for progress updates
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      async start(controller) {
+        for (let i = 0; i < sections.length; i += BATCH_SIZE) {
+          const batchNum = Math.floor(i / BATCH_SIZE) + 1;
+          const batch = sections.slice(i, i + BATCH_SIZE);
+          
+          // Send progress update
+          const progress = {
+            type: 'progress',
+            currentBatch: batchNum,
+            totalBatches,
+            sectionsTranslated: translatedSections.length,
+            totalSections: sections.length
+          };
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify(progress)}\n\n`));
+          
+          console.log(`Translating batch ${batchNum} of ${totalBatches}`);
+          
+          const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${LOVABLE_API_KEY}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model,
+              messages: [
+                { role: "system", content: systemPrompt },
+                { role: "user", content: JSON.stringify(batch) }
+              ],
+            }),
           });
+
+          if (!response.ok) {
+            if (response.status === 429) {
+              const error = { type: 'error', error: "Rate limits exceeded, please try again later." };
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify(error)}\n\n`));
+              controller.close();
+              return;
+            }
+            if (response.status === 402) {
+              const error = { type: 'error', error: "Payment required, please add credits to your Lovable workspace." };
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify(error)}\n\n`));
+              controller.close();
+              return;
+            }
+            const errorText = await response.text();
+            console.error("AI gateway error:", response.status, errorText);
+            const error = { type: 'error', error: "AI gateway error" };
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify(error)}\n\n`));
+            controller.close();
+            return;
+          }
+
+          const data = await response.json();
+          let translatedText = data.choices[0].message.content;
+          
+          // Extract JSON from markdown code blocks if present
+          const jsonMatch = translatedText.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
+          if (jsonMatch) {
+            translatedText = jsonMatch[1];
+          }
+          
+          // Parse the JSON response
+          let batchTranslated;
+          try {
+            batchTranslated = JSON.parse(translatedText.trim());
+          } catch (e) {
+            console.error("Failed to parse AI response for batch:", translatedText);
+            // If parsing fails, use original sections for this batch
+            batchTranslated = batch;
+          }
+          
+          // Ensure we got an array
+          if (Array.isArray(batchTranslated)) {
+            translatedSections.push(...batchTranslated);
+          } else {
+            // If single object returned, wrap in array
+            translatedSections.push(batchTranslated);
+          }
         }
-        if (response.status === 402) {
-          return new Response(JSON.stringify({ error: "Payment required, please add credits to your Lovable workspace." }), {
-            status: 402,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
-        const errorText = await response.text();
-        console.error("AI gateway error:", response.status, errorText);
-        return new Response(JSON.stringify({ error: "AI gateway error" }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
 
-      const data = await response.json();
-      let translatedText = data.choices[0].message.content;
-      
-      // Extract JSON from markdown code blocks if present
-      const jsonMatch = translatedText.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
-      if (jsonMatch) {
-        translatedText = jsonMatch[1];
+        console.log(`Successfully translated ${translatedSections.length} sections`);
+        
+        // Send final result
+        const result = { type: 'complete', sections: translatedSections };
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify(result)}\n\n`));
+        controller.close();
       }
-      
-      // Parse the JSON response
-      let batchTranslated;
-      try {
-        batchTranslated = JSON.parse(translatedText.trim());
-      } catch (e) {
-        console.error("Failed to parse AI response for batch:", translatedText);
-        // If parsing fails, use original sections for this batch
-        batchTranslated = batch;
-      }
-      
-      // Ensure we got an array
-      if (Array.isArray(batchTranslated)) {
-        translatedSections.push(...batchTranslated);
-      } else {
-        // If single object returned, wrap in array
-        translatedSections.push(batchTranslated);
-      }
-    }
+    });
 
-    console.log(`Successfully translated ${translatedSections.length} sections`);
-
-    return new Response(JSON.stringify({ sections: translatedSections }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    return new Response(stream, {
+      headers: { 
+        ...corsHeaders, 
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        "Connection": "keep-alive"
+      },
     });
   } catch (error) {
     console.error("Error in translate-page function:", error);
